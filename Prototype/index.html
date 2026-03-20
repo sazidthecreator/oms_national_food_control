@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMS National Control Platform — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink-500:#1E3A8A; --blue-400:#2563EB; --blue-100:#DBEAFE; --blue-050:#EFF6FF;
+  --teal-600:#0F766E; --teal-500:#0D9488; --teal-400:#14B8A6; --teal-100:#CCFBF1; --teal-050:#F0FDFA;
+  --amber-600:#B45309; --amber-500:#D97706; --amber-100:#FEF3C7; --amber-050:#FFFBEB;
+  --red-600:#B91C1C; --red-500:#DC2626; --red-100:#FEE2E2;
+  --green-600:#15803D; --green-500:#16A34A; --green-100:#DCFCE7; --green-050:#F0FDF4;
+  --slate-900:#0F172A; --slate-600:#475569; --slate-500:#64748B;
+  --slate-300:#CBD5E1; --slate-200:#E2E8F0; --slate-100:#F1F5F9; --slate-050:#F8FAFC;
+  --border-l:var(--slate-200); --text-primary:#0F172A;
+  --text-secondary:var(--slate-600); --text-muted:var(--slate-500); --bg-light:var(--slate-050);
+  --font-display:'Fraunces',Georgia,serif; --font-body:'Plus Jakarta Sans',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono','Courier New',monospace;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:20px;
+  --sh-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 4px 16px rgba(0,0,0,.08);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-body);font-size:14px;background:var(--bg-light);color:var(--text-primary);overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--slate-300);border-radius:2px;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(16px)}}
+
+.d-topbar{background:white;border-bottom:1px solid var(--border-l);height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100;box-shadow:var(--sh-sm);}
+.d-brand{display:flex;align-items:center;gap:9px;}
+.d-logo{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,var(--teal-500),var(--blue-400));display:flex;align-items:center;justify-content:center;}
+.d-logo svg{width:14px;height:14px;fill:white;}
+.d-title{font-family:var(--font-display);font-weight:600;font-size:13px;color:var(--slate-900);}
+.d-status{display:flex;align-items:center;gap:7px;}
+.d-pill{display:flex;align-items:center;gap:5px;background:var(--slate-100);border-radius:100px;padding:3px 10px;font-size:11px;color:var(--text-secondary);font-weight:500;}
+.d-live{width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;animation:blink 2s infinite;}
+.d-alert{color:var(--red-500);}
+.d-layout{display:flex;min-height:calc(100vh - 50px);}
+.d-sidebar{width:192px;flex-shrink:0;background:white;border-right:1px solid var(--border-l);padding:8px 0;overflow-y:auto;}
+.sidebar-cat{padding:10px 14px 4px;font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--slate-300);}
+.d-nav{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;border-left:2.5px solid transparent;transition:all .12s;user-select:none;}
+.d-nav:hover{color:var(--text-primary);background:var(--slate-050);}
+.d-nav.active{color:var(--ink-500);background:var(--blue-050);border-left-color:var(--ink-500);font-weight:600;}
+.d-nav-i{font-size:13px;width:16px;text-align:center;}
+.d-badge{margin-left:auto;background:var(--red-500);color:white;font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;}
+.d-progress{margin:10px 10px 0;background:var(--blue-050);border-radius:var(--r-md);padding:10px 12px;border:1px solid var(--blue-100);}
+.dp-label{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--ink-500);margin-bottom:4px;font-weight:500;}
+.dp-val{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--slate-900);}
+.dp-sub{font-size:10px;color:var(--text-muted);}
+.dp-bar{height:3px;background:var(--blue-100);border-radius:2px;margin-top:6px;}
+.dp-fill{height:100%;background:var(--ink-500);border-radius:2px;transition:width 1.5s ease;}
+.d-main{flex:1;overflow-y:auto;padding:20px;}
+.dph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.dph-t{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--slate-900);letter-spacing:-.4px;}
+.dph-s{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.dc{background:white;border-radius:var(--r-lg);border:1px solid var(--border-l);padding:14px 16px;box-shadow:var(--sh-sm);}
+.dct{font-family:var(--font-mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:12px;display:flex;align-items:center;}
+.dm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.dm-card{background:white;border-radius:var(--r-lg);padding:14px;border:1px solid var(--border-l);position:relative;overflow:hidden;box-shadow:var(--sh-sm);transition:all .2s;cursor:pointer;}
+.dm-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);}
+.dm-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;}
+.mc-b::after{background:linear-gradient(90deg,var(--ink-500),var(--blue-400));}
+.mc-t::after{background:linear-gradient(90deg,var(--teal-600),var(--teal-400));}
+.mc-g::after{background:linear-gradient(90deg,var(--green-600),var(--green-500));}
+.mc-a::after{background:linear-gradient(90deg,var(--amber-600),var(--amber-500));}
+.dm-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);}
+.dm-val{font-family:var(--font-display);font-size:24px;font-weight:700;margin:4px 0 2px;line-height:1;}
+.mc-b .dm-val{color:var(--ink-500);} .mc-t .dm-val{color:var(--teal-600);}
+.mc-g .dm-val{color:var(--green-600);} .mc-a .dm-val{color:var(--amber-600);}
+.dm-trend{font-size:10px;color:var(--text-muted);}
+.dm-icon{position:absolute;right:12px;top:12px;font-size:18px;opacity:.1;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.g75{display:grid;grid-template-columns:7fr 5fr;gap:12px;margin-bottom:12px;}
+.mb14{margin-bottom:14px;}
+.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt th{background:var(--slate-050);padding:8px 11px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-l);}
+.dt td{padding:9px 11px;border-bottom:1px solid var(--slate-050);color:var(--text-primary);vertical-align:middle;}
+.dt tr:hover td{background:var(--slate-050);} .dt tr:last-child td{border-bottom:none;}
+.b{display:inline-flex;align-items:center;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:700;}
+.bg{background:var(--green-100);color:var(--green-600);}
+.br{background:var(--red-100);color:var(--red-600);}
+.by{background:var(--amber-100);color:var(--amber-600);}
+.bb{background:var(--blue-100);color:var(--ink-500);}
+.bt{background:var(--teal-100);color:var(--teal-600);}
+.bs{background:var(--slate-100);color:var(--slate-600);}
+.btn{padding:6px 13px;border-radius:var(--r-sm);font-family:var(--font-body);font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .12s;}
+.btn:active{transform:scale(.97);}
+.btn-p{background:var(--ink-500);color:white;} .btn-p:hover{background:var(--blue-400);}
+.btn-t{background:var(--teal-500);color:white;} .btn-t:hover{background:var(--teal-600);}
+.btn-o{background:white;border:1.5px solid var(--border-l);color:var(--text-muted);}
+.btn-o:hover{border-color:var(--slate-300);color:var(--text-primary);}
+.al{padding:9px 12px;border-radius:var(--r-sm);font-size:12px;display:flex;align-items:flex-start;gap:7px;margin-bottom:8px;}
+.al-e{background:var(--red-100);border:1px solid #FCA5A5;color:var(--red-600);}
+.al-w{background:var(--amber-100);border:1px solid #FDE68A;color:var(--amber-600);}
+.al-s{background:var(--green-100);border:1px solid #BBF7D0;color:var(--green-600);}
+.al-i{background:var(--blue-050);border:1px solid var(--blue-100);color:var(--ink-500);}
+.al-ic{font-size:13px;flex-shrink:0;margin-top:1px;}
+.tl-row{display:flex;gap:10px;padding-bottom:12px;position:relative;}
+.tl-row:not(:last-child)::before{content:'';position:absolute;left:9px;top:20px;bottom:0;width:1px;background:var(--border-l);}
+.tl-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;}
+.tl-ok{background:var(--green-100);} .tl-er{background:var(--red-100);}
+.tl-wn{background:var(--amber-100);} .tl-in{background:var(--blue-100);}
+.tl-t{font-size:12px;font-weight:600;color:var(--slate-900);}
+.tl-d{font-size:11px;color:var(--text-muted);margin-top:1px;}
+.tl-m{font-size:10px;color:var(--text-muted);margin-top:1px;font-family:var(--font-mono);}
+.bc-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.bc-lbl{font-size:11px;color:var(--text-muted);width:80px;text-align:right;flex-shrink:0;}
+.bc-track{flex:1;height:15px;background:var(--slate-100);border-radius:3px;overflow:hidden;}
+.bc-fill{height:100%;border-radius:3px;transition:width 1.2s ease;}
+.bc-v{font-size:11px;font-weight:600;color:var(--text-primary);width:32px;}
+.module-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.module-card{background:white;border-radius:var(--r-lg);border:1px solid var(--border-l);padding:14px;cursor:pointer;transition:all .2s;box-shadow:var(--sh-sm);text-decoration:none;display:block;position:relative;overflow:hidden;}
+.module-card:hover{transform:translateY(-3px);box-shadow:var(--sh-md);border-color:var(--teal-300);}
+.module-card:hover .mc-icon{transform:scale(1.15);}
+.mc-icon{font-size:22px;margin-bottom:7px;display:block;transition:transform .2s;}
+.mc-title{font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:2px;}
+.mc-sub{font-size:10px;color:var(--text-muted);line-height:1.4;}
+.mc-arrow{position:absolute;right:10px;bottom:12px;color:var(--text-muted);font-size:12px;opacity:0;transition:opacity .15s;}
+.module-card:hover .mc-arrow{opacity:1;}
+.rg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.rg-tile{padding:12px 10px;border-radius:var(--r-md);text-align:center;cursor:pointer;transition:transform .12s;}
+.rg-tile:hover{transform:scale(1.04);}
+.rg-name{font-size:10px;font-weight:700;margin-bottom:3px;}
+.rg-val{font-family:var(--font-display);font-size:20px;font-weight:700;}
+.rg-sub{font-size:10px;opacity:.7;}
+#toast-container{position:fixed;top:60px;right:16px;z-index:2000;display:flex;flex-direction:column;gap:7px;pointer-events:none;}
+.toast{background:white;border-radius:10px;border:1px solid var(--border-l);padding:10px 14px;box-shadow:0 8px 28px rgba(0,0,0,.12);display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:var(--slate-900);max-width:280px;pointer-events:all;animation:toastIn .3s ease;}
+.toast.out{animation:toastOut .25s ease forwards;}
+@media(max-width:1100px){.dm-grid,.module-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:800px){.g2,.g75{grid-template-columns:1fr;}.d-sidebar{width:160px;}}
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="d-topbar">
+  <div class="d-brand">
+    <div class="d-logo"><svg viewBox="0 0 16 16"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z"/></svg></div>
+    <div>
+      <div class="d-title">OMS National Control Platform</div>
+      <div style="font-size:10px;color:var(--text-muted)">Ministry of Food · Bangladesh</div>
+    </div>
+  </div>
+  <div class="d-status">
+    <div class="d-pill"><div class="d-live"></div>System Live</div>
+    <div class="d-pill">📡 5,000 online</div>
+    <div class="d-pill" id="topbar-time">📅 20 March 2026 — 09:41 BDT</div>
+    <div class="d-pill d-alert" style="cursor:pointer" onclick="location.href='notifications.html'">⚠ 3 Alerts</div>
+  </div>
+</div>
+
+<div class="d-layout">
+  <div class="d-sidebar">
+    <div class="sidebar-cat">Main</div>
+    <div class="d-nav active"><span class="d-nav-i">📊</span>Dashboard</div>
+    <div class="d-nav" onclick="location.href='offices.html'"><span class="d-nav-i">🏛</span>Offices & Programs</div>
+    <div class="d-nav" onclick="location.href='dealers.html'"><span class="d-nav-i">🏪</span>Dealers<span class="d-badge">2</span></div>
+    <div class="d-nav" onclick="location.href='beneficiaries.html'"><span class="d-nav-i">👥</span>Beneficiaries</div>
+    <div class="sidebar-cat">Operations</div>
+    <div class="d-nav" onclick="location.href='distribution.html'"><span class="d-nav-i">🌾</span>Distribution</div>
+    <div class="d-nav" onclick="location.href='inspection.html'"><span class="d-nav-i">🔍</span>Inspection</div>
+    <div class="d-nav" onclick="location.href='analytics.html'"><span class="d-nav-i">📈</span>Analytics</div>
+    <div class="sidebar-cat">Admin</div>
+    <div class="d-nav" onclick="location.href='notifications.html'"><span class="d-nav-i">🔔</span>Notifications<span class="d-badge">3</span></div>
+    <div class="d-nav" onclick="location.href='audit.html'"><span class="d-nav-i">📋</span>Audit Log</div>
+    <div class="d-progress">
+      <div class="dp-label">TODAY'S PROGRESS</div>
+      <div class="dp-val">1,247</div>
+      <div class="dp-sub">of 1,800 target</div>
+      <div class="dp-bar"><div class="dp-fill" id="prog-fill" style="width:0"></div></div>
+    </div>
+  </div>
+
+  <div class="d-main">
+    <div class="dph">
+      <div>
+        <div class="dph-t">National Control Dashboard</div>
+        <div class="dph-s">Dhaka Division · Real-time · 20 March 2026 — Ramadan Distribution Active</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-o" onclick="toast('📤 Report exported','success')">📤 Export</button>
+        <button class="btn btn-p" onclick="doRefresh()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="dm-grid">
+      <div class="dm-card mc-b" onclick="location.href='distribution.html'">
+        <div class="dm-icon">🌾</div>
+        <div class="dm-lbl">Today's Transactions</div>
+        <div class="dm-val" id="m1">1,247</div>
+        <div class="dm-trend">▲ 8.3% vs yesterday</div>
+      </div>
+      <div class="dm-card mc-t" onclick="location.href='beneficiaries.html'">
+        <div class="dm-icon">👥</div>
+        <div class="dm-lbl">Beneficiaries Served</div>
+        <div class="dm-val" id="m2">1,198</div>
+        <div class="dm-trend">▲ 5.1% this week</div>
+      </div>
+      <div class="dm-card mc-g" onclick="location.href='analytics.html'">
+        <div class="dm-icon">🛡</div>
+        <div class="dm-lbl">Duplicates Blocked</div>
+        <div class="dm-val" id="m3">49</div>
+        <div class="dm-trend">100% prevention rate</div>
+      </div>
+      <div class="dm-card mc-a" onclick="location.href='analytics.html'">
+        <div class="dm-icon">⚖️</div>
+        <div class="dm-lbl">Food Distributed</div>
+        <div class="dm-val">6.2T</div>
+        <div class="dm-trend">Rice + Flour combined</div>
+      </div>
+    </div>
+
+    <!-- Module Nav -->
+    <div class="dc mb14">
+      <div class="dct">🗂 All Platform Modules</div>
+      <div class="module-grid">
+        <a href="offices.html" class="module-card"><span class="mc-icon">🏛</span><div class="mc-title">Offices & Programs</div><div class="mc-sub">5 offices · 3 programs active</div><div class="mc-arrow">→</div></a>
+        <a href="dealers.html" class="module-card"><span class="mc-icon">🏪</span><div class="mc-title">Dealer Management</div><div class="mc-sub">47 active · 2 pending approval</div><span style="position:absolute;top:10px;right:10px;background:var(--red-100);color:var(--red-600);font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px">2 pending</span><div class="mc-arrow">→</div></a>
+        <a href="beneficiaries.html" class="module-card"><span class="mc-icon">👥</span><div class="mc-title">Beneficiaries</div><div class="mc-sub">12,840 enrolled · 1,198 today</div><div class="mc-arrow">→</div></a>
+        <a href="distribution.html" class="module-card"><span class="mc-icon">🌾</span><div class="mc-title">Food Distribution</div><div class="mc-sub">Live · Biometric verify</div><div class="mc-arrow">→</div></a>
+        <a href="inspection.html" class="module-card"><span class="mc-icon">🔍</span><div class="mc-title">Field Inspection</div><div class="mc-sub">24 this month · 5 pending</div><div class="mc-arrow">→</div></a>
+        <a href="analytics.html" class="module-card"><span class="mc-icon">📈</span><div class="mc-title">Analytics & Intel</div><div class="mc-sub">Leakage 7.8% · 4 anomalies</div><span style="position:absolute;top:10px;right:10px;background:var(--amber-100);color:var(--amber-600);font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px">4 alerts</span><div class="mc-arrow">→</div></a>
+        <a href="notifications.html" class="module-card"><span class="mc-icon">🔔</span><div class="mc-title">Notifications & SMS</div><div class="mc-sub">3 unread · 179 SMS today</div><span style="position:absolute;top:10px;right:10px;background:var(--red-100);color:var(--red-600);font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px">3 unread</span><div class="mc-arrow">→</div></a>
+        <a href="audit.html" class="module-card"><span class="mc-icon">📋</span><div class="mc-title">Audit Trail</div><div class="mc-sub">4,821 events · Hash verified</div><div class="mc-arrow">→</div></a>
+      </div>
+    </div>
+
+    <!-- Live Feed + Right Panel -->
+    <div class="g75">
+      <div class="dc">
+        <div class="dct">⚡ Live Transaction Feed
+          <span style="margin-left:auto;background:var(--green-100);color:var(--green-600);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700">● LIVE</span>
+        </div>
+        <div id="live-feed">
+          <div class="tl-row"><div class="tl-dot tl-ok">✓</div><div><div class="tl-t">Amina Khatun — 5kg Rice</div><div class="tl-d">Rahman Center · Face: 97.7% · <span class="b bg">VERIFIED</span></div><div class="tl-m">09:41:02 · TXN-20260320-7001</div></div></div>
+          <div class="tl-row"><div class="tl-dot tl-er">✗</div><div><div class="tl-t">Duplicate Blocked — Mohammad Ali</div><div class="tl-d">Already collected 5kg at 07:23 today · <span class="b br">BLOCKED</span></div><div class="tl-m">09:38:45 · DUPLICATE_ATTEMPT</div></div></div>
+          <div class="tl-row"><div class="tl-dot tl-ok">✓</div><div><div class="tl-t">Rina Begum — 3kg Flour</div><div class="tl-d">Karim Depot · Face: 94.1% · <span class="b bg">VERIFIED</span></div><div class="tl-m">09:36:18 · TXN-20260320-6998</div></div></div>
+          <div class="tl-row"><div class="tl-dot tl-wn">!</div><div><div class="tl-t">Exception — Jabbar Mia (face 68%)</div><div class="tl-d">Karim Depot · Pending supervisor review · <span class="b by">REVIEW</span></div><div class="tl-m">09:33:07 · EXC-20260320-015</div></div></div>
+          <div class="tl-row"><div class="tl-dot tl-in">↑</div><div><div class="tl-t">Salma Khanom — 5kg Rice (Offline Sync)</div><div class="tl-d">Offline at 09:21 · Synced 09:34 · <span class="b bt">SYNCED</span></div><div class="tl-m">09:34:02 · TXN-20260320-6989</div></div></div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-l);display:flex;gap:8px">
+          <a href="distribution.html" style="text-decoration:none"><button class="btn btn-t" style="font-size:11px;padding:5px 12px">View All Transactions →</button></a>
+          <a href="audit.html" style="text-decoration:none"><button class="btn btn-o" style="font-size:11px;padding:5px 12px">Audit Log →</button></a>
+        </div>
+      </div>
+
+      <div>
+        <!-- Dealer Compliance -->
+        <div class="dc mb14">
+          <div class="dct">🏆 Dealer Compliance
+            <a href="dealers.html" style="margin-left:auto;font-size:10px;color:var(--ink-500);text-decoration:none;font-weight:600">All dealers →</a>
+          </div>
+          <div class="bc-row"><div class="bc-lbl">Rahman Ctr</div><div class="bc-track"><div class="bc-fill" data-w="96" style="background:var(--teal-500)"></div></div><div class="bc-v">96%</div></div>
+          <div class="bc-row"><div class="bc-lbl">Karim Depot</div><div class="bc-track"><div class="bc-fill" data-w="91" style="background:var(--teal-500)"></div></div><div class="bc-v">91%</div></div>
+          <div class="bc-row"><div class="bc-lbl">Hasan Store</div><div class="bc-track"><div class="bc-fill" data-w="88" style="background:var(--teal-500)"></div></div><div class="bc-v">88%</div></div>
+          <div class="bc-row"><div class="bc-lbl">Ali Center</div><div class="bc-track"><div class="bc-fill" data-w="74" style="background:var(--amber-500)"></div></div><div class="bc-v">74%</div></div>
+          <div class="bc-row"><div class="bc-lbl">Khan Depot</div><div class="bc-track"><div class="bc-fill" data-w="61" style="background:var(--red-500)"></div></div><div class="bc-v">61%</div></div>
+        </div>
+
+        <!-- Region tiles -->
+        <div class="dc">
+          <div class="dct">🗺 Region Distribution
+            <a href="analytics.html" style="margin-left:auto;font-size:10px;color:var(--ink-500);text-decoration:none;font-weight:600">Analytics →</a>
+          </div>
+          <div class="rg-grid">
+            <div class="rg-tile" style="background:var(--blue-050)" onclick="location.href='analytics.html'"><div class="rg-name" style="color:var(--ink-500)">Dhaka</div><div class="rg-val" style="color:var(--ink-500)">428</div><div class="rg-sub" style="color:var(--text-muted)">txns today</div></div>
+            <div class="rg-tile" style="background:var(--green-050)" onclick="location.href='analytics.html'"><div class="rg-name" style="color:var(--green-600)">Mirpur</div><div class="rg-val" style="color:var(--green-600)">312</div><div class="rg-sub" style="color:var(--text-muted)">txns today</div></div>
+            <div class="rg-tile" style="background:var(--amber-050)" onclick="location.href='analytics.html'"><div class="rg-name" style="color:var(--amber-600)">Uttara</div><div class="rg-val" style="color:var(--amber-600)">267</div><div class="rg-sub" style="color:var(--text-muted)">txns today</div></div>
+            <div class="rg-tile" style="background:var(--teal-050)" onclick="location.href='analytics.html'"><div class="rg-name" style="color:var(--teal-600)">Gulshan</div><div class="rg-val" style="color:var(--teal-600)">240</div><div class="rg-sub" style="color:var(--text-muted)">txns today</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts + Health -->
+    <div class="g2">
+      <div class="dc">
+        <div class="dct">🚨 Active Alerts
+          <a href="notifications.html" style="margin-left:auto;font-size:10px;color:var(--ink-500);text-decoration:none;font-weight:600">View all →</a>
+        </div>
+        <div class="al al-e"><span class="al-ic">🔴</span><div><strong>Khan Food Point — Anomaly Detected</strong><br>94% late-night transactions flagged. <a href="analytics.html" style="color:var(--red-600);font-weight:700">Investigate →</a></div></div>
+        <div class="al al-w"><span class="al-ic">🟡</span><div><strong>Karim Depot — Offline 54 min</strong><br>23 transactions queued for sync. <a href="distribution.html" style="color:var(--amber-600);font-weight:700">View sync →</a></div></div>
+        <div class="al al-w"><span class="al-ic">🟡</span><div><strong>15 exceptions pending review</strong><br>Supervisor sign-off required. <a href="distribution.html" style="color:var(--amber-600);font-weight:700">Review →</a></div></div>
+        <div class="al al-i"><span class="al-ic">ℹ️</span><div><strong>2 dealer registrations pending</strong><br><a href="dealers.html" style="color:var(--ink-500);font-weight:700">Review dealers →</a></div></div>
+      </div>
+      <div class="dc">
+        <div class="dct">📡 Service Health</div>
+        <div id="health-block">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;margin-bottom:4px;background:var(--green-050)"><span style="font-size:12px;font-weight:500;color:var(--green-600)">API Gateway</span><span class="b bg">Operational</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;margin-bottom:4px;background:var(--green-050)"><span style="font-size:12px;font-weight:500;color:var(--green-600)">PostgreSQL Primary</span><span class="b bg">Operational</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;margin-bottom:4px;background:var(--green-050)"><span style="font-size:12px;font-weight:500;color:var(--green-600)">Biometric Service</span><span class="b bg">Operational</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;margin-bottom:4px;background:var(--amber-050)"><span style="font-size:12px;font-weight:500;color:var(--amber-600)">RabbitMQ Queue</span><span class="b by">30 queued</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;margin-bottom:4px;background:var(--green-050)"><span style="font-size:12px;font-weight:500;color:var(--green-600)">SMS Gateway</span><span class="b bg">Operational</span></div>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-l);display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)">
+          <span>Uptime (30d): <strong style="color:var(--green-600)">99.97%</strong></span>
+          <span>API p95: <strong style="color:var(--ink-500)">0.84s</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Banner -->
+    <div class="dc">
+      <div class="dct">📊 Platform Summary — March 2026</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;text-align:center">
+        <a href="beneficiaries.html" style="text-decoration:none;transition:transform .15s;display:block" onmouseenter="this.style.transform='scale(1.06)'" onmouseleave="this.style.transform='scale(1)'"><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--ink-500)">12,840</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px">Beneficiaries</div></a>
+        <a href="dealers.html" style="text-decoration:none;transition:transform .15s;display:block" onmouseenter="this.style.transform='scale(1.06)'" onmouseleave="this.style.transform='scale(1)'"><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--teal-600)">47</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px">Active Dealers</div></a>
+        <a href="distribution.html" style="text-decoration:none;transition:transform .15s;display:block" onmouseenter="this.style.transform='scale(1.06)'" onmouseleave="this.style.transform='scale(1)'"><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--green-600)">34,521</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px">Txns This Month</div></a>
+        <a href="analytics.html" style="text-decoration:none;transition:transform .15s;display:block" onmouseenter="this.style.transform='scale(1.06)'" onmouseleave="this.style.transform='scale(1)'"><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--amber-600)">7.8%</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px">Leakage Rate</div></a>
+        <a href="audit.html" style="text-decoration:none;transition:transform .15s;display:block" onmouseenter="this.style.transform='scale(1.06)'" onmouseleave="this.style.transform='scale(1)'"><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--teal-600)">99.97%</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px">System Uptime</div></a>
+        <a href="analytics.html" style="text-decoration:none;transition:transform .15s;display:block" onmouseenter="this.style.transform='scale(1.06)'" onmouseleave="this.style.transform='scale(1)'"><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--green-600)">$4.8M</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px">Monthly Savings</div></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Clock
+(function(){
+  const upd=()=>{const e=document.getElementById('topbar-time');if(e)e.textContent=`📅 20 March 2026 — ${new Date().toTimeString().slice(0,5)} BDT`;};
+  upd(); setInterval(upd,30000);
+})();
+
+// Bar animations
+setTimeout(()=>{
+  document.querySelectorAll('.bc-fill[data-w]').forEach(f=>{f.style.width='0';setTimeout(()=>f.style.width=f.dataset.w+'%',200);});
+  const pf=document.getElementById('prog-fill');if(pf)pf.style.width='69%';
+},400);
+
+// Toast
+function toast(msg,type='info'){
+  const ic={success:'✅',error:'🔴',warning:'⚠️',info:'ℹ️'};
+  const cl={success:'#16A34A',error:'#DC2626',warning:'#D97706',info:'#1D4ED8'};
+  const tc=document.getElementById('toast-container');
+  const t=document.createElement('div');t.className='toast';
+  t.style.borderLeft=`3px solid ${cl[type]}`;
+  t.innerHTML=`<span style="font-size:14px">${ic[type]}</span><span>${msg}</span>`;
+  tc.appendChild(t);
+  setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},3000);
+}
+
+// Live feed
+const FEED_DATA=[
+  {dot:'tl-ok',sym:'✓',name:'Nasrin Akter',kg:'5kg Rice',place:'Rahman Center',face:'92.3%',bdg:'<span class="b bg">VERIFIED</span>',prefix:'TXN'},
+  {dot:'tl-ok',sym:'✓',name:'Abdul Karim',kg:'3kg Flour',place:'Hasan Store',face:'96.1%',bdg:'<span class="b bg">VERIFIED</span>',prefix:'TXN'},
+  {dot:'tl-er',sym:'✗',name:'Duplicate Blocked',kg:'—',place:'Mirpur Center',face:'—',bdg:'<span class="b br">BLOCKED</span>',prefix:'DUP'},
+  {dot:'tl-ok',sym:'✓',name:'Fatema Khatun',kg:'5kg Rice',place:'Ali Center',face:'89.5%',bdg:'<span class="b bg">VERIFIED</span>',prefix:'TXN'},
+  {dot:'tl-wn',sym:'!',name:'Exception — Rafiq Mia',kg:'5kg Rice',place:'Karim Depot',face:'71%',bdg:'<span class="b by">REVIEW</span>',prefix:'EXC'},
+];
+let fi=0,tn=7010;
+setInterval(()=>{
+  const d=FEED_DATA[fi%FEED_DATA.length];fi++;tn++;
+  const now=new Date().toTimeString().slice(0,8);
+  const feed=document.getElementById('live-feed');if(!feed)return;
+  const r=document.createElement('div');r.className='tl-row';r.style.animation='fadeIn .4s ease';
+  r.innerHTML=`<div class="tl-dot ${d.dot}">${d.sym}</div><div><div class="tl-t">${d.name} — ${d.kg}</div><div class="tl-d">${d.place} · Face: ${d.face} · ${d.bdg}</div><div class="tl-m">${now} · ${d.prefix}-20260320-${tn}</div></div>`;
+  feed.insertBefore(r,feed.firstChild);
+  while(feed.children.length>8)feed.removeChild(feed.lastChild);
+},10000);
+
+// Refresh
+let refreshing=false;
+function doRefresh(){
+  if(refreshing)return;refreshing=true;
+  toast('🔄 Refreshing...','info');
+  ['m1','m2','m3'].forEach((id,i)=>{
+    const el=document.getElementById(id);if(!el)return;
+    const base=[1247,1198,49][i];const n=base+Math.floor(Math.random()*20);
+    let s=0,t0=null;
+    const step=ts=>{if(!t0)t0=ts;const p=Math.min((ts-t0)/800,1);el.textContent=Math.floor((1-Math.pow(1-p,4))*n).toLocaleString();if(p<1)requestAnimationFrame(step);else el.textContent=n.toLocaleString();};
+    requestAnimationFrame(step);
+  });
+  setTimeout(()=>{refreshing=false;toast('✅ Dashboard updated','success');},900);
+}
+</script>
+</body>
+</html>
