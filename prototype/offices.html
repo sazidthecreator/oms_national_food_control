@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offices &amp; Programs — OMS National Food Control</title>
+  <script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="topbar"></div>
+<div id="sidebar-placeholder"></div>
+<div class="main-content">
+
+  <div class="page-header">
+    <h1 class="page-header__title">Offices &amp; Programs</h1>
+    <p class="page-header__sub">Manage administrative hierarchy and food programs</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat-card">
+      <div class="stat-card__icon">🗺️</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Divisions</div>
+        <div class="stat-card__value" id="kpi-div">0</div>
+        <div class="stat-card__change text-muted">National level</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🏛️</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Districts</div>
+        <div class="stat-card__value" id="kpi-dist">0</div>
+        <div class="stat-card__change text-muted">Across all divisions</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🏘️</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Upazilas</div>
+        <div class="stat-card__value" id="kpi-upz">0</div>
+        <div class="stat-card__change text-muted">Sub-district units</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">📍</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Distribution Centers</div>
+        <div class="stat-card__value" id="kpi-centers">0</div>
+        <div class="stat-card__change text-muted">Operational points</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid mt-20" style="grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">Administrative Hierarchy</h2>
+      </div>
+      <div style="padding:8px 0">
+        <!-- National HQ -->
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-elevated);border-radius:8px;margin-bottom:8px">
+          <span style="font-size:18px">🏢</span>
+          <div>
+            <div style="font-weight:600;color:var(--accent)">National HQ — Dhaka</div>
+            <div class="text-muted" style="font-size:12px">Ministry of Food, Bangladesh</div>
+          </div>
+        </div>
+        <!-- Divisions -->
+        <div style="border-left:2px solid var(--border);margin-left:18px;padding-left:16px">
+          <div class="text-muted" style="font-size:11px;font-weight:600;letter-spacing:.08em;margin-bottom:6px">8 DIVISIONS</div>
+          <div id="hierarchy-tree"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">Division-wise Statistics</h2>
+      </div>
+      <div class="grid grid-2" style="gap:12px" id="division-grid"></div>
+    </div>
+  </div>
+
+  <div class="card mt-20">
+    <div class="card__header">
+      <h2 class="card__title">Food Programs</h2>
+      <button class="btn btn-primary btn-sm" onclick="OMS.toast('Program configuration panel opening...','info')">⚙️ Configure</button>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Program Code</th>
+            <th>Full Name</th>
+            <th>Target Beneficiaries</th>
+            <th>Allocated Budget</th>
+            <th>Commodity Type</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-info">FFP</span></td>
+            <td>Food for Progress</td>
+            <td>12,400</td>
+            <td>BDT 245 Cr</td>
+            <td>Rice / Flour</td>
+            <td><span class="badge badge-success">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info">VGD</span></td>
+            <td>Vulnerable Group Development</td>
+            <td>21,000</td>
+            <td>BDT 380 Cr</td>
+            <td>Rice</td>
+            <td><span class="badge badge-success">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info">VGF</span></td>
+            <td>Vulnerable Group Feeding</td>
+            <td>8,200</td>
+            <td>BDT 156 Cr</td>
+            <td>Rice / Flour</td>
+            <td><span class="badge badge-success">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info">TR</span></td>
+            <td>Test Relief</td>
+            <td>3,630</td>
+            <td>BDT 89 Cr</td>
+            <td>Rice</td>
+            <td><span class="badge badge-success">ACTIVE</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DIVISIONS = [
+  { name: 'Dhaka',      districts: 13, beneficiaries: '14,200', color: '#22c55e' },
+  { name: 'Chattogram', districts: 11, beneficiaries: '10,800', color: '#3b82f6' },
+  { name: 'Rajshahi',   districts: 8,  beneficiaries: '7,400',  color: '#f59e0b' },
+  { name: 'Khulna',     districts: 10, beneficiaries: '5,900',  color: '#8b5cf6' },
+  { name: 'Barishal',   districts: 6,  beneficiaries: '3,200',  color: '#06b6d4' },
+  { name: 'Sylhet',     districts: 4,  beneficiaries: '2,100',  color: '#ec4899' },
+  { name: 'Mymensingh', districts: 4,  beneficiaries: '2,630',  color: '#f97316' },
+  { name: 'Rangpur',    districts: 8,  beneficiaries: '5,000',  color: '#a3e635' },
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+  OMS.init();
+  document.getElementById('topbar').outerHTML = OMS.buildTopbar('offices');
+  document.getElementById('sidebar-placeholder').outerHTML = OMS.buildSidebar('offices');
+
+  setTimeout(() => {
+    OMS.countUp(document.getElementById('kpi-div'), 8, 600);
+    OMS.countUp(document.getElementById('kpi-dist'), 64, 800);
+    OMS.countUp(document.getElementById('kpi-upz'), 495, 1100);
+    OMS.countUp(document.getElementById('kpi-centers'), 4892, 1300);
+  }, 300);
+
+  // Hierarchy tree
+  const tree = document.getElementById('hierarchy-tree');
+  DIVISIONS.forEach((div, i) => {
+    tree.insertAdjacentHTML('beforeend', `
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:${i < DIVISIONS.length-1 ? '10' : '0'}px">
+        <div style="width:12px;height:12px;border-radius:50%;background:${div.color};margin-top:3px;flex-shrink:0"></div>
+        <div>
+          <div style="font-weight:500">${div.name} Division</div>
+          <div class="text-muted" style="font-size:11px">${div.districts} districts · ${div.beneficiaries} beneficiaries</div>
+          <div style="border-left:1px dashed var(--border);margin-left:6px;padding-left:10px;margin-top:4px">
+            <span class="text-muted" style="font-size:11px">
+              ${div.districts} Districts → ${div.districts * 7} Upazilas → ${div.districts * 42} Centers
+            </span>
+          </div>
+        </div>
+      </div>`);
+  });
+
+  // Division grid
+  const grid = document.getElementById('division-grid');
+  DIVISIONS.forEach(div => {
+    grid.insertAdjacentHTML('beforeend', `
+      <div style="background:var(--bg-elevated);border-radius:8px;padding:12px;border:1px solid var(--border)">
+        <div style="font-weight:600;color:${div.color};margin-bottom:4px">${div.name}</div>
+        <div class="text-muted" style="font-size:12px">${div.districts} districts</div>
+        <div style="font-size:13px;margin-top:4px">${div.beneficiaries} beneficiaries</div>
+      </div>`);
+  });
+});
+</script>
+</body>
+</html>

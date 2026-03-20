@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMS &amp; Notifications — OMS National Food Control</title>
+  <script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="topbar"></div>
+<div id="sidebar-placeholder"></div>
+<div class="main-content">
+
+  <div class="page-header">
+    <h1 class="page-header__title">SMS &amp; Notifications</h1>
+    <p class="page-header__sub">Bulk messaging and alert management for beneficiaries and dealers</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat-card">
+      <div class="stat-card__icon">📤</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">SMS Sent Today</div>
+        <div class="stat-card__value" id="kpi-sent">0</div>
+        <div class="stat-card__change text-muted">Total dispatched</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">✅</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Delivered</div>
+        <div class="stat-card__value" id="kpi-delivered" style="color:var(--accent)">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">95.7% rate</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">❌</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Failed</div>
+        <div class="stat-card__value" id="kpi-failed" style="color:var(--danger)">0</div>
+        <div class="stat-card__change" style="color:var(--danger)">Invalid / unreachable</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">⏳</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Pending</div>
+        <div class="stat-card__value" id="kpi-pending" style="color:var(--warning)">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">Queue clear</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid mt-20" style="grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+    <!-- Left column -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+
+      <!-- Compose SMS -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Compose SMS</h2>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="form-group">
+            <label class="form-label">Recipient Type</label>
+            <select class="form-control" id="recipientType" onchange="toggleDistrictField()">
+              <option value="all_benef">All Beneficiaries (45,230)</option>
+              <option value="all_dealers">All Dealers (892)</option>
+              <option value="district">Specific District</option>
+              <option value="custom">Custom List</option>
+            </select>
+          </div>
+
+          <div class="form-group hidden" id="districtGroup">
+            <label class="form-label">Select District</label>
+            <select class="form-control" id="districtSelect">
+              <option value="">— Select District —</option>
+              <option>Dhaka</option><option>Gazipur</option><option>Narayanganj</option>
+              <option>Chattogram</option><option>Rajshahi</option><option>Khulna</option>
+              <option>Barishal</option><option>Sylhet</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Message Template</label>
+            <select class="form-control" id="templateSelect" onchange="applyTemplate()">
+              <option value="">— Select Template —</option>
+              <option value="dist_ready">Distribution Ready</option>
+              <option value="alert">Alert</option>
+              <option value="reminder">Collection Reminder</option>
+              <option value="custom">Custom Message</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="display:flex;justify-content:space-between">
+              <span>Message</span>
+              <span class="text-muted" style="font-size:12px" id="charCount">0 / 160 characters</span>
+            </label>
+            <textarea class="form-control" id="smsBody" rows="4" maxlength="160"
+              placeholder="Type your message here (max 160 characters)..."
+              oninput="document.getElementById('charCount').textContent = this.value.length + ' / 160 characters'"></textarea>
+          </div>
+
+          <div class="flex items-center gap-12">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="sendTime" value="now" checked style="accent-color:var(--accent)">
+              <span>Send Now</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="sendTime" value="schedule" id="scheduleRadio" style="accent-color:var(--accent)" onchange="toggleSchedule()">
+              <span>Schedule</span>
+            </label>
+          </div>
+
+          <div class="form-group hidden" id="scheduleGroup">
+            <label class="form-label">Schedule Date &amp; Time</label>
+            <input class="form-control" type="datetime-local" id="scheduleTime">
+          </div>
+
+          <div class="flex gap-12">
+            <button class="btn btn-secondary" onclick="previewSMS()">👁 Preview</button>
+            <button class="btn btn-primary" style="flex:1" onclick="sendSMS()">📤 Send SMS</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alert Templates -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Alert Templates</h2>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px" id="template-list"></div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">SMS Log</h2>
+          <button class="btn btn-sm btn-secondary" onclick="OMS.toast('Exporting SMS log to CSV...','info')">⬇ Export</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Message ID</th><th>Recipient Type</th><th>Count</th><th>Sent At</th><th>Delivered %</th><th>Status</th></tr>
+            </thead>
+            <tbody id="sms-log-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Delivery Statistics</h2>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-elevated);border-radius:8px">
+            <span>Grameenphone</span>
+            <div class="flex items-center gap-12">
+              <div style="width:120px;background:#1e293b;height:6px;border-radius:3px">
+                <div style="width:97%;background:var(--accent);height:6px;border-radius:3px"></div>
+              </div>
+              <span style="color:var(--accent);font-weight:600;min-width:36px">97%</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-elevated);border-radius:8px">
+            <span>Robi / Airtel</span>
+            <div class="flex items-center gap-12">
+              <div style="width:120px;background:#1e293b;height:6px;border-radius:3px">
+                <div style="width:94%;background:var(--accent);height:6px;border-radius:3px"></div>
+              </div>
+              <span style="color:var(--accent);font-weight:600;min-width:36px">94%</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-elevated);border-radius:8px">
+            <span>Banglalink</span>
+            <div class="flex items-center gap-12">
+              <div style="width:120px;background:#1e293b;height:6px;border-radius:3px">
+                <div style="width:91%;background:var(--accent);height:6px;border-radius:3px"></div>
+              </div>
+              <span style="color:var(--accent);font-weight:600;min-width:36px">91%</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-elevated);border-radius:8px">
+            <span>Teletalk</span>
+            <div class="flex items-center gap-12">
+              <div style="width:120px;background:#1e293b;height:6px;border-radius:3px">
+                <div style="width:88%;background:var(--warning);height:6px;border-radius:3px"></div>
+              </div>
+              <span style="color:var(--warning);font-weight:600;min-width:36px">88%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TEMPLATES = [
+  { title: 'Distribution Reminder', icon: '📦', msg: 'আপনার মাসিক রেশন বিতরণ শুরু হয়েছে। অনুগ্রহ করে নিকটস্থ ডিলারের কাছ থেকে আজই সংগ্রহ করুন।' },
+  { title: 'Collection Deadline',   icon: '⏰', msg: 'আজই আপনার রেশন সংগ্রহ করুন। আজ বিতরণের শেষ দিন। সময়: সকাল ৯টা থেকে বিকাল ৫টা।' },
+  { title: 'New Enrollment',        icon: '✅', msg: 'আপনি সফলভাবে তালিকাভুক্ত হয়েছেন। আপনার কোড: BNF-XXXX। বিস্তারিত জানতে যোগাযোগ করুন।' },
+  { title: 'Emergency Alert',       icon: '🚨', msg: 'জরুরি বিজ্ঞপ্তি: বিশেষ বরাদ্দ প্রদান করা হবে। আপনার এলাকার ডিলারের সাথে যোগাযোগ করুন।' },
+];
+
+const SMS_LOG = [
+  { id: 'MSG-8821', type: 'All Beneficiaries', count: '45,230', time: '10:30 AM', delivered: 95.7, status: 'COMPLETED' },
+  { id: 'MSG-8810', type: 'Dhaka District',     count: '8,420',  time: '09:15 AM', delivered: 97.2, status: 'COMPLETED' },
+  { id: 'MSG-8797', type: 'All Dealers',         count: '892',    time: 'Yesterday', delivered: 99.1, status: 'COMPLETED' },
+  { id: 'MSG-8780', type: 'Custom List',         count: '124',    time: 'Yesterday', delivered: 89.5, status: 'PARTIAL' },
+  { id: 'MSG-8764', type: 'Chattogram District', count: '6,200',  time: '2 days ago', delivered: 94.8, status: 'COMPLETED' },
+];
+
+function toggleDistrictField() {
+  const type = document.getElementById('recipientType').value;
+  document.getElementById('districtGroup').classList.toggle('hidden', type !== 'district');
+}
+
+function toggleSchedule() {
+  const isSchedule = document.querySelector('input[name="sendTime"]:checked').value === 'schedule';
+  document.getElementById('scheduleGroup').classList.toggle('hidden', !isSchedule);
+}
+
+function applyTemplate() {
+  const val = document.getElementById('templateSelect').value;
+  const tMap = { dist_ready: TEMPLATES[0].msg, alert: TEMPLATES[3].msg, reminder: TEMPLATES[1].msg };
+  const body = document.getElementById('smsBody');
+  if (tMap[val]) {
+    body.value = tMap[val];
+    document.getElementById('charCount').textContent = body.value.length + ' / 160 characters';
+  }
+}
+
+function previewSMS() {
+  const msg = document.getElementById('smsBody').value.trim();
+  if (!msg) { OMS.toast('Please compose a message first.', 'warning'); return; }
+  OMS.toast(`Preview: "${msg.substring(0,60)}${msg.length > 60 ? '...' : ''}"`, 'info');
+}
+
+function sendSMS() {
+  const msg = document.getElementById('smsBody').value.trim();
+  if (!msg) { OMS.toast('Cannot send empty message.', 'warning'); return; }
+  const type = document.getElementById('recipientType');
+  const label = type.options[type.selectedIndex].text;
+  OMS.toast(`SMS sent to ${label}. Delivery in progress...`, 'success');
+  document.getElementById('smsBody').value = '';
+  document.getElementById('charCount').textContent = '0 / 160 characters';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  OMS.init();
+  document.getElementById('topbar').outerHTML = OMS.buildTopbar('notifications');
+  document.getElementById('sidebar-placeholder').outerHTML = OMS.buildSidebar('notifications');
+
+  setTimeout(() => {
+    OMS.countUp(document.getElementById('kpi-sent'), 12847, 1100);
+    OMS.countUp(document.getElementById('kpi-delivered'), 12291, 1000);
+    OMS.countUp(document.getElementById('kpi-failed'), 556, 700);
+    document.getElementById('kpi-pending').textContent = '0';
+  }, 300);
+
+  // Templates
+  const tList = document.getElementById('template-list');
+  TEMPLATES.forEach(t => {
+    tList.insertAdjacentHTML('beforeend', `
+      <div style="padding:12px;background:var(--bg-elevated);border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:border-color .2s"
+           onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'"
+           onclick="document.getElementById('smsBody').value='${t.msg.replace(/'/g,"\\'")}';document.getElementById('charCount').textContent=document.getElementById('smsBody').value.length+' / 160 characters';OMS.toast('Template loaded.','info')">
+        <div style="font-weight:600;margin-bottom:6px">${t.icon} ${t.title}</div>
+        <div class="text-muted" style="font-size:12px;line-height:1.5">${t.msg.substring(0,80)}...</div>
+      </div>`);
+  });
+
+  // SMS Log
+  const logBody = document.getElementById('sms-log-body');
+  SMS_LOG.forEach(s => {
+    const sc = s.status === 'COMPLETED' ? 'badge-success' : 'badge-warning';
+    const dc = s.delivered >= 95 ? 'var(--accent)' : s.delivered >= 90 ? 'var(--warning)' : 'var(--danger)';
+    logBody.insertAdjacentHTML('beforeend', `<tr>
+      <td style="font-family:monospace;font-size:12px">${s.id}</td>
+      <td>${s.type}</td>
+      <td>${s.count}</td>
+      <td class="text-muted">${s.time}</td>
+      <td style="color:${dc};font-weight:600">${s.delivered}%</td>
+      <td><span class="badge ${sc}">${s.status}</span></td>
+    </tr>`);
+  });
+});
+</script>
+</body>
+</html>

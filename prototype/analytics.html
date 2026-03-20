@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics &amp; Intelligence — OMS National Food Control</title>
+  <script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="topbar"></div>
+<div id="sidebar-placeholder"></div>
+<div class="main-content">
+
+  <div class="page-header">
+    <h1 class="page-header__title">Analytics &amp; Intelligence</h1>
+    <p class="page-header__sub">Data-driven insights for program management</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat-card">
+      <div class="stat-card__icon">📊</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Total Distributions</div>
+        <div class="stat-card__value">1.2M</div>
+        <div class="stat-card__change" style="color:var(--accent)">▲ All-time</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">⚠️</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Leakage Detected</div>
+        <div class="stat-card__value" style="color:var(--warning)">2.3%</div>
+        <div class="stat-card__change" style="color:var(--accent)">▼ Down from 4.1%</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🎯</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Forecast Accuracy</div>
+        <div class="stat-card__value" style="color:var(--accent)">91.4%</div>
+        <div class="stat-card__change" style="color:var(--accent)">▲ +2.1% improvement</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🚨</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Risk Alerts</div>
+        <div class="stat-card__value" style="color:var(--danger)">7</div>
+        <div class="stat-card__change" style="color:var(--warning)">Requires attention</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="grid grid-2 mt-20">
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">Monthly Distribution Trend</h2>
+        <span class="badge badge-muted">Jan–Jun 2025</span>
+      </div>
+      <svg viewBox="0 0 580 220" style="width:100%;height:220px">
+        <!-- Grid lines -->
+        <line x1="50" y1="20" x2="560" y2="20" stroke="#334155" stroke-width="1"/>
+        <line x1="50" y1="60" x2="560" y2="60" stroke="#334155" stroke-width="1"/>
+        <line x1="50" y1="100" x2="560" y2="100" stroke="#334155" stroke-width="1"/>
+        <line x1="50" y1="140" x2="560" y2="140" stroke="#334155" stroke-width="1"/>
+        <line x1="50" y1="180" x2="560" y2="180" stroke="#334155" stroke-width="1"/>
+        <!-- Y-axis labels -->
+        <text x="44" y="24" fill="#94a3b8" font-size="10" text-anchor="end">200K</text>
+        <text x="44" y="64" fill="#94a3b8" font-size="10" text-anchor="end">160K</text>
+        <text x="44" y="104" fill="#94a3b8" font-size="10" text-anchor="end">120K</text>
+        <text x="44" y="144" fill="#94a3b8" font-size="10" text-anchor="end">80K</text>
+        <text x="44" y="184" fill="#94a3b8" font-size="10" text-anchor="end">40K</text>
+        <!-- Bars: Jan=165K, Feb=148K, Mar=172K, Apr=190K, May=183K, Jun=178K -->
+        <rect x="60"  y="47"  width="60" height="133" fill="#22c55e" rx="4" opacity=".85"/>
+        <rect x="140" y="62"  width="60" height="118" fill="#22c55e" rx="4" opacity=".85"/>
+        <rect x="220" y="40"  width="60" height="140" fill="#22c55e" rx="4" opacity=".85"/>
+        <rect x="300" y="20"  width="60" height="160" fill="#3b82f6" rx="4" opacity=".9"/>
+        <rect x="380" y="27"  width="60" height="153" fill="#22c55e" rx="4" opacity=".85"/>
+        <rect x="460" y="31"  width="60" height="149" fill="#22c55e" rx="4" opacity=".85"/>
+        <!-- Value labels on bars -->
+        <text x="90"  y="43"  fill="#f1f5f9" font-size="10" text-anchor="middle">165K</text>
+        <text x="170" y="58"  fill="#f1f5f9" font-size="10" text-anchor="middle">148K</text>
+        <text x="250" y="36"  fill="#f1f5f9" font-size="10" text-anchor="middle">172K</text>
+        <text x="330" y="16"  fill="#3b82f6" font-size="10" text-anchor="middle">190K</text>
+        <text x="410" y="23"  fill="#f1f5f9" font-size="10" text-anchor="middle">183K</text>
+        <text x="490" y="27"  fill="#f1f5f9" font-size="10" text-anchor="middle">178K</text>
+        <!-- X-axis labels -->
+        <text x="90"  y="200" fill="#94a3b8" font-size="12" text-anchor="middle">Jan</text>
+        <text x="170" y="200" fill="#94a3b8" font-size="12" text-anchor="middle">Feb</text>
+        <text x="250" y="200" fill="#94a3b8" font-size="12" text-anchor="middle">Mar</text>
+        <text x="330" y="200" fill="#94a3b8" font-size="12" text-anchor="middle">Apr</text>
+        <text x="410" y="200" fill="#94a3b8" font-size="12" text-anchor="middle">May</text>
+        <text x="490" y="200" fill="#94a3b8" font-size="12" text-anchor="middle">Jun</text>
+      </svg>
+    </div>
+
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">Program-wise Breakdown</h2>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-around;flex-wrap:wrap;gap:16px;padding:8px 0">
+        <svg viewBox="0 0 200 200" style="width:180px;height:180px">
+          <!-- Donut chart: VGD 46%, FFP 27%, VGF 18%, TR 9% -->
+          <!-- Total = 360 degrees; VGD=165.6, FFP=97.2, VGF=64.8, TR=32.4 -->
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#273549" stroke-width="40"/>
+          <!-- VGD: 46% start 0 -->
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#22c55e" stroke-width="40"
+            stroke-dasharray="288.4 626.9" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+          <!-- FFP: 27% -->
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#3b82f6" stroke-width="40"
+            stroke-dasharray="169.4 745.9" stroke-dashoffset="-288.4" transform="rotate(-90 100 100)"/>
+          <!-- VGF: 18% -->
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#f59e0b" stroke-width="40"
+            stroke-dasharray="113 801.3" stroke-dashoffset="-457.8" transform="rotate(-90 100 100)"/>
+          <!-- TR: 9% -->
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#8b5cf6" stroke-width="40"
+            stroke-dasharray="56.5 857.8" stroke-dashoffset="-570.8" transform="rotate(-90 100 100)"/>
+          <text x="100" y="95" fill="#f1f5f9" font-size="14" font-weight="bold" text-anchor="middle">45,230</text>
+          <text x="100" y="113" fill="#94a3b8" font-size="10" text-anchor="middle">beneficiaries</text>
+        </svg>
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:130px">
+          <div class="flex items-center gap-8"><div style="width:12px;height:12px;background:#22c55e;border-radius:3px;flex-shrink:0"></div><div><div style="font-size:13px">VGD — 46%</div><div class="text-muted" style="font-size:11px">21,000</div></div></div>
+          <div class="flex items-center gap-8"><div style="width:12px;height:12px;background:#3b82f6;border-radius:3px;flex-shrink:0"></div><div><div style="font-size:13px">FFP — 27%</div><div class="text-muted" style="font-size:11px">12,400</div></div></div>
+          <div class="flex items-center gap-8"><div style="width:12px;height:12px;background:#f59e0b;border-radius:3px;flex-shrink:0"></div><div><div style="font-size:13px">VGF — 18%</div><div class="text-muted" style="font-size:11px">8,200</div></div></div>
+          <div class="flex items-center gap-8"><div style="width:12px;height:12px;background:#8b5cf6;border-radius:3px;flex-shrink:0"></div><div><div style="font-size:13px">TR — 9%</div><div class="text-muted" style="font-size:11px">3,630</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leakage Detection -->
+  <div class="card mt-20">
+    <div class="card__header">
+      <h2 class="card__title">Leakage Detection Alerts</h2>
+      <span class="badge badge-warning">7 Active</span>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Alert ID</th><th>Type</th><th>Dealer</th><th>Flagged Date</th><th>Anomaly Score</th><th>Status</th></tr>
+        </thead>
+        <tbody id="leakage-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid grid-2 mt-20">
+    <!-- Demand Forecast -->
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">Demand Forecast — Next Month</h2>
+        <span class="badge badge-info">ML Model v2.1</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Region</th><th>Current (MT)</th><th>Forecast (MT)</th><th>Variance %</th><th>Confidence</th></tr>
+          </thead>
+          <tbody id="forecast-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Dealer Risk Matrix -->
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">Dealer Risk Matrix</h2>
+      </div>
+      <div class="grid grid-2" style="gap:10px" id="risk-grid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const LEAKAGE_ALERTS = [
+  { id: 'ALT-2891', type: 'Ghost Beneficiary',    dealer: 'DLR-042', date: '2025-01-14', score: 94, status: 'OPEN' },
+  { id: 'ALT-2887', type: 'Over-distribution',    dealer: 'DLR-088', date: '2025-01-13', score: 87, status: 'INVESTIGATING' },
+  { id: 'ALT-2881', type: 'Duplicate Claim',       dealer: 'DLR-017', date: '2025-01-12', score: 82, status: 'OPEN' },
+  { id: 'ALT-2874', type: 'Time Anomaly',          dealer: 'DLR-031', date: '2025-01-11', score: 71, status: 'RESOLVED' },
+  { id: 'ALT-2862', type: 'Location Mismatch',     dealer: 'DLR-055', date: '2025-01-10', score: 68, status: 'RESOLVED' },
+];
+
+const FORECASTS = [
+  { region: 'Dhaka',      current: 4820, forecast: 5100, variance: '+5.8', confidence: '94%' },
+  { region: 'Chattogram', current: 3640, forecast: 3710, variance: '+1.9', confidence: '91%' },
+  { region: 'Rajshahi',   current: 2510, forecast: 2480, variance: '-1.2', confidence: '89%' },
+  { region: 'Khulna',     current: 1990, forecast: 2050, variance: '+3.0', confidence: '92%' },
+  { region: 'Barishal',   current: 1080, forecast: 1120, variance: '+3.7', confidence: '88%' },
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+  OMS.init();
+  document.getElementById('topbar').outerHTML = OMS.buildTopbar('analytics');
+  document.getElementById('sidebar-placeholder').outerHTML = OMS.buildSidebar('analytics');
+
+  // Leakage
+  const ltbody = document.getElementById('leakage-body');
+  LEAKAGE_ALERTS.forEach(a => {
+    const sc = a.status === 'OPEN' ? 'badge-danger' : a.status === 'INVESTIGATING' ? 'badge-warning' : 'badge-success';
+    const scoreColor = a.score >= 90 ? 'var(--danger)' : a.score >= 70 ? 'var(--warning)' : 'var(--accent)';
+    ltbody.insertAdjacentHTML('beforeend', `<tr>
+      <td style="font-family:monospace;font-size:12px">${a.id}</td>
+      <td>${a.type}</td>
+      <td style="font-family:monospace;font-size:12px">${a.dealer}</td>
+      <td class="text-muted">${a.date}</td>
+      <td style="color:${scoreColor};font-weight:700">${a.score}</td>
+      <td><span class="badge ${sc}">${a.status}</span></td>
+    </tr>`);
+  });
+
+  // Forecast
+  const ftbody = document.getElementById('forecast-body');
+  FORECASTS.forEach(f => {
+    const varColor = f.variance.startsWith('+') ? 'var(--warning)' : 'var(--accent)';
+    ftbody.insertAdjacentHTML('beforeend', `<tr>
+      <td>${f.region}</td>
+      <td>${f.current.toLocaleString()}</td>
+      <td style="color:var(--accent);font-weight:600">${f.forecast.toLocaleString()}</td>
+      <td style="color:${varColor};font-weight:600">${f.variance}%</td>
+      <td><span class="badge badge-success">${f.confidence}</span></td>
+    </tr>`);
+  });
+
+  // Risk matrix
+  const grid = document.getElementById('risk-grid');
+  OMS.sampleDealers.slice(0,6).forEach(d => {
+    const risk = d.complianceScore >= 80 ? ['LOW','badge-success'] : d.complianceScore >= 50 ? ['MEDIUM','badge-warning'] : ['HIGH','badge-danger'];
+    grid.insertAdjacentHTML('beforeend', `
+      <div style="padding:12px;background:var(--bg-elevated);border-radius:8px;border:1px solid var(--border)">
+        <div style="font-size:12px;font-family:monospace;color:var(--text-muted)">${d.dealerCode}</div>
+        <div style="font-weight:500;margin:4px 0;font-size:13px">${d.name.split(' ').slice(0,2).join(' ')}</div>
+        <div class="flex items-center gap-8">
+          <span class="badge ${risk[1]}">${risk[0]}</span>
+          <span class="text-muted" style="font-size:12px">Score: ${d.complianceScore}</span>
+        </div>
+      </div>`);
+  });
+});
+</script>
+</body>
+</html>

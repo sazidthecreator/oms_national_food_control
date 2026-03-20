@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dealer Management — OMS National Food Control</title>
+  <script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="topbar"></div>
+<div id="sidebar-placeholder"></div>
+<div class="main-content">
+
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-header__title">Dealer Management</h1>
+      <p class="page-header__sub">Monitor and manage licensed food distribution dealers</p>
+    </div>
+    <button class="btn btn-primary" onclick="OMS.openModal('registerDealerModal')">+ Register New Dealer</button>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat-card">
+      <div class="stat-card__icon">🏪</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Total Dealers</div>
+        <div class="stat-card__value" id="kpi-total">0</div>
+        <div class="stat-card__change text-muted">All registered</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">✅</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Active</div>
+        <div class="stat-card__value" id="kpi-active" style="color:var(--accent)">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">Currently operating</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🚫</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Suspended</div>
+        <div class="stat-card__value" id="kpi-suspended" style="color:var(--danger)">0</div>
+        <div class="stat-card__change" style="color:var(--danger)">Compliance violations</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">⏳</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Pending Approval</div>
+        <div class="stat-card__value" id="kpi-pending" style="color:var(--warning)">0</div>
+        <div class="stat-card__change" style="color:var(--warning)">Awaiting review</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-20">
+    <div class="card__header" style="flex-wrap:wrap;gap:12px">
+      <h2 class="card__title">Dealer Registry</h2>
+      <div class="flex items-center gap-12" style="flex-wrap:wrap">
+        <input class="form-control" style="width:240px" id="searchInput" placeholder="Search by name, code, district..." oninput="filterTable()">
+        <select class="form-control" style="width:140px" id="statusFilter" onchange="filterTable()">
+          <option value="">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="SUSPENDED">Suspended</option>
+          <option value="PENDING">Pending</option>
+        </select>
+        <select class="form-control" style="width:140px" id="districtFilter" onchange="filterTable()">
+          <option value="">All Districts</option>
+          <option>Dhaka</option><option>Chattogram</option><option>Rajshahi</option>
+          <option>Khulna</option><option>Barishal</option><option>Sylhet</option>
+        </select>
+        <select class="form-control" style="width:160px" id="complianceFilter" onchange="filterTable()">
+          <option value="">All Compliance</option>
+          <option value="high">High (≥80)</option>
+          <option value="medium">Medium (50–79)</option>
+          <option value="low">Low (&lt;50)</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Dealer Code</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Area / District</th>
+            <th>Compliance Score</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="dealer-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Register Dealer Modal -->
+<div class="modal-overlay hidden" id="registerDealerModal">
+  <div class="modal modal--lg">
+    <div class="modal__header">
+      <h3 class="modal__title">Register New Dealer</h3>
+      <button class="modal__close" onclick="OMS.closeModal('registerDealerModal')">&times;</button>
+    </div>
+    <div class="modal__body">
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Dealer Name (English)</label>
+          <input class="form-control" placeholder="Full name in English">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dealer Name (বাংলা)</label>
+          <input class="form-control" placeholder="বাংলায় নাম লিখুন">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input class="form-control" placeholder="01XXXXXXXXX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">National ID (NID)</label>
+          <input class="form-control" placeholder="17-digit NID number">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Area / Ward</label>
+          <input class="form-control" placeholder="Local area or ward">
+        </div>
+        <div class="form-group">
+          <label class="form-label">District</label>
+          <select class="form-control">
+            <option value="">— Select District —</option>
+            <option>Dhaka</option><option>Chattogram</option><option>Rajshahi</option>
+            <option>Khulna</option><option>Barishal</option><option>Sylhet</option>
+            <option>Mymensingh</option><option>Rangpur</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Upazila</label>
+        <input class="form-control" placeholder="Upazila name">
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn-secondary" onclick="OMS.closeModal('registerDealerModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitDealerForm()">Register Dealer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let dealerRows = [];
+
+function complianceBar(score) {
+  const color = score >= 80 ? '#22c55e' : score >= 50 ? '#f59e0b' : '#ef4444';
+  return `<div style="display:flex;align-items:center;gap:8px">
+    <div style="background:#1e293b;border-radius:4px;height:6px;width:80px;flex-shrink:0">
+      <div style="background:${color};height:6px;border-radius:4px;width:${score}%"></div>
+    </div>
+    <span style="font-size:12px;color:${color};font-weight:600">${score}</span>
+  </div>`;
+}
+
+function filterTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const district = document.getElementById('districtFilter').value;
+  const compliance = document.getElementById('complianceFilter').value;
+  dealerRows.forEach(({ el, dealer }) => {
+    const matchSearch = !search || dealer.name.toLowerCase().includes(search) ||
+      dealer.dealerCode.toLowerCase().includes(search) || dealer.district.toLowerCase().includes(search);
+    const matchStatus = !status || dealer.status === status;
+    const matchDistrict = !district || dealer.district === district;
+    const matchCompliance = !compliance ||
+      (compliance === 'high' && dealer.complianceScore >= 80) ||
+      (compliance === 'medium' && dealer.complianceScore >= 50 && dealer.complianceScore < 80) ||
+      (compliance === 'low' && dealer.complianceScore < 50);
+    el.style.display = (matchSearch && matchStatus && matchDistrict && matchCompliance) ? '' : 'none';
+  });
+}
+
+function submitDealerForm() {
+  OMS.closeModal('registerDealerModal');
+  OMS.toast('Dealer registered successfully. Pending admin approval.', 'success');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  OMS.init();
+  document.getElementById('topbar').outerHTML = OMS.buildTopbar('dealers');
+  document.getElementById('sidebar-placeholder').outerHTML = OMS.buildSidebar('dealers');
+
+  setTimeout(() => {
+    OMS.countUp(document.getElementById('kpi-total'), 1247, 1000);
+    OMS.countUp(document.getElementById('kpi-active'), 892, 900);
+    OMS.countUp(document.getElementById('kpi-suspended'), 124, 700);
+    OMS.countUp(document.getElementById('kpi-pending'), 231, 800);
+  }, 300);
+
+  const tbody = document.getElementById('dealer-table-body');
+  OMS.sampleDealers.forEach(dealer => {
+    const bc = dealer.status === 'ACTIVE' ? 'badge-success' : dealer.status === 'SUSPENDED' ? 'badge-danger' : 'badge-warning';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-family:monospace;font-size:12px">${dealer.dealerCode}</td>
+      <td>
+        <div style="font-weight:500">${dealer.name}</div>
+        <div class="text-muted" style="font-size:12px">${dealer.nameBn}</div>
+      </td>
+      <td class="text-muted">${dealer.phone}</td>
+      <td>
+        <div>${dealer.area}</div>
+        <div class="text-muted" style="font-size:12px">${dealer.district}</div>
+      </td>
+      <td>${complianceBar(dealer.complianceScore)}</td>
+      <td><span class="badge ${bc}">${dealer.status}</span></td>
+      <td>
+        <div class="flex gap-8">
+          <button class="btn btn-sm btn-primary" onclick="OMS.toast('Dealer ${dealer.dealerCode} approved successfully.','success')">Approve</button>
+          <button class="btn btn-sm btn-danger" onclick="OMS.toast('Dealer ${dealer.dealerCode} suspended.','warning')">Suspend</button>
+          <button class="btn btn-sm btn-ghost" onclick="OMS.toast('Loading profile for ${dealer.name}...','info')">View</button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+    dealerRows.push({ el: tr, dealer });
+  });
+});
+</script>
+</body>
+</html>

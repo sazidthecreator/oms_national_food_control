@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beneficiary Management — OMS National Food Control</title>
+  <script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="topbar"></div>
+<div id="sidebar-placeholder"></div>
+<div class="main-content">
+
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-header__title">Beneficiary Management</h1>
+      <p class="page-header__sub">Enroll and manage food aid beneficiaries across all programs</p>
+    </div>
+    <button class="btn btn-primary" onclick="OMS.openModal('addBeneficiaryModal')">+ Add Beneficiary</button>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat-card">
+      <div class="stat-card__icon">👥</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Total Enrolled</div>
+        <div class="stat-card__value" id="kpi-total">0</div>
+        <div class="stat-card__change text-muted">All programs</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">✅</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Active</div>
+        <div class="stat-card__value" id="kpi-active" style="color:var(--accent)">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">Currently receiving aid</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">⏸️</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Inactive</div>
+        <div class="stat-card__value" id="kpi-inactive" style="color:var(--warning)">0</div>
+        <div class="stat-card__change" style="color:var(--warning)">Suspended / moved</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🤳</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Face Enrolled</div>
+        <div class="stat-card__value" id="kpi-face">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">Biometric ready</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-20">
+    <div class="card__header" style="flex-wrap:wrap;gap:12px">
+      <h2 class="card__title">Beneficiary Registry</h2>
+      <div class="flex items-center gap-12" style="flex-wrap:wrap">
+        <input class="form-control" style="width:220px" id="searchInput" placeholder="Search name, code, NID..." oninput="filterBenef()">
+        <select class="form-control" style="width:160px" id="categoryFilter" onchange="filterBenef()">
+          <option value="">All Categories</option>
+          <option value="WIDOW">Widow</option>
+          <option value="ELDERLY">Elderly</option>
+          <option value="POOR_FAMILY">Poor Family</option>
+          <option value="DISABLED">Disabled</option>
+        </select>
+        <input class="form-control" style="width:140px" id="areaInput" placeholder="Filter by area" oninput="filterBenef()">
+        <select class="form-control" style="width:130px" id="activeFilter" onchange="filterBenef()">
+          <option value="">Any Status</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>NID</th>
+            <th>Phone</th>
+            <th>Area</th>
+            <th>Category</th>
+            <th>Monthly Quota</th>
+            <th>Face</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="benef-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Beneficiary Modal -->
+<div class="modal-overlay hidden" id="addBeneficiaryModal">
+  <div class="modal modal--lg">
+    <div class="modal__header">
+      <h3 class="modal__title">Add New Beneficiary</h3>
+      <button class="modal__close" onclick="OMS.closeModal('addBeneficiaryModal')">&times;</button>
+    </div>
+    <div class="modal__body">
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Full Name (English)</label>
+          <input class="form-control" placeholder="Full name in English">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name (বাংলা)</label>
+          <input class="form-control" placeholder="বাংলায় নাম">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">National ID (NID)</label>
+          <input class="form-control" placeholder="10 or 17-digit NID">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input class="form-control" placeholder="01XXXXXXXXX">
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Area / Ward</label>
+          <input class="form-control" placeholder="Local area">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Upazila</label>
+          <input class="form-control" placeholder="Upazila">
+        </div>
+        <div class="form-group">
+          <label class="form-label">District</label>
+          <input class="form-control" placeholder="District">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-control">
+            <option value="">— Select Category —</option>
+            <option value="WIDOW">Widow</option>
+            <option value="ELDERLY">Elderly</option>
+            <option value="POOR_FAMILY">Poor Family</option>
+            <option value="DISABLED">Disabled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly Quota (kg)</label>
+          <input class="form-control" type="number" placeholder="e.g. 30" min="5" max="50">
+        </div>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn-secondary" onclick="OMS.closeModal('addBeneficiaryModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitBenefForm()">Enroll Beneficiary</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATEGORY_BADGE = {
+  WIDOW: 'badge-info',
+  ELDERLY: 'badge-warning',
+  POOR_FAMILY: 'badge-success',
+  DISABLED: 'badge-muted',
+};
+
+let benefRows = [];
+
+function filterBenef() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('categoryFilter').value;
+  const area = document.getElementById('areaInput').value.toLowerCase();
+  const active = document.getElementById('activeFilter').value;
+  benefRows.forEach(({ el, b }) => {
+    const ms = !search || b.name.toLowerCase().includes(search) || b.beneficiaryCode.toLowerCase().includes(search) || b.nid.includes(search);
+    const mc = !cat || b.category === cat;
+    const ma = !area || b.area.toLowerCase().includes(area);
+    const mact = active === '' || String(b.isActive) === active;
+    el.style.display = (ms && mc && ma && mact) ? '' : 'none';
+  });
+}
+
+function submitBenefForm() {
+  OMS.closeModal('addBeneficiaryModal');
+  OMS.toast('Beneficiary enrolled successfully. Pending biometric capture.', 'success');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  OMS.init();
+  document.getElementById('topbar').outerHTML = OMS.buildTopbar('beneficiaries');
+  document.getElementById('sidebar-placeholder').outerHTML = OMS.buildSidebar('beneficiaries');
+
+  setTimeout(() => {
+    OMS.countUp(document.getElementById('kpi-total'), 45230, 1200);
+    OMS.countUp(document.getElementById('kpi-active'), 41847, 1100);
+    OMS.countUp(document.getElementById('kpi-inactive'), 3383, 800);
+    OMS.countUp(document.getElementById('kpi-face'), 38920, 1200);
+  }, 300);
+
+  const tbody = document.getElementById('benef-table-body');
+  OMS.sampleBeneficiaries.forEach(b => {
+    const catBadge = CATEGORY_BADGE[b.category] || 'badge-muted';
+    const catLabel = b.category.replace('_', ' ');
+    const maskedNid = b.nid.substring(0, 4) + '*****';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-family:monospace;font-size:12px">${b.beneficiaryCode}</td>
+      <td>
+        <div style="font-weight:500">${b.name}</div>
+        <div class="text-muted" style="font-size:12px">${b.nameBn}</div>
+      </td>
+      <td style="font-family:monospace;font-size:12px;color:var(--text-muted)">${maskedNid}</td>
+      <td class="text-muted">${b.phone}</td>
+      <td>${b.area}</td>
+      <td><span class="badge ${catBadge}">${catLabel}</span></td>
+      <td style="text-align:center">${b.monthlyQuotaKg} kg</td>
+      <td style="text-align:center;font-size:16px">${b.isActive ? '✅' : '❌'}</td>
+      <td><span class="badge ${b.isActive ? 'badge-success' : 'badge-danger'}">${b.isActive ? 'ACTIVE' : 'INACTIVE'}</span></td>
+      <td>
+        <div class="flex gap-8">
+          <button class="btn btn-sm btn-ghost" onclick="OMS.toast('Viewing profile: ${b.name} (${b.beneficiaryCode})','info')">View</button>
+          <button class="btn btn-sm btn-secondary" onclick="OMS.toast('Opening edit form for ${b.name}...','info')">Edit</button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+    benefRows.push({ el: tr, b });
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Trail — OMS National Food Control</title>
+  <script src="oms-shared.js"></script>
+  <style>
+    .hash-chip {
+      font-family: monospace;
+      font-size: 11px;
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+    .chain-block {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      min-width: 160px;
+      flex: 1;
+    }
+    .chain-arrow {
+      display: flex;
+      align-items: center;
+      color: var(--accent);
+      font-size: 20px;
+      padding: 0 4px;
+    }
+  </style>
+</head>
+<body>
+<div id="topbar"></div>
+<div id="sidebar-placeholder"></div>
+<div class="main-content">
+
+  <div class="page-header">
+    <h1 class="page-header__title">Audit Trail</h1>
+    <p class="page-header__sub">Immutable blockchain-style audit log — tamper-proof record of all system events</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat-card">
+      <div class="stat-card__icon">📋</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Total Events</div>
+        <div class="stat-card__value">2.4M</div>
+        <div class="stat-card__change text-muted">Since inception</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🕐</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Today's Events</div>
+        <div class="stat-card__value" id="kpi-today">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">Live recording</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🔐</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Integrity Checks</div>
+        <div class="stat-card__value" style="color:var(--accent)">100%</div>
+        <div class="stat-card__change" style="color:var(--accent)">All blocks valid</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🚫</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Anomalies</div>
+        <div class="stat-card__value" style="color:var(--accent)">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">No tampering detected</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mt-20">
+    <div class="card__header" style="flex-wrap:wrap;gap:12px">
+      <h2 class="card__title">Audit Log</h2>
+      <div class="flex items-center gap-12" style="flex-wrap:wrap">
+        <select class="form-control" style="width:160px" id="eventTypeFilter" onchange="filterAudit()">
+          <option value="">All Event Types</option>
+          <option value="LOGIN">Login</option>
+          <option value="DISTRIBUTION">Distribution</option>
+          <option value="DEALER_UPDATE">Dealer Update</option>
+          <option value="BENEFICIARY_UPDATE">Beneficiary Update</option>
+          <option value="EXPORT">Export</option>
+          <option value="SYSTEM">System</option>
+          <option value="INSPECTION">Inspection</option>
+        </select>
+        <input class="form-control" type="date" style="width:150px" id="dateFrom" onchange="filterAudit()">
+        <input class="form-control" type="date" style="width:150px" id="dateTo" onchange="filterAudit()">
+        <input class="form-control" style="width:160px" placeholder="Filter by user..." id="userFilter" oninput="filterAudit()">
+        <button class="btn btn-secondary btn-sm" onclick="OMS.toast('Exporting audit log to CSV...','info')">⬇ Export CSV</button>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Seq #</th>
+            <th>Event Type</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Resource</th>
+            <th>IP Address</th>
+            <th>Timestamp</th>
+            <th>Hash</th>
+          </tr>
+        </thead>
+        <tbody id="audit-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Hash Chain Integrity -->
+  <div class="card mt-20">
+    <div class="card__header">
+      <h2 class="card__title">Hash Chain Integrity</h2>
+      <span class="badge badge-success">✅ All Blocks Verified</span>
+    </div>
+    <div style="display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:8px 0" id="chain-container"></div>
+  </div>
+
+</div>
+
+<script>
+const EVENT_BADGE = {
+  LOGIN:               'badge-info',
+  DISTRIBUTION:        'badge-success',
+  DEALER_UPDATE:       'badge-warning',
+  BENEFICIARY_UPDATE:  'badge-warning',
+  EXPORT:              'badge-muted',
+  SYSTEM:              'badge-muted',
+  INSPECTION:          'badge-info',
+};
+
+const AUDIT_DATA = [
+  { seq: 248491, type: 'DISTRIBUTION',       user: 'dealer_042',      action: 'CREATE_TXN',      resource: 'TXN-9981244', ip: '103.12.54.88',  ts: '2025-01-15 10:42:31', hash: 'a3f8d92b1c4e' },
+  { seq: 248490, type: 'LOGIN',               user: 'admin_rahim',     action: 'USER_LOGIN',      resource: 'AUTH_SERVICE', ip: '10.0.1.15',     ts: '2025-01-15 10:40:12', hash: 'c7b2e14a8f93' },
+  { seq: 248489, type: 'BENEFICIARY_UPDATE',  user: 'officer_nasrin',  action: 'UPDATE_QUOTA',    resource: 'BNF-00421',   ip: '10.0.2.34',     ts: '2025-01-15 10:38:55', hash: 'f1d4a67c2b81' },
+  { seq: 248488, type: 'DEALER_UPDATE',       user: 'admin_karim',     action: 'SUSPEND_DEALER',  resource: 'DLR-088',     ip: '10.0.1.22',     ts: '2025-01-15 10:35:20', hash: '9e3c58b7d20f' },
+  { seq: 248487, type: 'INSPECTION',          user: 'inspector_jamal', action: 'SUBMIT_REPORT',   resource: 'INS-2024-501', ip: '192.168.1.45',  ts: '2025-01-15 10:32:18', hash: '2b8f1e5c9d74' },
+  { seq: 248486, type: 'EXPORT',              user: 'admin_rahim',     action: 'EXPORT_REPORT',   resource: 'RPT-JAN2025', ip: '10.0.1.15',     ts: '2025-01-15 10:28:44', hash: 'e6a2c91b4d38' },
+  { seq: 248485, type: 'DISTRIBUTION',        user: 'dealer_017',      action: 'CREATE_TXN',      resource: 'TXN-9981239', ip: '116.58.72.14',  ts: '2025-01-15 10:25:59', hash: '4d9f3a6c8e12' },
+  { seq: 248484, type: 'SYSTEM',              user: 'SYSTEM',          action: 'BACKUP_COMPLETE', resource: 'DB_MAIN',     ip: '127.0.0.1',     ts: '2025-01-15 10:00:00', hash: '7c1e84b2f56a' },
+  { seq: 248483, type: 'LOGIN',               user: 'officer_fatema',  action: 'USER_LOGIN',      resource: 'AUTH_SERVICE', ip: '10.0.3.88',     ts: '2025-01-15 09:58:33', hash: 'b5d2710f3c8e' },
+  { seq: 248482, type: 'BENEFICIARY_UPDATE',  user: 'officer_nasrin',  action: 'ENROLL_BIOMETRIC', resource: 'BNF-00419',  ip: '10.0.2.34',     ts: '2025-01-15 09:52:14', hash: '3a7f62c1d904' },
+];
+
+const CHAIN_BLOCKS = [
+  { num: 248491, hash: 'a3f8d92b1c4e', prev: 'c7b2e14a8f93' },
+  { num: 248490, hash: 'c7b2e14a8f93', prev: 'f1d4a67c2b81' },
+  { num: 248489, hash: 'f1d4a67c2b81', prev: '9e3c58b7d20f' },
+  { num: 248488, hash: '9e3c58b7d20f', prev: '2b8f1e5c9d74' },
+  { num: 248487, hash: '2b8f1e5c9d74', prev: 'e6a2c91b4d38' },
+];
+
+let auditRows = [];
+
+function filterAudit() {
+  const type = document.getElementById('eventTypeFilter').value;
+  const user = document.getElementById('userFilter').value.toLowerCase();
+  auditRows.forEach(({ el, row }) => {
+    const mt = !type || row.type === type;
+    const mu = !user || row.user.toLowerCase().includes(user);
+    el.style.display = (mt && mu) ? '' : 'none';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  OMS.init();
+  document.getElementById('topbar').outerHTML = OMS.buildTopbar('audit');
+  document.getElementById('sidebar-placeholder').outerHTML = OMS.buildSidebar('audit');
+
+  setTimeout(() => OMS.countUp(document.getElementById('kpi-today'), 8472, 1100), 300);
+
+  // Set date filters
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('dateTo').value = today;
+
+  // Audit table
+  const tbody = document.getElementById('audit-table-body');
+  AUDIT_DATA.forEach(row => {
+    const bc = EVENT_BADGE[row.type] || 'badge-muted';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-family:monospace;font-size:12px;color:var(--text-muted)">#${row.seq}</td>
+      <td><span class="badge ${bc}">${row.type}</span></td>
+      <td style="font-family:monospace;font-size:12px">${row.user}</td>
+      <td style="font-size:13px">${row.action}</td>
+      <td style="font-family:monospace;font-size:12px">${row.resource}</td>
+      <td class="text-muted" style="font-family:monospace;font-size:12px">${row.ip}</td>
+      <td class="text-muted" style="font-size:12px">${row.ts}</td>
+      <td><span class="hash-chip">${row.hash}...</span></td>`;
+    tbody.appendChild(tr);
+    auditRows.push({ el: tr, row });
+  });
+
+  // Hash chain
+  const container = document.getElementById('chain-container');
+  CHAIN_BLOCKS.forEach((block, i) => {
+    const blockEl = document.createElement('div');
+    blockEl.style.cssText = 'display:flex;align-items:center;gap:0';
+    blockEl.innerHTML = `
+      <div class="chain-block">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Block #${block.num}</div>
+        <div style="margin-bottom:4px"><span style="font-size:11px;color:var(--text-muted)">Hash:</span><br><span class="hash-chip">${block.hash}...</span></div>
+        <div style="margin-bottom:8px"><span style="font-size:11px;color:var(--text-muted)">Prev:</span><br><span class="hash-chip" style="color:var(--info)">${block.prev}...</span></div>
+        <div style="color:var(--accent);font-size:13px;font-weight:600">✅ Valid</div>
+      </div>
+      ${i < CHAIN_BLOCKS.length - 1 ? '<div class="chain-arrow">→</div>' : ''}`;
+    container.appendChild(blockEl);
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>National Dashboard — OMS National Food Control</title>
+  <script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="topbar"></div>
+<div id="sidebar-placeholder"></div>
+<div class="main-content">
+
+  <div class="page-header">
+    <h1 class="page-header__title">National Dashboard</h1>
+    <p class="page-header__sub">Real-time overview of food distribution operations</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat-card">
+      <div class="stat-card__icon">👥</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Total Beneficiaries</div>
+        <div class="stat-card__value" id="kpi-beneficiaries">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">▲ +2.3% this month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🏪</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Active Dealers</div>
+        <div class="stat-card__value" id="kpi-dealers">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">▲ +12 new this week</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">📦</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Distributions Today</div>
+        <div class="stat-card__value" id="kpi-distributions">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">▲ 94.2% success rate</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">✅</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Compliance Rate</div>
+        <div class="stat-card__value" id="kpi-compliance">0%</div>
+        <div class="stat-card__change" style="color:var(--danger)">▼ -0.4% from last week</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid mt-20" style="grid-template-columns:2fr 1fr;gap:20px">
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">Live Distribution Feed</h2>
+        <span class="badge badge-success" style="display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;background:var(--accent);border-radius:50%;display:inline-block;animation:pulse 1.5s infinite"></span>LIVE
+        </span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>TXN ID</th>
+              <th>Dealer</th>
+              <th>Beneficiary</th>
+              <th>Product</th>
+              <th>Qty (kg)</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="tx-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">Quick Actions</h2>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">
+        <button class="btn btn-primary w-full" onclick="OMS.toast('Opening distribution form...','info')">📦 New Distribution</button>
+        <button class="btn btn-secondary w-full" onclick="OMS.toast('Opening dealer registration...','info')">🏪 Register Dealer</button>
+        <button class="btn btn-secondary w-full" onclick="OMS.toast('Opening beneficiary form...','info')">👥 Add Beneficiary</button>
+        <button class="btn btn-secondary w-full" onclick="OMS.toast('Generating report...','info')">📊 Generate Report</button>
+        <button class="btn btn-secondary w-full" onclick="OMS.toast('Opening inspection form...','info')">🔍 Field Inspection</button>
+        <button class="btn btn-secondary w-full" onclick="OMS.toast('Opening SMS composer...','info')">📱 SMS Alert</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-20">
+    <div class="card__header">
+      <h2 class="card__title">Program Overview</h2>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Program</th>
+            <th>Full Name</th>
+            <th>Beneficiaries</th>
+            <th>Budget (BDT Cr)</th>
+            <th>Monthly Allotment (MT)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong class="text-accent">FFP</strong></td>
+            <td>Food for Progress</td>
+            <td>12,400</td>
+            <td>245</td>
+            <td>620</td>
+            <td><span class="badge badge-success">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><strong class="text-accent">VGD</strong></td>
+            <td>Vulnerable Group Development</td>
+            <td>21,000</td>
+            <td>380</td>
+            <td>1,050</td>
+            <td><span class="badge badge-success">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><strong class="text-accent">VGF</strong></td>
+            <td>Vulnerable Group Feeding</td>
+            <td>8,200</td>
+            <td>156</td>
+            <td>410</td>
+            <td><span class="badge badge-success">ACTIVE</span></td>
+          </tr>
+          <tr>
+            <td><strong class="text-accent">TR</strong></td>
+            <td>Test Relief</td>
+            <td>3,630</td>
+            <td>89</td>
+            <td>182</td>
+            <td><span class="badge badge-success">ACTIVE</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<style>
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  OMS.init();
+  document.getElementById('topbar').outerHTML = OMS.buildTopbar('dashboard');
+  document.getElementById('sidebar-placeholder').outerHTML = OMS.buildSidebar('dashboard');
+
+  // KPI count-ups
+  setTimeout(() => {
+    OMS.countUp(document.getElementById('kpi-beneficiaries'), 45230, 1200);
+    OMS.countUp(document.getElementById('kpi-dealers'), 892, 1000);
+    OMS.countUp(document.getElementById('kpi-distributions'), 3847, 1100);
+    const el = document.getElementById('kpi-compliance');
+    let val = 0; const target = 942; const dur = 1100;
+    const step = target / (dur / 16);
+    const timer = setInterval(() => {
+      val += step;
+      if (val >= target) { val = target; clearInterval(timer); }
+      el.textContent = (val / 10).toFixed(1) + '%';
+    }, 16);
+  }, 300);
+
+  // Transaction table
+  const tbody = document.getElementById('tx-table-body');
+  OMS.sampleTransactions.forEach(tx => {
+    const bc = tx.status === 'ACCEPTED' ? 'badge-success' : tx.status === 'BLOCKED' ? 'badge-danger' : 'badge-warning';
+    const time = new Date(tx.createdAt).toLocaleTimeString('en-BD', {hour:'2-digit', minute:'2-digit'});
+    tbody.insertAdjacentHTML('beforeend', `<tr>
+      <td style="font-family:monospace;font-size:11px">${tx.txnId}</td>
+      <td class="truncate" style="max-width:120px">${tx.dealerName}</td>
+      <td class="truncate" style="max-width:120px">${tx.beneficiaryName}</td>
+      <td>${tx.productType}</td>
+      <td>${tx.quantityKg}</td>
+      <td><span class="badge badge-muted">${tx.verificationMethod}</span></td>
+      <td><span class="badge ${bc}">${tx.status}</span></td>
+      <td class="text-muted" style="font-size:12px">${time}</td>
+    </tr>`);
+  });
+});
+</script>
+</body>
+</html>

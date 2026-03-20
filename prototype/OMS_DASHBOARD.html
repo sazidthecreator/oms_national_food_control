@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMS Executive Dashboard — National Food Control</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f172a; --surface: #1e293b; --elevated: #273549; --border: #334155;
+      --accent: #22c55e; --danger: #ef4444; --warning: #f59e0b; --info: #3b82f6; --purple: #8b5cf6;
+      --text: #f1f5f9; --muted: #94a3b8;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    html, body { height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; overflow-x: hidden; }
+
+    /* ─── TOP NAV ─── */
+    .topnav {
+      position: sticky; top: 0; z-index: 200;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      height: 56px; display: flex; align-items: center; padding: 0 24px; gap: 16px;
+    }
+    .topnav__hamburger { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 6px; border-radius: 6px; transition: color .15s; }
+    .topnav__hamburger:hover { color: var(--text); }
+    .topnav__brand { display: flex; align-items: center; gap: 10px; }
+    .topnav__logo { width: 34px; height: 34px; background: linear-gradient(135deg,var(--accent),#16a34a); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .topnav__title { font-weight: 700; font-size: 15px; }
+    .topnav__sub { font-size: 10px; color: var(--muted); }
+    .topnav__sep { flex: 1; }
+    .topnav__clock { font-family: monospace; font-size: 13px; color: var(--accent); padding: 4px 10px; background: rgba(34,197,94,.08); border-radius: 6px; }
+    .topnav__search { display: flex; align-items: center; background: var(--elevated); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; gap: 8px; width: 220px; transition: border-color .15s; }
+    .topnav__search:focus-within { border-color: var(--accent); }
+    .topnav__search input { background: none; border: none; outline: none; color: var(--text); font-size: 13px; width: 100%; }
+    .topnav__right { display: flex; align-items: center; gap: 12px; }
+    .notif-btn { background: none; border: none; font-size: 18px; cursor: pointer; position: relative; }
+    .notif-badge { position: absolute; top: -2px; right: -2px; width: 14px; height: 14px; background: var(--danger); border-radius: 50%; font-size: 9px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; }
+    .avatar { width: 32px; height: 32px; background: linear-gradient(135deg,var(--info),var(--purple)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .btn-ghost { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; transition: all .15s; }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ─── SHELL ─── */
+    .shell { display: flex; min-height: calc(100vh - 56px); }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+      padding: 20px 0; flex-shrink: 0; transition: width .25s ease;
+      display: flex; flex-direction: column;
+    }
+    .sidebar.collapsed { width: 56px; }
+    .sidebar.collapsed .sidebar__label { display: none; }
+    .sidebar.collapsed .sidebar__section { display: none; }
+    .sidebar__section { font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--muted); padding: 6px 16px; margin-top: 12px; white-space: nowrap; overflow: hidden; }
+    .sidebar__link {
+      display: flex; align-items: center; gap: 10px; padding: 9px 16px;
+      color: var(--muted); text-decoration: none; transition: all .15s;
+      border-left: 3px solid transparent; white-space: nowrap;
+    }
+    .sidebar__link:hover { color: var(--text); background: var(--elevated); }
+    .sidebar__link.active { color: var(--accent); background: rgba(34,197,94,.07); border-left-color: var(--accent); }
+    .sidebar__icon { font-size: 16px; flex-shrink: 0; width: 20px; text-align: center; }
+    .sidebar__bottom { margin-top: auto; padding: 12px 0; border-top: 1px solid var(--border); }
+
+    /* ─── MAIN ─── */
+    .main { flex: 1; padding: 24px; overflow-x: hidden; }
+
+    /* ─── WELCOME BANNER ─── */
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--surface) 0%, #162032 100%);
+      border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      margin-bottom: 20px;
+    }
+    .welcome-banner__greeting { font-size: 1.4rem; font-weight: 700; }
+    .welcome-banner__sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .welcome-banner__date { text-align: right; color: var(--muted); font-size: 13px; }
+    .welcome-banner__date .day { font-size: 2.2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+
+    /* ─── KPI STRIP ─── */
+    .kpi-strip { display: grid; grid-template-columns: repeat(6,1fr); gap: 14px; margin-bottom: 20px; }
+    .kpi-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; transition: all .2s; cursor: default; }
+    .kpi-tile:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+    .kpi-tile__icon { font-size: 20px; margin-bottom: 8px; }
+    .kpi-tile__val { font-size: 22px; font-weight: 800; line-height: 1; }
+    .kpi-tile__lbl { font-size: 11px; color: var(--muted); margin-top: 5px; }
+    .kpi-tile__change { font-size: 11px; margin-top: 4px; }
+
+    /* ─── SECTION LABEL ─── */
+    .section-row { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; }
+    .section-row h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .section-row .btn-sm { background: var(--elevated); border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer; transition: all .15s; }
+    .section-row .btn-sm:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ─── CARDS ─── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .card__header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card__title { font-size: 13px; font-weight: 700; }
+
+    /* ─── TABLE ─── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 8px 12px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 9px 12px; border-bottom: 1px solid rgba(51,65,85,.5); font-size: 12px; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(39,53,73,.5); }
+
+    /* ─── BADGES ─── */
+    .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .bs { background: rgba(34,197,94,.15); color: #4ade80; }
+    .bd { background: rgba(239,68,68,.15);  color: #f87171; }
+    .bw { background: rgba(245,158,11,.15); color: #fbbf24; }
+    .bi { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .bm { background: rgba(148,163,184,.1); color: var(--muted); }
+    .bp { background: rgba(139,92,246,.15); color: #a78bfa; }
+
+    /* ─── GRIDS ─── */
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+    .mb-20 { margin-bottom: 20px; }
+    .text-muted { color: var(--muted); }
+    .text-accent { color: var(--accent); }
+    .mono { font-family: monospace; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ─── ALERT PANEL ─── */
+    .alert-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .alert-item:last-child { border-bottom: none; }
+    .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+
+    /* ─── PROGRESS BAR ─── */
+    .prog-bar { height: 6px; background: var(--elevated); border-radius: 3px; overflow: hidden; }
+    .prog-bar__fill { height: 100%; border-radius: 3px; transition: width .8s ease; }
+
+    /* ─── FOOTER ─── */
+    .footer { background: var(--surface); border-top: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted); }
+
+    /* ─── RESPONSIVE ─── */
+    @media(max-width:1200px) { .kpi-strip { grid-template-columns: repeat(3,1fr); } }
+    @media(max-width:900px) { .grid-3 { grid-template-columns: 1fr; } .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="topnav">
+  <button class="topnav__hamburger" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+  <div class="topnav__brand">
+    <div class="topnav__logo">🌾</div>
+    <div>
+      <div class="topnav__title">OMS National Food Control</div>
+      <div class="topnav__sub">Ministry of Food · Bangladesh</div>
+    </div>
+  </div>
+  <div class="topnav__sep"></div>
+  <div class="topnav__search">
+    <span style="color:var(--muted)">🔍</span>
+    <input type="text" placeholder="Search beneficiaries, dealers...">
+  </div>
+  <div class="topnav__clock" id="clock">--:--:-- BDT</div>
+  <div class="topnav__right">
+    <button class="notif-btn" title="Notifications">
+      🔔
+      <span class="notif-badge">7</span>
+    </button>
+    <div class="avatar" title="Md. Rahim Uddin">R</div>
+    <div>
+      <div style="font-size:12px;font-weight:600">Md. Rahim Uddin</div>
+      <div style="font-size:10px;color:var(--muted)">National Admin</div>
+    </div>
+    <button class="btn-ghost">→ Out</button>
+  </div>
+</nav>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar__section">Overview</div>
+    <a href="#" class="sidebar__link active"><span class="sidebar__icon">📊</span><span class="sidebar__label">Dashboard</span></a>
+
+    <div class="sidebar__section">Operations</div>
+    <a href="#" class="sidebar__link"><span class="sidebar__icon">🏢</span><span class="sidebar__label">Offices &amp; Programs</span></a>
+    <a href="#" class="sidebar__link"><span class="sidebar__icon">🏪</span><span class="sidebar__label">Dealer Management</span></a>
+    <a href="#" class="sidebar__link"><span class="sidebar__icon">👥</span><span class="sidebar__label">Beneficiaries</span></a>
+    <a href="#" class="sidebar__link"><span class="sidebar__icon">📦</span><span class="sidebar__label">Distribution</span></a>
+
+    <div class="sidebar__section">Oversight</div>
+    <a href="#" class="sidebar__link"><span class="sidebar__icon">🔍</span><span class="sidebar__label">Field Inspection</span></a>
+    <a href="#" class="sidebar__link"><span class="sidebar__icon">📈</span><span class="sidebar__label">Analytics</span></a>
+    <a href="#" class="sidebar__link"><span class="sidebar__icon">🔔</span><span class="sidebar__label">Notifications</span></a>
+    <a href="#" class="sidebar__link"><span class="sidebar__icon">🔒</span><span class="sidebar__label">Audit Trail</span></a>
+
+    <div class="sidebar__bottom">
+      <a href="#" class="sidebar__link"><span class="sidebar__icon">⚙️</span><span class="sidebar__label">Settings</span></a>
+      <a href="#" class="sidebar__link"><span class="sidebar__icon">❓</span><span class="sidebar__label">Help Center</span></a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+      <div>
+        <div class="welcome-banner__greeting">Good morning, Rahim 👋</div>
+        <div class="welcome-banner__sub">Here's your national food distribution overview for today. All systems operational.</div>
+      </div>
+      <div class="welcome-banner__date">
+        <div class="day" id="dayNum">--</div>
+        <div id="monthYear" style="font-size:14px;font-weight:600">--- ----</div>
+        <div id="dayName" style="margin-top:2px">------</div>
+      </div>
+    </div>
+
+    <!-- KPI Strip -->
+    <div class="kpi-strip mb-20">
+      <div class="kpi-tile">
+        <div class="kpi-tile__icon">👥</div>
+        <div class="kpi-tile__val text-accent" id="kv1">0</div>
+        <div class="kpi-tile__lbl">Beneficiaries</div>
+        <div class="kpi-tile__change" style="color:var(--accent)">▲ +2.3%</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-tile__icon">🏪</div>
+        <div class="kpi-tile__val" id="kv2">0</div>
+        <div class="kpi-tile__lbl">Active Dealers</div>
+        <div class="kpi-tile__change" style="color:var(--accent)">▲ +12 new</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-tile__icon">📦</div>
+        <div class="kpi-tile__val" id="kv3">0</div>
+        <div class="kpi-tile__lbl">Distributions Today</div>
+        <div class="kpi-tile__change" style="color:var(--accent)">94.2% success</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-tile__icon">✅</div>
+        <div class="kpi-tile__val text-accent" id="kv4">0%</div>
+        <div class="kpi-tile__lbl">Compliance</div>
+        <div class="kpi-tile__change" style="color:var(--danger)">▼ -0.4%</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-tile__icon">⚠️</div>
+        <div class="kpi-tile__val" style="color:var(--warning)" id="kv5">0%</div>
+        <div class="kpi-tile__lbl">Leakage Rate</div>
+        <div class="kpi-tile__change" style="color:var(--accent)">▼ from 4.1%</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-tile__icon">🚨</div>
+        <div class="kpi-tile__val" style="color:var(--danger)" id="kv6">0</div>
+        <div class="kpi-tile__lbl">Pending Alerts</div>
+        <div class="kpi-tile__change" style="color:var(--danger)">Needs review</div>
+      </div>
+    </div>
+
+    <!-- Row 1: Charts -->
+    <div class="section-row"><h2>Analytics Overview</h2><button class="btn-sm">View Full Analytics →</button></div>
+    <div class="grid-3 mb-20">
+
+      <!-- Bar Chart: 12-month distribution -->
+      <div class="card" style="grid-column:1/3">
+        <div class="card__header">
+          <span class="card__title">12-Month Distribution Trend</span>
+          <span class="badge bi">2024–2025</span>
+        </div>
+        <div style="padding:16px">
+          <svg viewBox="0 0 680 180" style="width:100%;height:180px">
+            <!-- Grid -->
+            <line x1="40" y1="10" x2="670" y2="10" stroke="#334155" stroke-width="1"/>
+            <line x1="40" y1="50" x2="670" y2="50" stroke="#334155" stroke-width="1"/>
+            <line x1="40" y1="90" x2="670" y2="90" stroke="#334155" stroke-width="1"/>
+            <line x1="40" y1="130" x2="670" y2="130" stroke="#334155" stroke-width="1"/>
+            <!-- Y-axis -->
+            <text x="35" y="14" fill="#94a3b8" font-size="9" text-anchor="end">200K</text>
+            <text x="35" y="54" fill="#94a3b8" font-size="9" text-anchor="end">150K</text>
+            <text x="35" y="94" fill="#94a3b8" font-size="9" text-anchor="end">100K</text>
+            <text x="35" y="134" fill="#94a3b8" font-size="9" text-anchor="end">50K</text>
+            <!-- Bars: 12 months; data: 120,135,148,142,165,178,168,172,185,190,183,178 (×1000) -->
+            <!-- Bar width=34, spacing=52, start x=50 -->
+            <rect x="50"  y="82"  width="34" height="48"  fill="#3b82f6" rx="3" opacity=".8"/>
+            <rect x="102" y="73"  width="34" height="57"  fill="#3b82f6" rx="3" opacity=".8"/>
+            <rect x="154" y="65"  width="34" height="65"  fill="#3b82f6" rx="3" opacity=".8"/>
+            <rect x="206" y="68"  width="34" height="62"  fill="#3b82f6" rx="3" opacity=".8"/>
+            <rect x="258" y="57"  width="34" height="73"  fill="#22c55e" rx="3" opacity=".9"/>
+            <rect x="310" y="50"  width="34" height="80"  fill="#22c55e" rx="3" opacity=".9"/>
+            <rect x="362" y="54"  width="34" height="76"  fill="#22c55e" rx="3" opacity=".9"/>
+            <rect x="414" y="52"  width="34" height="78"  fill="#22c55e" rx="3" opacity=".9"/>
+            <rect x="466" y="43"  width="34" height="87"  fill="#22c55e" rx="3" opacity=".9"/>
+            <rect x="518" y="40"  width="34" height="90"  fill="#22c55e" rx="3" opacity=".9"/>
+            <rect x="570" y="43"  width="34" height="87"  fill="#22c55e" rx="3" opacity=".9"/>
+            <rect x="622" y="46"  width="34" height="84"  fill="#22c55e" rx="3"/>
+            <!-- X-axis labels -->
+            <text x="67"  y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Feb</text>
+            <text x="119" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Mar</text>
+            <text x="171" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Apr</text>
+            <text x="223" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">May</text>
+            <text x="275" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Jun</text>
+            <text x="327" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Jul</text>
+            <text x="379" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Aug</text>
+            <text x="431" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Sep</text>
+            <text x="483" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Oct</text>
+            <text x="535" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Nov</text>
+            <text x="587" y="148" fill="#94a3b8" font-size="9" text-anchor="middle">Dec</text>
+            <text x="639" y="148" fill="#22c55e" font-size="9" text-anchor="middle" font-weight="bold">Jan▲</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Donut: Program Status -->
+      <div class="card">
+        <div class="card__header"><span class="card__title">Program Distribution</span></div>
+        <div style="padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px">
+          <svg viewBox="0 0 160 160" style="width:140px;height:140px">
+            <circle cx="80" cy="80" r="55" fill="none" stroke="#273549" stroke-width="32"/>
+            <circle cx="80" cy="80" r="55" fill="none" stroke="#22c55e" stroke-width="32"
+              stroke-dasharray="159.1 345.6" stroke-dashoffset="0" transform="rotate(-90 80 80)"/>
+            <circle cx="80" cy="80" r="55" fill="none" stroke="#3b82f6" stroke-width="32"
+              stroke-dasharray="93.3 411.4" stroke-dashoffset="-159.1" transform="rotate(-90 80 80)"/>
+            <circle cx="80" cy="80" r="55" fill="none" stroke="#f59e0b" stroke-width="32"
+              stroke-dasharray="62.2 442.5" stroke-dashoffset="-252.4" transform="rotate(-90 80 80)"/>
+            <circle cx="80" cy="80" r="55" fill="none" stroke="#8b5cf6" stroke-width="32"
+              stroke-dasharray="31.1 473.6" stroke-dashoffset="-314.6" transform="rotate(-90 80 80)"/>
+            <text x="80" y="76" fill="#f1f5f9" font-size="13" font-weight="bold" text-anchor="middle">45.2K</text>
+            <text x="80" y="91" fill="#94a3b8" font-size="9" text-anchor="middle">beneficiaries</text>
+          </svg>
+          <div style="display:flex;flex-direction:column;gap:7px;width:100%">
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+              <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:#22c55e;border-radius:2px"></div>VGD</div>
+              <span style="color:var(--accent);font-weight:600">46%</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+              <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:#3b82f6;border-radius:2px"></div>FFP</div>
+              <span style="color:var(--info);font-weight:600">27%</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+              <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:#f59e0b;border-radius:2px"></div>VGF</div>
+              <span style="color:var(--warning);font-weight:600">18%</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+              <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;background:#8b5cf6;border-radius:2px"></div>TR</div>
+              <span style="color:var(--purple);font-weight:600">9%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Live feed + Beneficiary categories -->
+    <div class="section-row"><h2>Live Operations</h2><button class="btn-sm">View All →</button></div>
+    <div class="grid-2 mb-20">
+      <div class="card">
+        <div class="card__header">
+          <span class="card__title">Live Transaction Feed</span>
+          <span class="badge bs" style="display:flex;align-items:center;gap:5px">
+            <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;display:inline-block;animation:pulse 1.5s infinite"></span>LIVE
+          </span>
+        </div>
+        <div class="table-wrap" style="max-height:280px;overflow-y:auto">
+          <table>
+            <thead><tr><th>TXN</th><th>Dealer</th><th>Beneficiary</th><th>Qty</th><th>Status</th><th>Time</th></tr></thead>
+            <tbody id="tx-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__header"><span class="card__title">Beneficiary Category Breakdown</span></div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
+          <svg viewBox="0 0 320 120" style="width:100%;height:100px">
+            <!-- Horizontal bars for 4 categories -->
+            <text x="0" y="18" fill="#94a3b8" font-size="10">VGD (21,000)</text>
+            <rect x="90" y="7" width="184" height="14" fill="rgba(34,197,94,.15)" rx="3"/>
+            <rect x="90" y="7" width="184" height="14" fill="#22c55e" rx="3" opacity=".8"/>
+            <text x="278" y="18" fill="#22c55e" font-size="10" font-weight="bold">46%</text>
+
+            <text x="0" y="47" fill="#94a3b8" font-size="10">FFP (12,400)</text>
+            <rect x="90" y="36" width="184" height="14" fill="rgba(59,130,246,.15)" rx="3"/>
+            <rect x="90" y="36" width="108" height="14" fill="#3b82f6" rx="3" opacity=".8"/>
+            <text x="278" y="47" fill="#3b82f6" font-size="10" font-weight="bold">27%</text>
+
+            <text x="0" y="76" fill="#94a3b8" font-size="10">VGF (8,200)</text>
+            <rect x="90" y="65" width="184" height="14" fill="rgba(245,158,11,.15)" rx="3"/>
+            <rect x="90" y="65" width="72" height="14" fill="#f59e0b" rx="3" opacity=".8"/>
+            <text x="278" y="76" fill="#f59e0b" font-size="10" font-weight="bold">18%</text>
+
+            <text x="0" y="105" fill="#94a3b8" font-size="10">TR (3,630)</text>
+            <rect x="90" y="94" width="184" height="14" fill="rgba(139,92,246,.15)" rx="3"/>
+            <rect x="90" y="94" width="36" height="14" fill="#8b5cf6" rx="3" opacity=".8"/>
+            <text x="278" y="105" fill="#8b5cf6" font-size="10" font-weight="bold">9%</text>
+          </svg>
+
+          <div style="border-top:1px solid var(--border);padding-top:12px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="background:var(--elevated);border-radius:8px;padding:10px">
+                <div style="font-size:18px;font-weight:700;color:var(--accent)">38,920</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px">🤳 Face Enrolled</div>
+              </div>
+              <div style="background:var(--elevated);border-radius:8px;padding:10px">
+                <div style="font-size:18px;font-weight:700;color:var(--info)">41,847</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px">✅ Currently Active</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Alerts + Inspections + SMS -->
+    <div class="section-row"><h2>Status &amp; Reports</h2><button class="btn-sm">Export All →</button></div>
+    <div class="grid-3 mb-20">
+
+      <!-- Alert Panel -->
+      <div class="card">
+        <div class="card__header">
+          <span class="card__title">Risk Alerts</span>
+          <span class="badge bd">7 Active</span>
+        </div>
+        <div id="alert-panel"></div>
+      </div>
+
+      <!-- Recent Inspections -->
+      <div class="card">
+        <div class="card__header"><span class="card__title">Recent Inspections</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Inspector</th><th>Dealer</th><th>Score</th><th>Result</th></tr></thead>
+            <tbody id="insp-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SMS Stats -->
+      <div class="card">
+        <div class="card__header"><span class="card__title">SMS Delivery Stats</span></div>
+        <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+          <div style="text-align:center;padding:12px;background:var(--elevated);border-radius:8px">
+            <div style="font-size:1.8rem;font-weight:800;color:var(--accent)">12,847</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">SMS Sent Today</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px">Delivered</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="prog-bar" style="width:120px"><div class="prog-bar__fill" style="width:95.7%;background:var(--accent)"></div></div>
+              <span style="color:var(--accent);font-weight:700;font-size:12px;min-width:36px">95.7%</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px">Failed</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="prog-bar" style="width:120px"><div class="prog-bar__fill" style="width:4.3%;background:var(--danger)"></div></div>
+              <span style="color:var(--danger);font-weight:700;font-size:12px;min-width:36px">4.3%</span>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span class="text-muted">Grameenphone</span><span style="color:var(--accent)">97%</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span class="text-muted">Robi / Airtel</span><span style="color:var(--accent)">94%</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span class="text-muted">Banglalink</span><span style="color:var(--accent)">91%</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span class="text-muted">Teletalk</span><span style="color:var(--warning)">88%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <span>OMS National Food Control Platform &nbsp;·&nbsp; Ministry of Food, Bangladesh &nbsp;·&nbsp; v2.4.1</span>
+  <span>All systems operational &nbsp;·&nbsp; <span style="color:var(--accent)">● Online</span> &nbsp;·&nbsp; Last sync: just now</span>
+</footer>
+
+<style>
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+</style>
+
+<script>
+// Data
+const TX_DATA = [
+  {txnId:'TXN-9244',dealer:'Al-Amin Store',benef:'Fatema Begum',product:'Rice',qty:30,status:'ACCEPTED',ts:Date.now()-100000},
+  {txnId:'TXN-9239',dealer:'Hossain Depot',benef:'Rahima Khatun',product:'Flour',qty:25,status:'ACCEPTED',ts:Date.now()-200000},
+  {txnId:'TXN-9235',dealer:'Karim Traders',benef:'Mosharef Ali',product:'Rice',qty:35,status:'EXCEPTION',ts:Date.now()-320000},
+  {txnId:'TXN-9230',dealer:'Rahim Foods',benef:'Sufia Begum',product:'Rice',qty:30,status:'BLOCKED',ts:Date.now()-440000},
+  {txnId:'TXN-9225',dealer:'Metro Depot',benef:'Jamal Uddin',product:'Oil',qty:2,status:'ACCEPTED',ts:Date.now()-560000},
+  {txnId:'TXN-9218',dealer:'National Store',benef:'Roksana Islam',product:'Rice',qty:30,status:'ACCEPTED',ts:Date.now()-680000},
+  {txnId:'TXN-9210',dealer:'City Foods',benef:'Abul Hossain',product:'Flour',qty:25,status:'ACCEPTED',ts:Date.now()-800000},
+  {txnId:'TXN-9204',dealer:'Rupsha Store',benef:'Morium Begum',product:'Rice',qty:30,status:'ACCEPTED',ts:Date.now()-920000},
+];
+
+const ALERTS = [
+  { color: '#ef4444', label: 'Ghost Beneficiary', dealer: 'DLR-042', score: 94 },
+  { color: '#ef4444', label: 'Over-distribution',  dealer: 'DLR-088', score: 87 },
+  { color: '#f59e0b', label: 'Duplicate Claim',    dealer: 'DLR-017', score: 82 },
+  { color: '#f59e0b', label: 'Scale Miscalibrated', dealer: 'DLR-031', score: 71 },
+  { color: '#f59e0b', label: 'Location Mismatch',  dealer: 'DLR-055', score: 68 },
+  { color: '#3b82f6', label: 'Late Sync (>48h)',   dealer: 'DLR-072', score: 45 },
+  { color: '#3b82f6', label: 'Low Stock Warning',  dealer: 'DLR-009', score: 38 },
+];
+
+const INSPECTIONS = [
+  { inspector: 'Karim H.',    dealer: 'DLR-042', score: '6/6', result: 'PASS' },
+  { inspector: 'Nasrin A.',   dealer: 'DLR-017', score: '5/6', result: 'CONDITIONAL' },
+  { inspector: 'Rahim U.',    dealer: 'DLR-088', score: '2/6', result: 'FAIL' },
+  { inspector: 'Fatema B.',   dealer: 'DLR-031', score: '6/6', result: 'PASS' },
+  { inspector: 'Jamal H.',    dealer: 'DLR-055', score: '4/6', result: 'CONDITIONAL' },
+];
+
+// Helpers
+function countUp(el, target, dur, fmt) {
+  let v=0; const step=target/(dur/16);
+  const t=setInterval(()=>{v+=step;if(v>=target){v=target;clearInterval(t);}
+    el.textContent=fmt?fmt(v):Math.floor(v).toLocaleString();},16);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// Clock
+function tick() {
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('en-BD',{hour12:false})+' BDT';
+}
+tick(); setInterval(tick,1000);
+
+// Date banner
+(function() {
+  const now = new Date();
+  document.getElementById('dayNum').textContent = now.getDate();
+  document.getElementById('monthYear').textContent = now.toLocaleDateString('en-BD',{month:'long',year:'numeric'});
+  document.getElementById('dayName').textContent = now.toLocaleDateString('en-BD',{weekday:'long'});
+})();
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    countUp(document.getElementById('kv1'), 45230, 1200);
+    countUp(document.getElementById('kv2'), 892, 900);
+    countUp(document.getElementById('kv3'), 3847, 1100);
+    countUp(document.getElementById('kv4'), 942, 1000, v => (v/10).toFixed(1)+'%');
+    countUp(document.getElementById('kv5'), 23, 800, v => (v/10).toFixed(1)+'%');
+    countUp(document.getElementById('kv6'), 7, 600);
+  }, 300);
+
+  // Transaction feed
+  const txBody = document.getElementById('tx-body');
+  TX_DATA.forEach(tx => {
+    const bc = tx.status==='ACCEPTED'?'bs':tx.status==='BLOCKED'?'bd':'bw';
+    const t = new Date(tx.ts).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+    txBody.insertAdjacentHTML('beforeend',`<tr>
+      <td class="mono" style="font-size:10px">${tx.txnId}</td>
+      <td class="truncate" style="max-width:90px">${tx.dealer}</td>
+      <td class="truncate" style="max-width:90px">${tx.benef}</td>
+      <td>${tx.qty}kg</td>
+      <td><span class="badge ${bc}">${tx.status}</span></td>
+      <td class="text-muted">${t}</td>
+    </tr>`);
+  });
+
+  // Alerts
+  const ap = document.getElementById('alert-panel');
+  ALERTS.forEach(a => {
+    ap.insertAdjacentHTML('beforeend',`
+      <div class="alert-item">
+        <div class="alert-dot" style="background:${a.color}"></div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:500">${a.label}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${a.dealer} · Score: ${a.score}</div>
+        </div>
+        <button style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:2px 7px;font-size:10px;cursor:pointer">View</button>
+      </div>`);
+  });
+
+  // Inspections
+  const ib = document.getElementById('insp-body');
+  INSPECTIONS.forEach(ins => {
+    const bc = ins.result==='PASS'?'bs':ins.result==='FAIL'?'bd':'bw';
+    ib.insertAdjacentHTML('beforeend',`<tr>
+      <td>${ins.inspector}</td>
+      <td class="mono" style="font-size:11px">${ins.dealer}</td>
+      <td style="color:var(--accent);font-weight:600">${ins.score}</td>
+      <td><span class="badge ${bc}">${ins.result}</span></td>
+    </tr>`);
+  });
+});
+</script>
+</body>
+</html>

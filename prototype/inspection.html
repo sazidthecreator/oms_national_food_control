@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Field Inspection — OMS National Food Control</title>
+  <script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="topbar"></div>
+<div id="sidebar-placeholder"></div>
+<div class="main-content">
+
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-header__title">Field Inspection</h1>
+      <p class="page-header__sub">Conduct and track compliance inspections at dealer outlets</p>
+    </div>
+    <button class="btn btn-primary" onclick="OMS.toast('Scroll down to fill the inspection form.','info')">+ New Inspection</button>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat-card">
+      <div class="stat-card__icon">🔍</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Inspections This Month</div>
+        <div class="stat-card__value" id="kpi-total">0</div>
+        <div class="stat-card__change text-muted">Across all districts</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">✅</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Passed</div>
+        <div class="stat-card__value" id="kpi-passed" style="color:var(--accent)">0</div>
+        <div class="stat-card__change" style="color:var(--accent)">Full compliance</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">❌</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Failed</div>
+        <div class="stat-card__value" id="kpi-failed" style="color:var(--danger)">0</div>
+        <div class="stat-card__change" style="color:var(--danger)">Action required</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">⏳</div>
+      <div class="stat-card__body">
+        <div class="stat-card__label">Pending Review</div>
+        <div class="stat-card__value" id="kpi-pending" style="color:var(--warning)">0</div>
+        <div class="stat-card__change" style="color:var(--warning)">Awaiting submission</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid mt-20" style="grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+    <!-- Left: Inspection Form -->
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">New Inspection Form</h2>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Inspector Name</label>
+            <input class="form-control" id="inspectorName" placeholder="Full name of inspector">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dealer Code</label>
+            <input class="form-control" id="dealerCode" placeholder="e.g. DLR-001">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Inspection Date</label>
+          <input class="form-control" id="inspDate" type="date">
+        </div>
+
+        <!-- Checklist -->
+        <div>
+          <label class="form-label" style="margin-bottom:10px;display:block">Compliance Checklist</label>
+          <div style="display:flex;flex-direction:column;gap:10px" id="checklist">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+              <input type="checkbox" class="chk-item" style="margin-top:2px;accent-color:var(--accent)">
+              <span>Stock records match system data</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+              <input type="checkbox" class="chk-item" style="margin-top:2px;accent-color:var(--accent)">
+              <span>Distribution register is up to date</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+              <input type="checkbox" class="chk-item" style="margin-top:2px;accent-color:var(--accent)">
+              <span>Weighing scale is calibrated</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+              <input type="checkbox" class="chk-item" style="margin-top:2px;accent-color:var(--accent)">
+              <span>Storage conditions are adequate</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+              <input type="checkbox" class="chk-item" style="margin-top:2px;accent-color:var(--accent)">
+              <span>No unauthorized beneficiaries found</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+              <input type="checkbox" class="chk-item" style="margin-top:2px;accent-color:var(--accent)">
+              <span>Price list displayed prominently</span>
+            </label>
+          </div>
+          <div style="margin-top:10px;font-size:13px;color:var(--text-muted)">
+            Score: <span id="checkScore" style="color:var(--accent);font-weight:600">0/6</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Findings &amp; Observations</label>
+          <textarea class="form-control" id="findings" rows="3" placeholder="Describe any issues, violations, or observations..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Inspection Result</label>
+          <select class="form-control" id="resultSelect">
+            <option value="">— Select Result —</option>
+            <option value="PASS">Pass</option>
+            <option value="FAIL">Fail</option>
+            <option value="CONDITIONAL">Conditional Pass</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary w-full" onclick="submitInspection()">📋 Submit Inspection Report</button>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Recent Inspections</h2>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Inspector</th>
+                <th>Dealer</th>
+                <th>Date</th>
+                <th>Score</th>
+                <th>Result</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="insp-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Inspector Assignment</h2>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px" id="inspector-list"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const SAMPLE_INSPECTIONS = [
+  { inspector: 'Karim Hossain',    dealer: 'DLR-042', date: '2025-01-14', score: '6/6', result: 'PASS' },
+  { inspector: 'Nasrin Akter',     dealer: 'DLR-017', date: '2025-01-13', score: '5/6', result: 'CONDITIONAL' },
+  { inspector: 'Rahim Uddin',      dealer: 'DLR-088', date: '2025-01-13', score: '2/6', result: 'FAIL' },
+  { inspector: 'Fatema Begum',     dealer: 'DLR-031', date: '2025-01-12', score: '6/6', result: 'PASS' },
+  { inspector: 'Jamal Hossain',    dealer: 'DLR-055', date: '2025-01-12', score: '4/6', result: 'CONDITIONAL' },
+  { inspector: 'Sumaiya Islam',    dealer: 'DLR-009', date: '2025-01-11', score: '6/6', result: 'PASS' },
+  { inspector: 'Mizanur Rahman',   dealer: 'DLR-072', date: '2025-01-11', score: '1/6', result: 'FAIL' },
+  { inspector: 'Roksana Khatun',   dealer: 'DLR-064', date: '2025-01-10', score: '6/6', result: 'PASS' },
+];
+
+const INSPECTORS = [
+  { name: 'Karim Hossain',  districts: 'Dhaka, Narayanganj', pending: 3 },
+  { name: 'Nasrin Akter',   districts: 'Chattogram',          pending: 5 },
+  { name: 'Jamal Hossain',  districts: 'Rajshahi, Natore',   pending: 2 },
+];
+
+function submitInspection() {
+  const name = document.getElementById('inspectorName').value.trim();
+  const dealer = document.getElementById('dealerCode').value.trim();
+  const result = document.getElementById('resultSelect').value;
+  if (!name || !dealer || !result) {
+    OMS.toast('Please fill all required fields before submitting.', 'warning');
+    return;
+  }
+  const badge = result === 'PASS' ? 'badge-success' : result === 'FAIL' ? 'badge-danger' : 'badge-warning';
+  const tbody = document.getElementById('insp-table-body');
+  tbody.insertAdjacentHTML('afterbegin', `<tr>
+    <td>${name}</td>
+    <td style="font-family:monospace;font-size:12px">${dealer}</td>
+    <td>${new Date().toISOString().slice(0,10)}</td>
+    <td><span id="newScore" style="color:var(--accent)"></span></td>
+    <td><span class="badge ${badge}">${result}</span></td>
+    <td><button class="btn btn-sm btn-ghost" onclick="OMS.toast('Loading inspection report...','info')">View</button></td>
+  </tr>`);
+  document.getElementById('newScore').textContent = document.getElementById('checkScore').textContent;
+  OMS.toast(`Inspection report submitted for ${dealer}. Result: ${result}`, result === 'PASS' ? 'success' : result === 'FAIL' ? 'error' : 'warning');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  OMS.init();
+  document.getElementById('topbar').outerHTML = OMS.buildTopbar('inspection');
+  document.getElementById('sidebar-placeholder').outerHTML = OMS.buildSidebar('inspection');
+
+  // Set today's date
+  document.getElementById('inspDate').value = new Date().toISOString().slice(0,10);
+
+  setTimeout(() => {
+    OMS.countUp(document.getElementById('kpi-total'), 247, 900);
+    OMS.countUp(document.getElementById('kpi-passed'), 198, 800);
+    OMS.countUp(document.getElementById('kpi-failed'), 31, 600);
+    OMS.countUp(document.getElementById('kpi-pending'), 18, 600);
+  }, 300);
+
+  // Checklist score
+  document.querySelectorAll('.chk-item').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const total = document.querySelectorAll('.chk-item').length;
+      const checked = document.querySelectorAll('.chk-item:checked').length;
+      document.getElementById('checkScore').textContent = `${checked}/${total}`;
+    });
+  });
+
+  // Inspection table
+  const tbody = document.getElementById('insp-table-body');
+  SAMPLE_INSPECTIONS.forEach(ins => {
+    const bc = ins.result === 'PASS' ? 'badge-success' : ins.result === 'FAIL' ? 'badge-danger' : 'badge-warning';
+    tbody.insertAdjacentHTML('beforeend', `<tr>
+      <td>${ins.inspector}</td>
+      <td style="font-family:monospace;font-size:12px">${ins.dealer}</td>
+      <td class="text-muted">${ins.date}</td>
+      <td style="color:var(--accent);font-weight:600">${ins.score}</td>
+      <td><span class="badge ${bc}">${ins.result}</span></td>
+      <td><button class="btn btn-sm btn-ghost" onclick="OMS.toast('Opening report for ${ins.dealer}...','info')">View</button></td>
+    </tr>`);
+  });
+
+  // Inspector list
+  const list = document.getElementById('inspector-list');
+  INSPECTORS.forEach(ins => {
+    list.insertAdjacentHTML('beforeend', `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg-elevated);border-radius:8px;border:1px solid var(--border)">
+        <div>
+          <div style="font-weight:500">${ins.name}</div>
+          <div class="text-muted" style="font-size:12px">📍 ${ins.districts}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:600;color:var(--warning)">${ins.pending}</div>
+          <div class="text-muted" style="font-size:11px">pending</div>
+        </div>
+      </div>`);
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Distribution — OMS National Food Control</title>
+  <script src="oms-shared.js"></script>
+  <style>
+    .face-scan-box {
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: var(--bg-elevated);
+      animation: borderPulse 2s infinite;
+      gap: 10px;
+      transition: all .3s ease;
+      user-select: none;
+    }
+    .face-scan-box:hover { background: #1a2f1a; }
+    .face-scan-box.verified {
+      border-color: var(--accent);
+      background: rgba(34,197,94,.08);
+      animation: none;
+    }
+    @keyframes borderPulse {
+      0%, 100% { border-color: var(--accent); box-shadow: 0 0 0 0 rgba(34,197,94,.2); }
+      50% { border-color: #166534; box-shadow: 0 0 0 8px rgba(34,197,94,.0); }
+    }
+    .scan-icon { font-size: 40px; }
+    .sync-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .sync-dot.online { background: var(--accent); animation: pulse 1.5s infinite; }
+    .sync-dot.offline { background: var(--danger); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  </style>
+</head>
+<body>
+<div id="topbar"></div>
+<div id="sidebar-placeholder"></div>
+<div class="main-content">
+
+  <div class="page-header">
+    <h1 class="page-header__title">Food Distribution</h1>
+    <p class="page-header__sub">Real-time biometric verification &amp; transaction processing</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns:3fr 2fr;gap:20px;align-items:start">
+
+    <!-- Left column -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Distribution Verification</h2>
+          <span class="badge badge-success" id="session-status">Session Active</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <div class="form-group">
+            <label class="form-label">Beneficiary Code</label>
+            <input class="form-control" id="benef-code" placeholder="Enter beneficiary code e.g. BNF-001" oninput="lookupBeneficiary(this.value)">
+          </div>
+
+          <!-- Face scan -->
+          <div class="form-group">
+            <label class="form-label">Biometric Verification</label>
+            <div class="face-scan-box" id="faceScanBox" onclick="simulateFaceScan()">
+              <span class="scan-icon" id="scanIcon">🔍</span>
+              <span id="scanText" style="font-size:14px;color:var(--text-muted)">Click to Simulate Face Scan</span>
+              <span style="font-size:11px;color:var(--text-muted)" id="scanSub">Position face within the frame</span>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Product Type</label>
+              <select class="form-control" id="productType">
+                <option value="Rice">Rice (চাল)</option>
+                <option value="Flour">Flour (আটা)</option>
+                <option value="Oil">Cooking Oil (তেল)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Quantity (kg)</label>
+              <input class="form-control" id="quantity" type="number" value="30" min="1" max="100" placeholder="kg">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Dealer Code</label>
+            <input class="form-control" id="dealer-code" placeholder="Enter dealer code e.g. DLR-001">
+          </div>
+
+          <button class="btn btn-primary w-full btn-lg" onclick="processDistribution()">
+            📦 Process Distribution
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Offline Sync Status</h2>
+          <button class="btn btn-sm btn-secondary" onclick="syncNow()">🔄 Sync Now</button>
+        </div>
+        <div class="grid grid-3" style="gap:12px">
+          <div style="text-align:center;padding:12px;background:var(--bg-elevated);border-radius:8px">
+            <div style="font-size:22px;margin-bottom:4px">
+              <span class="sync-dot online"></span>
+            </div>
+            <div style="font-weight:600;color:var(--accent)">Online</div>
+            <div class="text-muted" style="font-size:12px">Network status</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:var(--bg-elevated);border-radius:8px">
+            <div style="font-size:18px;font-weight:700;color:var(--text-primary)" id="last-sync">Just now</div>
+            <div class="text-muted" style="font-size:12px;margin-top:4px">Last synced</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:var(--bg-elevated);border-radius:8px">
+            <div style="font-size:18px;font-weight:700;color:var(--warning)" id="pending-queue">0</div>
+            <div class="text-muted" style="font-size:12px;margin-top:4px">Pending queue</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right column -->
+    <div class="card" style="position:sticky;top:20px">
+      <div class="card__header">
+        <h2 class="card__title">Live Transaction Feed</h2>
+        <span class="badge badge-success" style="display:flex;align-items:center;gap:5px">
+          <span class="sync-dot online" style="width:7px;height:7px"></span>LIVE
+        </span>
+      </div>
+      <div class="table-wrapper" style="max-height:500px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>TXN ID</th>
+              <th>Beneficiary</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Status</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="live-feed-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+let verified = false;
+
+function simulateFaceScan() {
+  const box = document.getElementById('faceScanBox');
+  const icon = document.getElementById('scanIcon');
+  const text = document.getElementById('scanText');
+  const sub = document.getElementById('scanSub');
+
+  if (verified) return;
+  icon.textContent = '⏳';
+  text.textContent = 'Scanning...';
+  sub.textContent = 'Please hold still';
+
+  setTimeout(() => {
+    verified = true;
+    box.classList.add('verified');
+    icon.textContent = '✅';
+    text.textContent = 'Identity Verified';
+    text.style.color = 'var(--accent)';
+    sub.textContent = 'Biometric match: 98.4% confidence';
+    OMS.toast('Face scan successful. Identity confirmed.', 'success');
+  }, 1800);
+}
+
+function lookupBeneficiary(code) {
+  if (code.length >= 5) {
+    const b = OMS.sampleBeneficiaries[Math.floor(Math.random() * OMS.sampleBeneficiaries.length)];
+    document.getElementById('quantity').value = b.monthlyQuotaKg;
+    OMS.toast(`Beneficiary found: ${b.name}. Quota: ${b.monthlyQuotaKg}kg`, 'info');
+  }
+}
+
+function processDistribution() {
+  if (!verified) {
+    OMS.toast('Biometric verification required before processing.', 'warning');
+    return;
+  }
+  const txnId = 'TXN-' + Date.now();
+  const product = document.getElementById('productType').value;
+  const qty = document.getElementById('quantity').value;
+  OMS.toast(`Distribution recorded: ${txnId} | ${product} ${qty}kg`, 'success');
+
+  // Reset face scan
+  verified = false;
+  const box = document.getElementById('faceScanBox');
+  box.classList.remove('verified');
+  document.getElementById('scanIcon').textContent = '🔍';
+  document.getElementById('scanText').textContent = 'Click to Simulate Face Scan';
+  document.getElementById('scanText').style.color = '';
+  document.getElementById('scanSub').textContent = 'Position face within the frame';
+
+  // Prepend to live feed
+  const tbody = document.getElementById('live-feed-body');
+  const now = new Date().toLocaleTimeString('en-BD', {hour:'2-digit',minute:'2-digit'});
+  tbody.insertAdjacentHTML('afterbegin', `<tr>
+    <td style="font-family:monospace;font-size:11px">${txnId.slice(-12)}</td>
+    <td class="text-muted">Just scanned</td>
+    <td>${product}</td>
+    <td>${qty}kg</td>
+    <td><span class="badge badge-success">ACCEPTED</span></td>
+    <td class="text-muted" style="font-size:12px">${now}</td>
+  </tr>`);
+}
+
+function syncNow() {
+  document.getElementById('last-sync').textContent = 'Syncing...';
+  setTimeout(() => {
+    document.getElementById('last-sync').textContent = 'Just now';
+    document.getElementById('pending-queue').textContent = '0';
+    OMS.toast('All transactions synced to central server.', 'success');
+  }, 1500);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  OMS.init();
+  document.getElementById('topbar').outerHTML = OMS.buildTopbar('distribution');
+  document.getElementById('sidebar-placeholder').outerHTML = OMS.buildSidebar('distribution');
+
+  const tbody = document.getElementById('live-feed-body');
+  OMS.sampleTransactions.forEach(tx => {
+    const bc = tx.status === 'ACCEPTED' ? 'badge-success' : tx.status === 'BLOCKED' ? 'badge-danger' : 'badge-warning';
+    const time = new Date(tx.createdAt).toLocaleTimeString('en-BD', {hour:'2-digit',minute:'2-digit'});
+    tbody.insertAdjacentHTML('beforeend', `<tr>
+      <td style="font-family:monospace;font-size:11px">${tx.txnId.slice(-10)}</td>
+      <td class="truncate" style="max-width:100px">${tx.beneficiaryName}</td>
+      <td>${tx.productType}</td>
+      <td>${tx.quantityKg}kg</td>
+      <td><span class="badge ${bc}">${tx.status}</span></td>
+      <td class="text-muted" style="font-size:12px">${time}</td>
+    </tr>`);
+  });
+});
+</script>
+</body>
+</html>

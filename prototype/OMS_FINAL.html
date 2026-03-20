@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMS National Food Control — Complete Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-base: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-elevated: #273549;
+      --border: #334155;
+      --accent: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --text-primary: #f1f5f9;
+      --text-muted: #94a3b8;
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font); font-size: 14px; }
+
+    /* Layout */
+    .shell { display: flex; height: 100vh; flex-direction: column; }
+    .topbar {
+      height: 56px; background: var(--bg-surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; z-index: 100;
+    }
+    .topbar__brand { display: flex; align-items: center; gap: 10px; }
+    .topbar__logo { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .topbar__title { font-weight: 700; font-size: 15px; }
+    .topbar__sub { font-size: 11px; color: var(--text-muted); }
+    .topbar__right { display: flex; align-items: center; gap: 14px; }
+    .clock { font-family: monospace; font-size: 13px; color: var(--accent); }
+
+    .body-row { display: flex; flex: 1; overflow: hidden; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px; background: var(--bg-surface); border-right: 1px solid var(--border);
+      padding: 16px 0; flex-shrink: 0; overflow-y: auto;
+    }
+    .sidebar__section { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--text-muted); padding: 8px 16px; margin-top: 8px; }
+    .sidebar__link {
+      display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text-muted);
+      text-decoration: none; transition: all .15s; font-size: 13px;
+    }
+    .sidebar__link:hover { color: var(--text-primary); background: var(--bg-elevated); }
+    .sidebar__link.active { color: var(--accent); background: rgba(34,197,94,.08); border-left: 3px solid var(--accent); padding-left: 13px; }
+
+    /* Main */
+    .main { flex: 1; overflow-y: auto; padding: 24px; background: var(--bg-base); }
+
+    /* Cards */
+    .card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .card__header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card__title { font-size: 14px; font-weight: 600; }
+    .card__body { padding: 16px 20px; }
+
+    /* Stat cards */
+    .stat-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; }
+    .stat-card__icon { font-size: 24px; width: 44px; height: 44px; background: var(--bg-elevated); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .stat-card__label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+    .stat-card__value { font-size: 24px; font-weight: 700; line-height: 1; }
+    .stat-card__change { font-size: 12px; margin-top: 4px; color: var(--text-muted); }
+
+    /* Grid */
+    .grid { display: grid; gap: 16px; }
+    .grid-2 { grid-template-columns: repeat(2,1fr); }
+    .grid-3 { grid-template-columns: repeat(3,1fr); }
+    .grid-4 { grid-template-columns: repeat(4,1fr); }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(51,65,85,.5); font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(39,53,73,.5); }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .badge-success { background: rgba(34,197,94,.15); color: #4ade80; }
+    .badge-danger  { background: rgba(239,68,68,.15);  color: #f87171; }
+    .badge-warning { background: rgba(245,158,11,.15); color: #fbbf24; }
+    .badge-info    { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .badge-muted   { background: rgba(148,163,184,.1); color: var(--text-muted); }
+
+    /* Quick stats bar */
+    .stats-bar { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; display: flex; gap: 0; overflow-x: auto; }
+    .stats-bar__item { flex: 1; text-align: center; min-width: 100px; padding: 0 16px; border-right: 1px solid var(--border); }
+    .stats-bar__item:last-child { border-right: none; }
+    .stats-bar__val { font-size: 20px; font-weight: 700; }
+    .stats-bar__lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: all .15s; text-decoration: none; }
+    .btn-primary { background: var(--accent); color: #0a1628; }
+    .btn-primary:hover { background: #16a34a; }
+    .btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* Footer */
+    .footer { background: var(--bg-surface); border-top: 1px solid var(--border); padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+
+    /* Utility */
+    .mt-16 { margin-top: 16px; }
+    .mt-20 { margin-top: 20px; }
+    .text-accent { color: var(--accent); }
+    .text-muted { color: var(--text-muted); }
+    .text-danger { color: var(--danger); }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .gap-12 { gap: 12px; }
+    .font-mono { font-family: monospace; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar__brand">
+      <div class="topbar__logo">🌾</div>
+      <div>
+        <div class="topbar__title">OMS National Control Platform</div>
+        <div class="topbar__sub">Ministry of Food, Bangladesh</div>
+      </div>
+    </div>
+    <div class="clock" id="clock">--:--:-- BDT</div>
+    <div class="topbar__right">
+      <span class="badge badge-info">ADMIN</span>
+      <span style="color:var(--text-muted);font-size:13px">Md. Rahim Uddin</span>
+      <button class="btn btn-secondary btn-sm">→ Logout</button>
+    </div>
+  </header>
+
+  <div class="body-row">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar__section">Modules</div>
+      <a href="#" class="sidebar__link active">📊 <span>Dashboard</span></a>
+      <a href="#" class="sidebar__link">🏢 <span>Offices &amp; Programs</span></a>
+      <a href="#" class="sidebar__link">🏪 <span>Dealer Management</span></a>
+      <a href="#" class="sidebar__link">👥 <span>Beneficiaries</span></a>
+      <a href="#" class="sidebar__link">📦 <span>Distribution</span></a>
+      <a href="#" class="sidebar__link">🔍 <span>Field Inspection</span></a>
+      <a href="#" class="sidebar__link">📈 <span>Analytics</span></a>
+      <a href="#" class="sidebar__link">🔔 <span>Notifications</span></a>
+      <a href="#" class="sidebar__link">🔒 <span>Audit Trail</span></a>
+      <div class="sidebar__section" style="margin-top:16px">System</div>
+      <a href="#" class="sidebar__link">⚙️ <span>Settings</span></a>
+      <a href="#" class="sidebar__link">👤 <span>Profile</span></a>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main">
+
+      <!-- KPI Cards -->
+      <div class="grid grid-4">
+        <div class="stat-card">
+          <div class="stat-card__icon">👥</div>
+          <div>
+            <div class="stat-card__label">Total Beneficiaries</div>
+            <div class="stat-card__value text-accent" id="v-benef">0</div>
+            <div class="stat-card__change">▲ +2.3% this month</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon">🏪</div>
+          <div>
+            <div class="stat-card__label">Active Dealers</div>
+            <div class="stat-card__value" id="v-dealers">0</div>
+            <div class="stat-card__change text-accent">▲ +12 this week</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon">📦</div>
+          <div>
+            <div class="stat-card__label">Distributions Today</div>
+            <div class="stat-card__value" id="v-distrib">0</div>
+            <div class="stat-card__change text-accent">▲ 94.2% success</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon">✅</div>
+          <div>
+            <div class="stat-card__label">Compliance Rate</div>
+            <div class="stat-card__value text-accent" id="v-compliance">0%</div>
+            <div class="stat-card__change text-danger">▼ -0.4% last week</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick stats bar -->
+      <div class="stats-bar mt-16">
+        <div class="stats-bar__item">
+          <div class="stats-bar__val text-accent">1.2M</div>
+          <div class="stats-bar__lbl">Total Distributions</div>
+        </div>
+        <div class="stats-bar__item">
+          <div class="stats-bar__val" style="color:var(--warning)">2.3%</div>
+          <div class="stats-bar__lbl">Leakage Detected</div>
+        </div>
+        <div class="stats-bar__item">
+          <div class="stats-bar__val">8</div>
+          <div class="stats-bar__lbl">Divisions</div>
+        </div>
+        <div class="stats-bar__item">
+          <div class="stats-bar__val">495</div>
+          <div class="stats-bar__lbl">Upazilas</div>
+        </div>
+        <div class="stats-bar__item">
+          <div class="stats-bar__val text-accent">91.4%</div>
+          <div class="stats-bar__lbl">Forecast Accuracy</div>
+        </div>
+        <div class="stats-bar__item">
+          <div class="stats-bar__val" style="color:var(--danger)">7</div>
+          <div class="stats-bar__lbl">Risk Alerts</div>
+        </div>
+      </div>
+
+      <!-- Distribution feed + 2 summary cards -->
+      <div class="grid mt-20" style="grid-template-columns:2fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card__header">
+            <span class="card__title">Live Distribution Feed</span>
+            <span class="badge badge-success" style="display:flex;align-items:center;gap:5px">
+              <span style="width:7px;height:7px;background:var(--accent);border-radius:50%;display:inline-block;animation:p 1.5s infinite"></span>LIVE
+            </span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>TXN ID</th><th>Dealer</th><th>Beneficiary</th><th>Product</th><th>Qty</th><th>Status</th><th>Time</th></tr>
+              </thead>
+              <tbody id="feed-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <!-- Dealer summary -->
+          <div class="card">
+            <div class="card__header"><span class="card__title">Dealer Status</span></div>
+            <div class="card__body" style="padding:12px 20px">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span>Active</span>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:80px;height:6px;background:var(--bg-elevated);border-radius:3px">
+                      <div style="width:71%;height:6px;background:var(--accent);border-radius:3px"></div>
+                    </div>
+                    <span class="text-accent" style="font-weight:700;min-width:36px">892</span>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span>Suspended</span>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:80px;height:6px;background:var(--bg-elevated);border-radius:3px">
+                      <div style="width:10%;height:6px;background:var(--danger);border-radius:3px"></div>
+                    </div>
+                    <span class="text-danger" style="font-weight:700;min-width:36px">124</span>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span>Pending</span>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:80px;height:6px;background:var(--bg-elevated);border-radius:3px">
+                      <div style="width:19%;height:6px;background:var(--warning);border-radius:3px"></div>
+                    </div>
+                    <span style="color:var(--warning);font-weight:700;min-width:36px">231</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Beneficiary breakdown -->
+          <div class="card">
+            <div class="card__header"><span class="card__title">Beneficiary Categories</span></div>
+            <div class="card__body" style="padding:12px 20px">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between"><span>VGD — Vulnerable Group Dev</span><span class="badge badge-info">21,000</span></div>
+                <div style="display:flex;justify-content:space-between"><span>FFP — Food for Progress</span><span class="badge badge-success">12,400</span></div>
+                <div style="display:flex;justify-content:space-between"><span>VGF — Vulnerable Group Feed</span><span class="badge badge-warning">8,200</span></div>
+                <div style="display:flex;justify-content:space-between"><span>TR — Test Relief</span><span class="badge badge-muted">3,630</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>OMS National Food Control Platform — Ministry of Food, Bangladesh</span>
+    <span>Version 2.4.1 &nbsp;|&nbsp; Last sync: <span id="last-sync">Just now</span> &nbsp;|&nbsp; <span class="text-accent">● Online</span></span>
+  </footer>
+
+</div>
+
+<style>@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}</style>
+
+<script>
+const TX_DATA = [
+  {txnId:'TXN-9981244',dealer:'Al-Amin Store',beneficiary:'Fatema Begum',product:'Rice',qty:30,method:'FACE',status:'ACCEPTED',ts:Date.now()-120000},
+  {txnId:'TXN-9981239',dealer:'Hossain Depot',beneficiary:'Rahima Khatun',product:'Flour',qty:25,method:'FACE',status:'ACCEPTED',ts:Date.now()-240000},
+  {txnId:'TXN-9981235',dealer:'Karim Traders',beneficiary:'Mosharef Ali',product:'Rice',qty:35,method:'FINGERPRINT',status:'EXCEPTION',ts:Date.now()-360000},
+  {txnId:'TXN-9981230',dealer:'Rahim Foods',beneficiary:'Sufia Begum',product:'Rice',qty:30,method:'FACE',status:'BLOCKED',ts:Date.now()-480000},
+  {txnId:'TXN-9981225',dealer:'National Store',beneficiary:'Jamal Uddin',product:'Oil',qty:2,method:'FACE',status:'ACCEPTED',ts:Date.now()-600000},
+  {txnId:'TXN-9981220',dealer:'Metro Depot',beneficiary:'Roksana Islam',product:'Rice',qty:30,method:'FACE',status:'ACCEPTED',ts:Date.now()-720000},
+];
+
+function countUp(el, target, dur) {
+  let v = 0; const step = target / (dur/16);
+  const t = setInterval(() => { v+=step; if(v>=target){v=target;clearInterval(t);} el.textContent=Math.floor(v).toLocaleString(); }, 16);
+}
+
+// Clock
+function tick() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-BD',{hour12:false}) + ' BDT';
+}
+tick(); setInterval(tick, 1000);
+
+// KPIs
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    countUp(document.getElementById('v-benef'), 45230, 1200);
+    countUp(document.getElementById('v-dealers'), 892, 1000);
+    countUp(document.getElementById('v-distrib'), 3847, 1100);
+    let cv=0;const ct=942,cd=1100,cs=ct/(cd/16);
+    const cTimer=setInterval(()=>{cv+=cs;if(cv>=ct){cv=ct;clearInterval(cTimer);}document.getElementById('v-compliance').textContent=(cv/10).toFixed(1)+'%';},16);
+  }, 300);
+
+  const tbody = document.getElementById('feed-body');
+  TX_DATA.forEach(tx => {
+    const bc = tx.status==='ACCEPTED'?'badge-success':tx.status==='BLOCKED'?'badge-danger':'badge-warning';
+    const t = new Date(tx.ts).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+    tbody.insertAdjacentHTML('beforeend',`<tr>
+      <td class="font-mono" style="font-size:11px">${tx.txnId}</td>
+      <td class="truncate" style="max-width:110px">${tx.dealer}</td>
+      <td class="truncate" style="max-width:110px">${tx.beneficiary}</td>
+      <td>${tx.product}</td>
+      <td>${tx.qty}kg</td>
+      <td><span class="badge ${bc}">${tx.status}</span></td>
+      <td class="text-muted" style="font-size:12px">${t}</td>
+    </tr>`);
+  });
+});
+</script>
+</body>
+</html>

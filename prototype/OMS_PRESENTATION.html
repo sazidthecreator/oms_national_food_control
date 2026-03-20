@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMS National Food Control — Strategic Presentation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f172a; --surface: #1e293b; --elevated: #273549;
+      --border: #334155; --accent: #22c55e; --danger: #ef4444;
+      --warning: #f59e0b; --info: #3b82f6; --purple: #8b5cf6;
+      --text: #f1f5f9; --muted: #94a3b8;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+
+    /* Nav dots */
+    .nav-dots { position: fixed; right: 20px; top: 50%; transform: translateY(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+    .nav-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); cursor: pointer; transition: all .25s; border: 2px solid transparent; }
+    .nav-dot:hover, .nav-dot.active { background: var(--accent); border-color: rgba(34,197,94,.4); transform: scale(1.3); }
+
+    /* Sections */
+    section { min-height: 100vh; padding: 60px 80px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    section + section { border-top: 1px solid var(--border); }
+
+    /* SLIDE 1: Cover */
+    .slide-cover { background: radial-gradient(ellipse at 60% 40%, rgba(34,197,94,.08) 0%, transparent 60%), var(--bg); flex-direction: column; text-align: center; gap: 24px; }
+    .slide-cover .logo-badge { width: 90px; height: 90px; background: linear-gradient(135deg, var(--accent), #16a34a); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 44px; margin: 0 auto; box-shadow: 0 0 60px rgba(34,197,94,.3); }
+    .slide-cover h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.1; }
+    .slide-cover h1 .accent { color: var(--accent); }
+    .slide-cover .tagline { font-size: 1.3rem; color: var(--muted); max-width: 600px; }
+    .version-badge { display: inline-block; background: rgba(34,197,94,.15); color: var(--accent); border: 1px solid rgba(34,197,94,.3); border-radius: 20px; padding: 6px 16px; font-size: 13px; font-weight: 600; }
+    .ministry-tag { color: var(--muted); font-size: 14px; }
+
+    /* SLIDE 2: Problems */
+    .slide-problem .problem-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; width: 100%; max-width: 1100px; }
+    .problem-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center; transition: transform .2s; }
+    .problem-card:hover { transform: translateY(-4px); }
+    .problem-card .icon { font-size: 48px; margin-bottom: 16px; }
+    .problem-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--danger); }
+    .problem-card p { color: var(--muted); line-height: 1.6; font-size: 14px; }
+    .problem-card .stat { font-size: 2rem; font-weight: 800; color: var(--danger); margin-top: 16px; }
+
+    /* Section headers */
+    .section-content { width: 100%; max-width: 1100px; }
+    .section-header { margin-bottom: 40px; }
+    .section-header .slide-num { font-size: 11px; font-weight: 700; letter-spacing: .15em; color: var(--accent); margin-bottom: 8px; }
+    .section-header h2 { font-size: 2.2rem; font-weight: 800; line-height: 1.2; }
+    .section-header p { color: var(--muted); font-size: 15px; margin-top: 10px; }
+
+    /* SLIDE 3: Solution */
+    .arch-diagram { display: flex; align-items: center; gap: 0; flex-wrap: wrap; justify-content: center; margin-bottom: 32px; }
+    .arch-box { background: var(--elevated); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; text-align: center; min-width: 120px; }
+    .arch-box .arch-icon { font-size: 22px; margin-bottom: 6px; }
+    .arch-box .arch-label { font-size: 12px; font-weight: 600; }
+    .arch-arrow { color: var(--accent); font-size: 22px; padding: 0 8px; }
+    .modules-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .module-chip { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--elevated); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+    /* SLIDE 4: Stats */
+    .slide-stats { background: radial-gradient(ellipse at 30% 50%, rgba(59,130,246,.06) 0%, transparent 60%), var(--bg); flex-direction: column; }
+    .big-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 32px; width: 100%; max-width: 1100px; }
+    .big-stat { text-align: center; }
+    .big-stat .num { font-size: 4rem; font-weight: 800; line-height: 1; }
+    .big-stat .lbl { color: var(--muted); font-size: 14px; margin-top: 8px; }
+    .big-stat .sublbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* SLIDE 5: Modules */
+    .modules-showcase { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .mod-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: all .2s; }
+    .mod-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .mod-card .mod-icon { font-size: 32px; margin-bottom: 12px; }
+    .mod-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .mod-card p { color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+    /* SLIDE 6: Tech Architecture */
+    .tech-layers { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 900px; }
+    .tech-layer { display: flex; align-items: center; gap: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 24px; }
+    .tech-layer__num { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #0a1628; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; }
+    .tech-layer__name { font-weight: 700; min-width: 160px; }
+    .tech-layer__desc { color: var(--muted); font-size: 13px; }
+    .tech-layer__tags { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+    .tag { background: var(--elevated); color: var(--muted); border-radius: 4px; padding: 2px 8px; font-size: 11px; border: 1px solid var(--border); white-space: nowrap; }
+
+    /* SLIDE 7: Impact */
+    .impact-table { width: 100%; border-collapse: collapse; }
+    .impact-table th { padding: 12px 16px; text-align: left; background: var(--elevated); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .impact-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .impact-table tr:last-child td { border-bottom: none; }
+    .before { color: var(--danger); }
+    .after { color: var(--accent); font-weight: 600; }
+
+    /* SLIDE 8: Roadmap */
+    .roadmap { display: flex; gap: 0; width: 100%; max-width: 1000px; }
+    .phase { flex: 1; position: relative; padding: 20px 16px 20px 20px; }
+    .phase:not(:last-child)::after { content:'→'; position:absolute; right:-10px; top:50%; transform:translateY(-50%); color:var(--accent); font-size:20px; z-index:1; }
+    .phase__num { font-size: 11px; font-weight: 700; letter-spacing: .1em; margin-bottom: 8px; }
+    .phase__title { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+    .phase__period { font-size: 12px; margin-bottom: 12px; }
+    .phase__items { display: flex; flex-direction: column; gap: 6px; }
+    .phase__item { font-size: 12px; color: var(--muted); display: flex; gap: 6px; }
+    .phase__item::before { content:'•'; color: var(--accent); flex-shrink: 0; }
+    .phase-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; height: 100%; padding: 20px; }
+
+    /* SLIDE 9: CTA */
+    .slide-cta { background: radial-gradient(ellipse at 50% 50%, rgba(34,197,94,.1) 0%, transparent 60%), var(--bg); flex-direction: column; text-align: center; gap: 32px; }
+    .cta-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; width: 100%; max-width: 800px; }
+    .cta-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .btn-accent { display: inline-block; background: var(--accent); color: #0a1628; font-weight: 700; font-size: 15px; padding: 14px 32px; border-radius: 10px; border: none; cursor: pointer; text-decoration: none; transition: all .2s; }
+    .btn-accent:hover { background: #16a34a; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(34,197,94,.3); }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .bs { background: rgba(34,197,94,.15); color: #4ade80; }
+    .bw { background: rgba(245,158,11,.15); color: #fbbf24; }
+    .bi { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .bd { background: rgba(239,68,68,.15); color: #f87171; }
+    .bp { background: rgba(139,92,246,.15); color: #a78bfa; }
+
+    /* Responsive guard */
+    @media(max-width: 900px) {
+      section { padding: 40px 24px; }
+      .big-stats, .slide-problem .problem-cards, .modules-showcase { grid-template-columns: repeat(2,1fr); }
+      .roadmap { flex-direction: column; }
+      h1 { font-size: 2rem !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navigation dots -->
+<div class="nav-dots" id="navDots"></div>
+
+<!-- SLIDE 1: Cover -->
+<section class="slide-cover" id="s1" data-title="Cover">
+  <div class="logo-badge">🌾</div>
+  <div>
+    <h1>OMS <span class="accent">National</span><br>Food Control</h1>
+  </div>
+  <div class="tagline">Eliminating Food Aid Fraud Through Technology — Ensuring Every Kilogram Reaches Its Rightful Beneficiary</div>
+  <div style="display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap">
+    <span class="ministry-tag">🇧🇩 Ministry of Food, Government of Bangladesh</span>
+    <span class="version-badge">Version 2.4 — Jan 2025</span>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <span class="badge bs">● Live System</span>
+    <span class="badge bi">45,230 Beneficiaries</span>
+    <span class="badge bp">892 Active Dealers</span>
+    <span class="badge bw">4 Programs</span>
+  </div>
+</section>
+
+<!-- SLIDE 2: Problem Statement -->
+<section id="s2" data-title="Problem" style="flex-direction:column">
+  <div class="section-content">
+    <div class="section-header text-center" style="text-align:center">
+      <div class="slide-num">02 — PROBLEM STATEMENT</div>
+      <h2>Challenges in Traditional Food Aid Distribution</h2>
+      <p>Bangladesh distributes food aid to millions of vulnerable citizens — but without technology, the system is riddled with inefficiencies.</p>
+    </div>
+    <div class="problem-cards">
+      <div class="problem-card">
+        <div class="icon">👻</div>
+        <h3>Ghost Beneficiaries</h3>
+        <p>Deceased, duplicate, or fabricated beneficiary registrations receive rations without any physical presence or biometric verification.</p>
+        <div class="stat">~8.4%</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:4px">estimated ghost entries</div>
+      </div>
+      <div class="problem-card">
+        <div class="icon">🏪</div>
+        <h3>Dealer Fraud</h3>
+        <p>Unscrupulous dealers under-distribute food, sell on the black market, collude with fake beneficiaries, and falsify distribution records.</p>
+        <div class="stat">~4.1%</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:4px">verified leakage rate</div>
+      </div>
+      <div class="problem-card">
+        <div class="icon">📝</div>
+        <h3>Manual Record-Keeping</h3>
+        <p>Paper-based registers are easily manipulated, lost, or destroyed. No real-time visibility into distributions, stock levels, or beneficiary status.</p>
+        <div class="stat">72 hrs</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:4px">average reporting lag</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 3: Solution Overview -->
+<section id="s3" data-title="Solution" style="flex-direction:column">
+  <div class="section-content">
+    <div class="section-header">
+      <div class="slide-num">03 — SOLUTION OVERVIEW</div>
+      <h2>Integrated Digital Platform Architecture</h2>
+      <p>A unified platform combining biometric verification, real-time tracking, and blockchain audit to eliminate fraud at every layer.</p>
+    </div>
+    <div class="arch-diagram">
+      <div class="arch-box"><div class="arch-icon">📱</div><div class="arch-label">Dealer App</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="border-color:var(--accent)"><div class="arch-icon">🔐</div><div class="arch-label">Biometric Auth</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box"><div class="arch-icon">☁️</div><div class="arch-label">API Gateway</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box"><div class="arch-icon">⚙️</div><div class="arch-label">Core Services</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box"><div class="arch-icon">🗄️</div><div class="arch-label">Secure DB</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="border-color:var(--purple)"><div class="arch-icon">🔒</div><div class="arch-label">Blockchain Audit</div></div>
+    </div>
+    <div class="modules-grid">
+      <div class="module-chip">📊 <span><strong>Dashboard</strong> — National overview</span></div>
+      <div class="module-chip">🏢 <span><strong>Offices</strong> — Admin hierarchy</span></div>
+      <div class="module-chip">🏪 <span><strong>Dealers</strong> — License management</span></div>
+      <div class="module-chip">👥 <span><strong>Beneficiaries</strong> — Enrollment &amp; quotas</span></div>
+      <div class="module-chip">📦 <span><strong>Distribution</strong> — Real-time processing</span></div>
+      <div class="module-chip">🔍 <span><strong>Inspection</strong> — Field compliance</span></div>
+      <div class="module-chip">📈 <span><strong>Analytics</strong> — ML-driven insights</span></div>
+      <div class="module-chip">🔔 <span><strong>SMS Alerts</strong> — Bulk notifications</span></div>
+      <div class="module-chip">🔒 <span><strong>Audit Trail</strong> — Immutable log</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 4: Key Statistics -->
+<section id="s4" class="slide-stats" data-title="Statistics">
+  <div class="section-content" style="display:flex;flex-direction:column;align-items:center;gap:48px">
+    <div class="section-header text-center" style="text-align:center;margin-bottom:0">
+      <div class="slide-num">04 — KEY STATISTICS</div>
+      <h2>Platform Impact at a Glance</h2>
+    </div>
+    <div class="big-stats">
+      <div class="big-stat">
+        <div class="num" style="color:var(--accent)" id="pv1">0</div>
+        <div class="lbl">Registered Beneficiaries</div>
+        <div class="sublbl">Across 4 programs</div>
+      </div>
+      <div class="big-stat">
+        <div class="num" id="pv2">0</div>
+        <div class="lbl">Active Dealers</div>
+        <div class="sublbl">Licensed distributors</div>
+      </div>
+      <div class="big-stat">
+        <div class="num" style="color:var(--accent)" id="pv3">0%</div>
+        <div class="lbl">Compliance Rate</div>
+        <div class="sublbl">System-wide</div>
+      </div>
+      <div class="big-stat">
+        <div class="num" style="color:var(--warning)" id="pv4">0%</div>
+        <div class="lbl">Leakage Detected</div>
+        <div class="sublbl">Down from 4.1%</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center">
+      <span class="badge bs">1.2M Total Distributions</span>
+      <span class="badge bi">91.4% Forecast Accuracy</span>
+      <span class="badge bp">4,892 Distribution Centers</span>
+      <span class="badge bw">495 Upazilas Covered</span>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 5: Module Showcase -->
+<section id="s5" data-title="Modules" style="flex-direction:column">
+  <div class="section-content">
+    <div class="section-header">
+      <div class="slide-num">05 — MODULE SHOWCASE</div>
+      <h2>Nine Integrated Modules</h2>
+      <p>Each module is purpose-built for a specific function, fully integrated through shared services and real-time data.</p>
+    </div>
+    <div class="modules-showcase">
+      <div class="mod-card">
+        <div class="mod-icon">📊</div>
+        <h3>National Dashboard</h3>
+        <p>Real-time KPIs, live distribution feed, and program overview for national-level monitoring and quick action.</p>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">🏢</div>
+        <h3>Offices &amp; Programs</h3>
+        <p>Manages the full administrative hierarchy from National HQ to 4,892 distribution centers across 495 upazilas.</p>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">🏪</div>
+        <h3>Dealer Management</h3>
+        <p>License registration, compliance scoring, suspension workflows, and field visit scheduling for all 1,247 dealers.</p>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">👥</div>
+        <h3>Beneficiary Registry</h3>
+        <p>Enroll beneficiaries with biometric capture, assign quotas by category (Widow/Elderly/Poor/Disabled), and manage eligibility.</p>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">📦</div>
+        <h3>Food Distribution</h3>
+        <p>Biometric identity verification at point-of-distribution with real-time transaction recording and offline sync capability.</p>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">🔍</div>
+        <h3>Field Inspection</h3>
+        <p>6-point compliance checklist, inspector assignment, automated scoring, and instant report submission from the field.</p>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">📈</div>
+        <h3>Analytics &amp; Intelligence</h3>
+        <p>ML-driven demand forecasting, anomaly detection, leakage alerts, and program-wise performance breakdowns.</p>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">🔔</div>
+        <h3>SMS Notifications</h3>
+        <p>Bulk Bengali-language messaging to beneficiaries and dealers. Pre-built templates, scheduling, and 95%+ delivery rate.</p>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">🔒</div>
+        <h3>Audit Trail</h3>
+        <p>Blockchain-style immutable event log with cryptographic hash chaining. Every action recorded, tamper-proof and exportable.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 6: Technical Architecture -->
+<section id="s6" data-title="Architecture" style="flex-direction:column">
+  <div class="section-content" style="display:flex;flex-direction:column;align-items:center">
+    <div class="section-header" style="text-align:center;margin-bottom:40px">
+      <div class="slide-num">06 — TECHNICAL ARCHITECTURE</div>
+      <h2>Five-Layer Platform Stack</h2>
+      <p>Enterprise-grade, cloud-native architecture designed for scale and security.</p>
+    </div>
+    <div class="tech-layers">
+      <div class="tech-layer" style="border-color:rgba(34,197,94,.4)">
+        <div class="tech-layer__num" style="background:var(--accent)">1</div>
+        <div class="tech-layer__name">Frontend Layer</div>
+        <div class="tech-layer__desc">Responsive web application with offline PWA support for field operations</div>
+        <div class="tech-layer__tags">
+          <span class="tag">HTML5</span><span class="tag">JavaScript</span><span class="tag">PWA</span><span class="tag">WebRTC (Biometric)</span>
+        </div>
+      </div>
+      <div class="tech-layer" style="border-color:rgba(59,130,246,.4)">
+        <div class="tech-layer__num" style="background:var(--info)">2</div>
+        <div class="tech-layer__name">API Gateway</div>
+        <div class="tech-layer__desc">JWT-secured REST APIs with rate limiting, request routing, and audit logging middleware</div>
+        <div class="tech-layer__tags">
+          <span class="tag">REST API</span><span class="tag">JWT Auth</span><span class="tag">TLS 1.3</span><span class="tag">Rate Limiting</span>
+        </div>
+      </div>
+      <div class="tech-layer" style="border-color:rgba(245,158,11,.4)">
+        <div class="tech-layer__num" style="background:var(--warning)">3</div>
+        <div class="tech-layer__name">Microservices</div>
+        <div class="tech-layer__desc">Domain-specific services for distribution, beneficiaries, dealers, analytics, and notifications</div>
+        <div class="tech-layer__tags">
+          <span class="tag">Docker</span><span class="tag">Node.js</span><span class="tag">Message Queue</span><span class="tag">ML Service</span>
+        </div>
+      </div>
+      <div class="tech-layer" style="border-color:rgba(139,92,246,.4)">
+        <div class="tech-layer__num" style="background:var(--purple)">4</div>
+        <div class="tech-layer__name">Database Layer</div>
+        <div class="tech-layer__desc">Encrypted relational store for operational data with time-series for analytics and caching</div>
+        <div class="tech-layer__tags">
+          <span class="tag">PostgreSQL</span><span class="tag">Redis</span><span class="tag">TimescaleDB</span><span class="tag">AES-256</span>
+        </div>
+      </div>
+      <div class="tech-layer" style="border-color:rgba(239,68,68,.4)">
+        <div class="tech-layer__num" style="background:var(--danger)">5</div>
+        <div class="tech-layer__name">Blockchain Audit</div>
+        <div class="tech-layer__desc">Cryptographically linked event blocks ensuring tamper-proof, immutable record of all system transactions</div>
+        <div class="tech-layer__tags">
+          <span class="tag">SHA-256 Hash Chain</span><span class="tag">Merkle Tree</span><span class="tag">Digital Signatures</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 7: Impact Metrics -->
+<section id="s7" data-title="Impact" style="flex-direction:column">
+  <div class="section-content">
+    <div class="section-header">
+      <div class="slide-num">07 — IMPACT METRICS</div>
+      <h2>Before &amp; After Implementation</h2>
+      <p>Measurable improvements across all key program performance indicators.</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <table class="impact-table">
+        <thead>
+          <tr>
+            <th style="width:30%">Metric</th>
+            <th>Before (Manual)</th>
+            <th>After (OMS Platform)</th>
+            <th>Improvement</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Leakage Rate</td><td class="before">4.1%</td><td class="after">2.3%</td><td><span style="color:var(--accent)">▼ 44% reduction</span></td></tr>
+          <tr><td>Distribution Time</td><td class="before">8–12 min/beneficiary</td><td class="after">45 sec/beneficiary</td><td><span style="color:var(--accent)">▼ 91% faster</span></td></tr>
+          <tr><td>Reporting Lag</td><td class="before">72 hours</td><td class="after">Real-time</td><td><span style="color:var(--accent)">▼ 100% eliminated</span></td></tr>
+          <tr><td>Ghost Beneficiaries</td><td class="before">~8.4% of rolls</td><td class="after">0.2% (biometric verified)</td><td><span style="color:var(--accent)">▼ 97.6% eliminated</span></td></tr>
+          <tr><td>Compliance Score</td><td class="before">62% average</td><td class="after">94.2% average</td><td><span style="color:var(--accent)">▲ 51.9% improvement</span></td></tr>
+          <tr><td>Cost per Beneficiary</td><td class="before">BDT 42 / month</td><td class="after">BDT 31 / month</td><td><span style="color:var(--accent)">▼ 26% savings</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px">
+      <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:20px;text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:var(--accent)">BDT 4.2 Cr</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">Annual cost savings</div>
+      </div>
+      <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:20px;text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:var(--info)">97.6%</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">Fraud reduction rate</div>
+      </div>
+      <div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:20px;text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:var(--purple)">1.2M</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">Verified distributions</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 8: Roadmap -->
+<section id="s8" data-title="Roadmap" style="flex-direction:column">
+  <div class="section-content">
+    <div class="section-header">
+      <div class="slide-num">08 — IMPLEMENTATION ROADMAP</div>
+      <h2>Four-Phase National Rollout</h2>
+      <p>Phased implementation ensures stability, feedback incorporation, and full national coverage by Q4 2025.</p>
+    </div>
+    <div class="roadmap">
+      <div class="phase">
+        <div class="phase-card" style="border-color:rgba(34,197,94,.4)">
+          <div class="phase__num" style="color:var(--accent)">PHASE 1 ✅</div>
+          <div class="phase__title">Pilot Program</div>
+          <div class="phase__period" style="color:var(--accent)">Q1 2024 — Completed</div>
+          <div class="phase__items">
+            <div class="phase__item">3 districts, 500 dealers</div>
+            <div class="phase__item">Biometric enrollment</div>
+            <div class="phase__item">Core distribution flow</div>
+            <div class="phase__item">Audit trail setup</div>
+          </div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-card" style="border-color:rgba(59,130,246,.4)">
+          <div class="phase__num" style="color:var(--info)">PHASE 2 ✅</div>
+          <div class="phase__title">Division Rollout</div>
+          <div class="phase__period" style="color:var(--info)">Q2–Q3 2024 — Completed</div>
+          <div class="phase__items">
+            <div class="phase__item">8 divisions, all districts</div>
+            <div class="phase__item">SMS notification system</div>
+            <div class="phase__item">Analytics dashboard</div>
+            <div class="phase__item">Inspector mobile app</div>
+          </div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-card" style="border-color:rgba(245,158,11,.4)">
+          <div class="phase__num" style="color:var(--warning)">PHASE 3 🔄</div>
+          <div class="phase__title">Full National</div>
+          <div class="phase__period" style="color:var(--warning)">Q4 2024 — In Progress</div>
+          <div class="phase__items">
+            <div class="phase__item">All 495 upazilas live</div>
+            <div class="phase__item">4,892 centers online</div>
+            <div class="phase__item">Offline sync rollout</div>
+            <div class="phase__item">Blockchain hardening</div>
+          </div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-card" style="border-color:rgba(139,92,246,.4)">
+          <div class="phase__num" style="color:var(--purple)">PHASE 4 📋</div>
+          <div class="phase__title">AI Analytics</div>
+          <div class="phase__period" style="color:var(--purple)">Q2 2025 — Planned</div>
+          <div class="phase__items">
+            <div class="phase__item">ML fraud detection v2</div>
+            <div class="phase__item">Predictive forecasting</div>
+            <div class="phase__item">Auto inspector routing</div>
+            <div class="phase__item">Cross-ministry integration</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 9: Call to Action -->
+<section id="s9" class="slide-cta" data-title="Next Steps">
+  <div class="section-header" style="text-align:center;margin-bottom:0">
+    <div class="slide-num" style="text-align:center">09 — NEXT STEPS</div>
+    <h2>Ready to Transform Food Aid in Bangladesh</h2>
+    <p style="color:var(--muted);max-width:600px;margin:0 auto">OMS National Food Control is live, proven, and ready for full-scale operation. Request a demo or schedule a technical review with our team.</p>
+  </div>
+  <div class="cta-cards">
+    <div class="cta-card">
+      <div style="font-size:32px;margin-bottom:12px">📧</div>
+      <div style="font-weight:700;margin-bottom:6px">Email</div>
+      <div style="color:var(--accent);font-size:13px">oms@mofood.gov.bd</div>
+    </div>
+    <div class="cta-card" style="border-color:var(--accent)">
+      <div style="font-size:32px;margin-bottom:12px">📱</div>
+      <div style="font-weight:700;margin-bottom:6px">Hotline</div>
+      <div style="color:var(--accent);font-size:13px">16-OMS (16-667)</div>
+    </div>
+    <div class="cta-card">
+      <div style="font-size:32px;margin-bottom:12px">🌐</div>
+      <div style="font-weight:700;margin-bottom:6px">Web Portal</div>
+      <div style="color:var(--accent);font-size:13px">oms.mofood.gov.bd</div>
+    </div>
+  </div>
+  <a href="#s1" class="btn-accent">🚀 Request Live Demo</a>
+  <div style="color:var(--muted);font-size:12px">Ministry of Food, Government of the People's Republic of Bangladesh &nbsp;|&nbsp; Secretariat, Dhaka-1000</div>
+</section>
+
+<script>
+// Build nav dots
+const sections = document.querySelectorAll('section[id]');
+const dotsContainer = document.getElementById('navDots');
+sections.forEach((sec, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+  dot.title = sec.dataset.title || '';
+  dot.addEventListener('click', () => sec.scrollIntoView({behavior:'smooth'}));
+  dotsContainer.appendChild(dot);
+});
+
+// Update active dot on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && e.intersectionRatio > 0.5) {
+      const idx = Array.from(sections).indexOf(e.target);
+      document.querySelectorAll('.nav-dot').forEach((d,i) => d.classList.toggle('active', i===idx));
+    }
+  });
+}, { threshold: 0.5 });
+sections.forEach(s => observer.observe(s));
+
+// Count-up for slide 4
+function countUp(el, target, dur, suffix='') {
+  let v=0; const step=target/(dur/16);
+  const t=setInterval(()=>{v+=step;if(v>=target){v=target;clearInterval(t);}
+    el.textContent=Math.floor(v).toLocaleString()+suffix;},16);
+}
+function countUpFloat(el, target, dur, suffix='') {
+  let v=0; const step=target/(dur/16);
+  const t=setInterval(()=>{v+=step;if(v>=target){v=target;clearInterval(t);}
+    el.textContent=v.toFixed(1)+suffix;},16);
+}
+
+const slide4Observer = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting) {
+    countUp(document.getElementById('pv1'), 45230, 1200);
+    countUp(document.getElementById('pv2'), 892, 1000);
+    countUpFloat(document.getElementById('pv3'), 94.2, 1100, '%');
+    countUpFloat(document.getElementById('pv4'), 2.3, 900, '%');
+    slide4Observer.disconnect();
+  }
+}, {threshold: 0.4});
+slide4Observer.observe(document.getElementById('s4'));
+</script>
+</body>
+</html>
