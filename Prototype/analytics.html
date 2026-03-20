@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics — OMS National Control Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast-container"></div>
+
+<script>
+const leakageData = [
+  {period:'Feb 18',pct:42,height:90},{period:'Feb 22',pct:36,height:78},
+  {period:'Feb 26',pct:30,height:65},{period:'Mar 1',pct:25,height:54},
+  {period:'Mar 5',pct:19,height:42},{period:'Mar 10',pct:13,height:30},
+  {period:'Mar 15',pct:10,height:22},{period:'Mar 18',pct:8.5,height:18},
+  {period:'Mar 20',pct:7.8,height:16}
+];
+const divisionData = [
+  {name:'Dhaka',     actual:1240000, forecast:1340000, change:'+8%',  action:'Increase by 100T'},
+  {name:'Chittagong',actual:980000,  forecast:1020000, change:'+4%',  action:'Increase by 40T'},
+  {name:'Sylhet',    actual:420000,  forecast:380000,  change:'-10%', action:'Reduce 40T (Boro harvest)'},
+  {name:'Rajshahi',  actual:670000,  forecast:720000,  change:'+7%',  action:'Increase by 50T'},
+  {name:'Khulna',    actual:510000,  forecast:530000,  change:'+4%',  action:'Maintain current levels'},
+  {name:'Barisal',   actual:290000,  forecast:305000,  change:'+5%',  action:'Minor increase'],},
+  {name:'Rangpur',   actual:380000,  forecast:370000,  change:'-3%',  action:'Slight reduction'},
+  {name:'Mymensingh',actual:320000,  forecast:345000,  change:'+8%',  action:'Increase by 25T'},
+];
+const dealerRiskData = [
+  {id:'DLR-0058',name:'Khan Food Point',score:88,risk:'HIGH',factors:['94% late-night','Device shared','3 anomalies']},
+  {id:'DLR-0052',name:'Ali Distribution',score:62,risk:'MEDIUM',factors:['Quota fast exhaustion','2 complaints']},
+  {id:'DLR-0039',name:'Karim Depot',score:45,risk:'MEDIUM',factors:['Extended offline periods','Slow sync']},
+  {id:'DLR-0041',name:'Rahman Center',score:8,risk:'LOW',factors:['Excellent compliance']},
+  {id:'DLR-0061',name:'Hossain Agro',score:0,risk:'N/A',factors:['Not yet active']},
+];
+const anomalies = [
+  {level:'HIGH',  dealer:'Khan Food Point (DLR-0058)',  desc:'94% of transactions between 18:00–23:00. Expected operating hours: 08:00–16:00.',  detected:'02:17'},
+  {level:'MEDIUM',dealer:'Ali Distribution (DLR-0052)', desc:'Quota exhaustion 40% faster than February baseline. Possible bulk diversion.',        detected:'06:30'},
+  {level:'MEDIUM',dealer:'DEVICE-XYZ-002',              desc:'Same device used under 2 different dealer accounts within 45-minute window.',          detected:'07:55'},
+  {level:'LOW',   dealer:'Karim Depot (DLR-0039)',       desc:'Unusual 3-hour offline period during peak distribution time.',                         detected:'11:20'},
+];
+
+document.getElementById('root').innerHTML = `
+  ${OMS.getSharedCSS()}
+  <style>
+    .chart-bar{flex:1;border-radius:3px 3px 0 0;position:relative;cursor:pointer;transition:opacity .2s;min-width:20px}
+    .chart-bar:hover{opacity:.8}
+    .chart-bar .tip{position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:var(--slate-900);color:white;font-size:9px;padding:3px 6px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;font-family:var(--font-mono)}
+    .chart-bar:hover .tip{opacity:1}
+    .anom-card{padding:11px 13px;border-radius:var(--r-sm);margin-bottom:8px;cursor:pointer;transition:all .15s}
+    .anom-card:hover{transform:translateX(3px)}
+    .a-hi{background:var(--red-100);border-left:3px solid var(--red-500)}
+    .a-md{background:var(--amber-100);border-left:3px solid var(--amber-500)}
+    .a-lo{background:var(--blue-050);border-left:3px solid var(--blue-400)}
+    .risk-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px}
+    .risk-hi{background:var(--red-100);color:var(--red-600)}
+    .risk-md{background:var(--amber-100);color:var(--amber-600)}
+    .risk-lo{background:var(--green-100);color:var(--green-600)}
+    .risk-na{background:var(--slate-100);color:var(--slate-500)}
+    .level-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+    .level-1{background:var(--teal-100);color:var(--teal-600)}
+    .level-2{background:var(--blue-100);color:var(--ink-500)}
+    .level-3{background:#EDE9FE;color:#6D28D9}
+  </style>
+
+  ${OMS.buildTopbar('analytics')}
+  <div class="d-layout">
+    ${OMS.buildSidebar('analytics')}
+    <div class="d-main">
+      <div class="dph">
+        <div>
+          <div class="dph-t">Analytics & Intelligence</div>
+          <div class="dph-s">Descriptive → Diagnostic → Predictive · March 2026</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <select class="fs" style="font-size:11px;padding:5px 10px;width:auto">
+            <option>March 2026</option><option>February 2026</option><option>January 2026</option>
+          </select>
+          <button class="btn btn-p" onclick="OMS.toast('📊 Analytics report exported','success')">📤 Export</button>
+        </div>
+      </div>
+
+      <!-- Level badges -->
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <span class="level-badge level-1">L1 DESCRIPTIVE — Active</span>
+        <span class="level-badge level-2">L2 DIAGNOSTIC — Active</span>
+        <span class="level-badge level-3">L3 PREDICTIVE — Preview</span>
+      </div>
+
+      <!-- KPI Metrics -->
+      <div class="dm-grid mb14">
+        <div class="dm-card mc-t"><div class="dm-icon">📉</div><div class="dm-lbl">Leakage Rate</div><div class="dm-val">7.8%</div><div class="dm-trend">↓ from 42% pre-system</div></div>
+        <div class="dm-card mc-g"><div class="dm-icon">💰</div><div class="dm-lbl">Monthly Savings Est.</div><div class="dm-val">$4.8M</div><div class="dm-trend">40% leakage reduction</div></div>
+        <div class="dm-card mc-b"><div class="dm-icon">🏪</div><div class="dm-lbl">Anomalies Detected</div><div class="dm-val" data-count="4">0</div><div class="dm-trend">2 high priority</div></div>
+        <div class="dm-card mc-a"><div class="dm-icon">🔮</div><div class="dm-lbl">Forecast Accuracy</div><div class="dm-val">91%</div><div class="dm-trend">vs actual last month</div></div>
+      </div>
+
+      <!-- Row 1: Leakage chart + Anomalies -->
+      <div class="g2 mb14">
+        <div class="dc">
+          <div class="dct">📉 Leakage Reduction Trend — 30 Days</div>
+          <div style="display:flex;align-items:flex-end;gap:6px;height:110px;padding:0 4px 0;margin-bottom:8px">
+            ${leakageData.map(d=>{
+              const col = d.pct>30?'#FCA5A5':d.pct>15?'#FDE68A':d.pct>10?'#6EE7B7':'#14B8A6';
+              return `<div class="chart-bar" style="height:${d.height}%;background:${col}">
+                <div class="tip">${d.period}: ${d.pct}%</div></div>`;
+            }).join('')}
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;padding-top:6px;border-top:1px solid var(--border-l)">
+            <span>Pre-system: <strong style="color:var(--red-500)">~42%</strong></span>
+            <span>Current: <strong style="color:var(--teal-500)">~7.8%</strong></span>
+            <span>Reduction: <strong style="color:var(--green-600)">↓ 34.2%</strong></span>
+          </div>
+          <div style="margin-top:12px;padding:10px 12px;background:var(--teal-050);border-radius:var(--r-sm);border:1px solid var(--teal-100)">
+            <div style="font-size:11px;font-weight:700;color:var(--teal-600);margin-bottom:3px">SYSTEM IMPACT</div>
+            <div style="font-size:12px;color:var(--teal-600)">At current rate: <strong>$48–60M</strong> annual leakage prevented. ROI > 300% on platform investment.</div>
+          </div>
+        </div>
+
+        <div class="dc">
+          <div class="dct">🚨 Active Anomalies <span id="anom-badge" style="margin-left:auto;background:var(--red-100);color:var(--red-600);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700">4 ACTIVE</span></div>
+          ${anomalies.map(a=>{
+            const cls = a.level==='HIGH'?'a-hi':a.level==='MEDIUM'?'a-md':'a-lo';
+            const badge = a.level==='HIGH'?'br':a.level==='MEDIUM'?'by':'bb';
+            return `<div class="anom-card ${cls}" onclick="OMS.toast('🔎 Investigating: ${a.dealer}','warning')">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+                <div style="font-size:11.5px;font-weight:700;color:var(--slate-900)">${a.dealer}</div>
+                <div style="display:flex;gap:5px;align-items:center">
+                  <span class="b ${badge}">${a.level}</span>
+                  <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">${a.detected}</span>
+                </div>
+              </div>
+              <div style="font-size:11px;color:var(--slate-600);line-height:1.5">${a.desc}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Row 2: Dealer risk + Daily distribution -->
+      <div class="g2 mb14">
+        <div class="dc">
+          <div class="dct">⚠️ Dealer Risk Scoring <span style="margin-left:auto;font-size:10px;color:var(--text-muted)">L2 Diagnostic</span></div>
+          <table class="dt">
+            <thead><tr><th>Dealer</th><th>Risk Score</th><th>Level</th><th>Key Factors</th></tr></thead>
+            <tbody>
+              ${dealerRiskData.map(d=>`
+                <tr>
+                  <td><strong>${d.name}</strong><br><span class="mono">${d.id}</span></td>
+                  <td style="font-family:var(--font-mono);font-weight:700;color:${d.score>70?'var(--red-600)':d.score>40?'var(--amber-600)':'var(--green-600)'}">${d.score}/100</td>
+                  <td><span class="risk-badge ${d.risk==='HIGH'?'risk-hi':d.risk==='MEDIUM'?'risk-md':d.risk==='N/A'?'risk-na':'risk-lo'}">${d.risk}</span></td>
+                  <td style="font-size:11px;color:var(--text-muted)">${d.factors.join(' · ')}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="dc">
+          <div class="dct">📊 Distribution by Category — This Month</div>
+          ${[
+            ['widow','Widows',42,35],['elderly','Elderly',28,24],
+            ['poor_family','Poor Families',19,18],['disabled','Disabled',11,9]
+          ].map(([k,label,pct,quota])=>`
+            <div style="margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+                <span style="font-weight:600;color:var(--text-primary)">${label}</span>
+                <span style="color:var(--text-muted)">${pct}% of distributions · ${quota}% of quotas used</span>
+              </div>
+              <div style="height:8px;background:var(--slate-100);border-radius:4px;overflow:hidden">
+                <div data-w="${pct}" style="width:0;height:100%;background:linear-gradient(90deg,var(--teal-500),var(--blue-400));border-radius:4px;transition:width 1.2s ease"></div>
+              </div>
+            </div>`).join('')}
+          <div style="padding-top:10px;border-top:1px solid var(--border-l);font-size:11px;color:var(--text-muted)">
+            Total beneficiaries served this month: <strong style="color:var(--ink-500)">12,634</strong> of 12,840 enrolled
+          </div>
+        </div>
+      </div>
+
+      <!-- Demand Forecast Table -->
+      <div class="dc mb14">
+        <div class="dct">🔮 Demand Forecast — April 2026 <span style="margin-left:auto;font-size:10px;color:#6D28D9;background:#EDE9FE;padding:1px 7px;border-radius:8px;font-weight:600">L3 PREDICTIVE</span></div>
+        <table class="dt">
+          <thead><tr><th>Division</th><th>Population</th><th>March Actual (kg)</th><th>April Forecast</th><th>Change</th><th>Confidence</th><th>Recommendation</th></tr></thead>
+          <tbody>
+            ${divisionData.map(d=>{
+              const isUp = d.change.startsWith('+');
+              const changeCls = isUp?'by':'bg';
+              return `<tr>
+                <td><strong>${d.name}</strong></td>
+                <td style="font-size:11px;color:var(--text-muted)">${Math.floor(Math.random()*500+300)},000</td>
+                <td style="font-family:var(--font-mono)">${d.actual.toLocaleString()}</td>
+                <td style="font-family:var(--font-mono);font-weight:700">${d.forecast.toLocaleString()}</td>
+                <td><span class="b ${changeCls}">${d.change}</span></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:5px">
+                    <div style="width:40px;height:4px;background:var(--slate-100);border-radius:2px;overflow:hidden">
+                      <div style="height:100%;width:${80+Math.floor(Math.random()*18)}%;background:var(--teal-500);border-radius:2px"></div>
+                    </div>
+                    <span style="font-size:11px;font-weight:600;color:var(--teal-600)">${80+Math.floor(Math.random()*18)}%</span>
+                  </div>
+                </td>
+                <td style="font-size:11px;color:var(--teal-600);font-weight:600">${d.action}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Analytics Maturity -->
+      <div class="dc">
+        <div class="dct">📈 Analytics Maturity Roadmap</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+          ${[
+            {level:'Level 1',name:'Descriptive',status:'active',color:'var(--teal-500)',items:['Daily transaction volume','Dealer compliance bars','Region distribution map','Exception rates']},
+            {level:'Level 2',name:'Diagnostic',status:'active',color:'var(--blue-400)',items:['Anomaly detection (live)','Late-night pattern alerts','Device sharing detection','Risk scoring']},
+            {level:'Level 3',name:'Predictive',status:'preview',color:'#8B5CF6',items:['Demand forecasting (✓)','Shortage prediction','Poverty correlation','Dealer risk ML model']},
+          ].map(l=>`
+            <div style="padding:16px;border-radius:var(--r-md);border:1.5px solid ${l.color}22;background:${l.color}08">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:${l.color};font-family:var(--font-mono);letter-spacing:1px">${l.level.toUpperCase()}</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text-primary)">${l.name}</div>
+                </div>
+                <span class="b ${l.status==='active'?'bg':'bs'}">${l.status}</span>
+              </div>
+              ${l.items.map(i=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);padding:3px 0">
+                <span style="color:${l.color};font-size:11px">✓</span>${i}</div>`).join('')}
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+OMS.init();
+</script>
+</body>
+</html>

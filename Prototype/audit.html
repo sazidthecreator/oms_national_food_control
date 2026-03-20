@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Log — OMS National Control Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast-container"></div>
+
+<!-- Audit Detail Modal -->
+<div class="modal-overlay" id="modal-audit-detail">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hdr">
+      <div class="modal-title" id="audit-modal-title">Audit Event Detail</div>
+      <button class="modal-close" onclick="OMS.closeModal('modal-audit-detail')">✕</button>
+    </div>
+    <div id="audit-modal-body"></div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="modal-export">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-hdr">
+      <div class="modal-title">📤 Export Audit Log</div>
+      <button class="modal-close" onclick="OMS.closeModal('modal-export')">✕</button>
+    </div>
+    <div class="fg"><label class="fl">Date Range</label>
+      <select class="fs">
+        <option>Today (20 March 2026)</option>
+        <option>This week</option>
+        <option>This month (March 2026)</option>
+        <option>Custom range</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Action Types</label>
+      <select class="fs">
+        <option>All actions</option>
+        <option>Transactions only</option>
+        <option>Admin actions only</option>
+        <option>Security events only</option>
+        <option>Anomalies only</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Format</label>
+      <select class="fs">
+        <option>CSV (spreadsheet)</option>
+        <option>PDF (official report)</option>
+        <option>JSON (system integration)</option>
+      </select>
+    </div>
+    <div class="al al-i mb14"><span class="al-ic">ℹ️</span><div>All exports are logged in the audit trail itself. Exporting records does not modify the original data.</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="OMS.closeModal('modal-export')">Cancel</button>
+      <button class="btn btn-p" style="flex:2" onclick="doExport()">📤 Generate Export</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const allAuditLogs = [
+  { code:'AUD-1710870000-101', action:'distribute',       entity:'TXN-20260320-7001', entityType:'transaction', user:'Rahman OMS Center', device:'DEVICE-ABC-001', result:'success',  time:'09:41:02', ip:'192.168.1.42',  detail:{ben:'Amina Khatun (BEN-10021)',product:'5kg Rice',face:'97.7%',dealer:'DLR-0041'} },
+  { code:'AUD-1710870000-102', action:'block_duplicate',  entity:'DUPLICATE_ATTEMPT', entityType:'transaction', user:'Mirpur Center',      device:'DEVICE-DEF-002', result:'blocked',  time:'09:38:45', ip:'10.0.0.15',     detail:{ben:'Mohammad Ali (BEN-10045)',reason:'Already collected 07:23',attempt:2} },
+  { code:'AUD-1710870000-099', action:'exception_raised', entity:'EXC-20260320-034',  entityType:'exception',   user:'Karim Depot',       device:'DEVICE-GHI-003', result:'review',   time:'09:33:07', ip:'172.16.0.8',    detail:{ben:'Jabbar Mia (BEN-10102)',faceScore:'68%',reason:'Face uncertain'} },
+  { code:'AUD-1710870000-098', action:'offline_sync',     entity:'BATCH-23-KARIM',   entityType:'sync',        user:'System/SyncEngine', device:'DEVICE-GHI-003', result:'synced',   time:'09:34:02', ip:'172.16.0.8',    detail:{count:23,conflicts:1,duration:'0.8s'} },
+  { code:'AUD-1710870000-096', action:'anomaly_flag',     entity:'DLR-0058',         entityType:'dealer',      user:'Analytics Engine',  device:'SYSTEM',         result:'flagged',  time:'02:17:44', ip:'127.0.0.1',     detail:{pattern:'94% late-night',threshold:'20%',riskScore:88} },
+  { code:'AUD-1710870000-095', action:'login',            entity:'USR-001',          entityType:'user',        user:'Admin User',        device:'BROWSER',        result:'success',  time:'08:00:00', ip:'203.0.113.1',   detail:{role:'super_user',office:'DHK-DIV-001'} },
+  { code:'AUD-1710870000-094', action:'approve_dealer',   entity:'DLR-0041',         entityType:'dealer',      user:'District Officer',  device:'BROWSER',        result:'success',  time:'07:45:00', ip:'203.0.113.2',   detail:{prevStatus:'pending',newStatus:'approved',by:'Md. Rafiqul Islam'} },
+  { code:'AUD-1710870000-093', action:'enroll_beneficiary',entity:'BEN-10156',       entityType:'beneficiary', user:'Beneficiary Officer',device:'BROWSER',       result:'success',  time:'07:30:00', ip:'10.0.1.5',      detail:{name:'Salma Khanom',category:'widow',quota:'10kg/month'} },
+  { code:'AUD-1710870000-090', action:'suspend_dealer',   entity:'DLR-0058',         entityType:'dealer',      user:'District Officer',  device:'BROWSER',        result:'success',  time:'07:00:00', ip:'203.0.113.2',   detail:{reason:'Anomalous transaction pattern',duration:'pending investigation'} },
+  { code:'AUD-1710870000-088', action:'distribute',       entity:'TXN-20260320-6998',entityType:'transaction', user:'Karim Depot',       device:'DEVICE-GHI-003', result:'success',  time:'09:36:18', ip:'172.16.0.8',    detail:{ben:'Rina Begum (BEN-10087)',product:'3kg Flour',face:'94.1%',dealer:'DLR-0039'} },
+  { code:'AUD-1710870000-085', action:'export_audit',     entity:'EXPORT-2026-001',  entityType:'system',      user:'Admin User',        device:'BROWSER',        result:'success',  time:'06:00:00', ip:'203.0.113.1',   detail:{range:'March 1-19',format:'CSV',records:4821} },
+  { code:'AUD-1710870000-081', action:'config_change',    entity:'PROG-OMS-REG-2026',entityType:'program',     user:'Super User',        device:'BROWSER',        result:'success',  time:'05:30:00', ip:'203.0.113.1',   detail:{field:'daily_limit_kg',old:'4',new:'5',reason:'Policy update'} },
+];
+
+const actionColors = {
+  distribute:       {cls:'bg',label:'distribute'},
+  block_duplicate:  {cls:'br',label:'block_dup'},
+  exception_raised: {cls:'by',label:'exception'},
+  offline_sync:     {cls:'bt',label:'sync'},
+  anomaly_flag:     {cls:'br',label:'anomaly'},
+  login:            {cls:'bb',label:'login'},
+  approve_dealer:   {cls:'bg',label:'approve'},
+  enroll_beneficiary:{cls:'bg',label:'enroll'},
+  suspend_dealer:   {cls:'br',label:'suspend'},
+  export_audit:     {cls:'bs',label:'export'},
+  config_change:    {cls:'by',label:'config'},
+};
+
+const resultColors = {success:'bg',blocked:'br',synced:'bt',review:'by',flagged:'br'};
+
+let filterAction = 'all';
+let filterResult = 'all';
+let searchText = '';
+
+document.getElementById('root').innerHTML = `
+  ${OMS.getSharedCSS()}
+  <style>
+    .audit-row{cursor:pointer;transition:background .12s}
+    .audit-row:hover td{background:var(--blue-050)!important}
+    .integrity-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-050);border:1px solid #BBF7D0;border-radius:var(--r-sm);padding:4px 10px;font-size:11px;font-weight:600;color:var(--green-600)}
+  </style>
+
+  ${OMS.buildTopbar('audit')}
+  <div class="d-layout">
+    ${OMS.buildSidebar('audit')}
+    <div class="d-main">
+      <div class="dph">
+        <div>
+          <div class="dph-t">Audit Trail</div>
+          <div class="dph-s">Tamper-evident append-only log · No UPDATE or DELETE permitted at DB level</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <div class="integrity-badge">🔒 Integrity: Verified</div>
+          <button class="btn btn-p" onclick="OMS.openModal('modal-export')">📤 Export</button>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="dm-grid mb14">
+        <div class="dm-card mc-b"><div class="dm-icon">📋</div><div class="dm-lbl">Total Events Today</div><div class="dm-val" data-count="4821">0</div><div class="dm-trend">Since midnight</div></div>
+        <div class="dm-card mc-t"><div class="dm-icon">✅</div><div class="dm-lbl">Successful Actions</div><div class="dm-val" data-count="4721">0</div><div class="dm-trend">97.9% success rate</div></div>
+        <div class="dm-card mc-a"><div class="dm-icon">🚫</div><div class="dm-lbl">Blocked/Flagged</div><div class="dm-val" data-count="49">0</div><div class="dm-trend">Duplicates + anomalies</div></div>
+        <div class="dm-card mc-g"><div class="dm-icon">🔒</div><div class="dm-lbl">Integrity Status</div><div class="dm-val" style="font-size:16px">Verified</div><div class="dm-trend">Hash chain intact</div></div>
+      </div>
+
+      <!-- Filters + integrity notice -->
+      <div class="dc mb14">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input class="fi" id="search-input" placeholder="Search by code, entity, user, or action..." style="flex:1;min-width:200px" oninput="applyFilters()">
+          <select class="fs" id="filter-action" style="width:160px" onchange="applyFilters()">
+            <option value="all">All Actions</option>
+            <option value="distribute">Distribute</option>
+            <option value="block_duplicate">Block Duplicate</option>
+            <option value="exception_raised">Exception</option>
+            <option value="offline_sync">Sync</option>
+            <option value="anomaly_flag">Anomaly</option>
+            <option value="login">Login</option>
+            <option value="approve_dealer">Approve</option>
+          </select>
+          <select class="fs" id="filter-result" style="width:130px" onchange="applyFilters()">
+            <option value="all">All Results</option>
+            <option value="success">Success</option>
+            <option value="blocked">Blocked</option>
+            <option value="flagged">Flagged</option>
+            <option value="review">Review</option>
+          </select>
+          <button class="btn btn-o" onclick="resetFilters()">Reset</button>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:8px">
+          <span>🔒 Append-only table — DB user has INSERT only. No UPDATE or DELETE permitted.</span>
+          <span style="margin-left:auto">Showing: <strong id="showing-count">${allAuditLogs.length}</strong> of ${allAuditLogs.length} events</span>
+        </div>
+      </div>
+
+      <div class="dc">
+        <div class="dct">📋 Audit Events <span id="live-indicator" style="margin-left:auto;background:var(--green-100);color:var(--green-600);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700">● LIVE</span></div>
+        <div style="overflow-x:auto">
+          <table class="dt" id="audit-table">
+            <thead>
+              <tr>
+                <th style="font-family:var(--font-mono)">Audit Code</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th>Type</th>
+                <th>User / Device</th>
+                <th>IP Address</th>
+                <th>Result</th>
+                <th style="font-family:var(--font-mono)">Time</th>
+              </tr>
+            </thead>
+            <tbody id="audit-tbody">
+              ${renderAuditRows(allAuditLogs)}
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-l)">
+          <div style="font-size:11px;color:var(--text-muted)">Records per page: <select class="fs" style="width:70px;padding:3px 6px;font-size:11px"><option>25</option><option>50</option><option>100</option></select></div>
+          <div style="display:flex;gap:5px">
+            <button class="btn btn-o" style="font-size:10px;padding:4px 9px">← Prev</button>
+            <button class="btn btn-p" style="font-size:10px;padding:4px 9px">1</button>
+            <button class="btn btn-o" style="font-size:10px;padding:4px 9px">2</button>
+            <button class="btn btn-o" style="font-size:10px;padding:4px 9px">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+OMS.init();
+
+function renderAuditRows(logs) {
+  return logs.map(log => {
+    const ac = actionColors[log.action] || {cls:'bs',label:log.action};
+    const rc = resultColors[log.result] || 'bs';
+    return `<tr class="audit-row" onclick="viewAuditDetail('${log.code}')">
+      <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">${log.code}</td>
+      <td><span class="b ${ac.cls}">${ac.label}</span></td>
+      <td style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-primary)">${log.entity}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${log.entityType}</td>
+      <td style="font-size:11.5px">
+        <strong>${log.user}</strong>
+        ${log.device !== 'BROWSER' && log.device !== 'SYSTEM' ? `<br><span style="font-family:var(--font-mono);font-size:9.5px;color:var(--text-muted)">${log.device}</span>` : ''}
+      </td>
+      <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">${log.ip}</td>
+      <td><span class="b ${rc}">${log.result}</span></td>
+      <td style="font-family:var(--font-mono);font-size:10.5px">${log.time}</td>
+    </tr>`;
+  }).join('');
+}
+
+function applyFilters() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const action = document.getElementById('filter-action').value;
+  const result = document.getElementById('filter-result').value;
+
+  const filtered = allAuditLogs.filter(log => {
+    const matchSearch = !search || 
+      log.code.toLowerCase().includes(search) ||
+      log.entity.toLowerCase().includes(search) ||
+      log.user.toLowerCase().includes(search) ||
+      log.action.toLowerCase().includes(search);
+    const matchAction = action === 'all' || log.action === action;
+    const matchResult = result === 'all' || log.result === result;
+    return matchSearch && matchAction && matchResult;
+  });
+
+  document.getElementById('audit-tbody').innerHTML = renderAuditRows(filtered);
+  document.getElementById('showing-count').textContent = filtered.length;
+}
+
+function resetFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-action').value = 'all';
+  document.getElementById('filter-result').value = 'all';
+  applyFilters();
+}
+
+function viewAuditDetail(code) {
+  const log = allAuditLogs.find(l=>l.code===code);
+  if (!log) return;
+  const ac = actionColors[log.action] || {cls:'bs',label:log.action};
+  const rc = resultColors[log.result] || 'bs';
+
+  document.getElementById('audit-modal-title').textContent = log.code;
+  document.getElementById('audit-modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px">
+      ${[['Action',`<span class="b ${ac.cls}">${log.action}</span>`],
+         ['Result',`<span class="b ${rc}">${log.result}</span>`],
+         ['Entity Type',log.entityType],
+         ['Entity ID',`<span style="font-family:var(--font-mono);font-size:11px">${log.entity}</span>`],
+         ['User',log.user],
+         ['Device',log.device],
+         ['IP Address',`<span style="font-family:var(--font-mono)">${log.ip}</span>`],
+         ['Timestamp',`<span style="font-family:var(--font-mono)">${log.time}</span>`],
+      ].map(([k,v])=>`
+        <div style="background:var(--slate-050);border-radius:var(--r-sm);padding:8px 10px">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px">${k}</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-primary)">${v}</div>
+        </div>`).join('')}
+    </div>
+
+    <div style="background:var(--slate-050);border-radius:var(--r-sm);padding:12px;margin-bottom:12px;font-family:var(--font-mono);font-size:11px;color:var(--text-primary)">
+      <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">EVENT DETAIL (JSON)</div>
+      <pre style="white-space:pre-wrap;line-height:1.7">${JSON.stringify(log.detail, null, 2)}</pre>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;background:var(--green-050);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:12px">
+      <span>🔒</span>
+      <div style="font-size:11px;font-weight:600;color:var(--green-600)">Hash chain: VERIFIED — This record has not been tampered with</div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="OMS.closeModal('modal-audit-detail')">Close</button>
+      <button class="btn btn-p" style="flex:1" onclick="OMS.toast('📤 Audit event exported','success')">Export Event</button>
+    </div>`;
+  OMS.openModal('modal-audit-detail');
+}
+
+function doExport() {
+  OMS.closeModal('modal-export');
+  OMS.toast('📥 Audit export generated — download starting', 'success');
+  // Simulate CSV download
+  const rows = [
+    ['Audit Code','Action','Entity','Type','User','Device','IP','Result','Time'],
+    ...allAuditLogs.map(l=>[l.code,l.action,l.entity,l.entityType,l.user,l.device,l.ip,l.result,l.time])
+  ];
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='oms-audit-20260320.csv'; a.click();
+}
+
+// Live feed — new audit events every 15s
+let auditCounter = 110;
+setInterval(() => {
+  auditCounter++;
+  const newLog = {
+    code: `AUD-1710870000-${auditCounter}`,
+    action: 'distribute',
+    entity: `TXN-20260320-${7010+auditCounter}`,
+    entityType: 'transaction',
+    user: 'Rahman Center',
+    device: 'DEVICE-ABC-001',
+    result: 'success',
+    time: new Date().toTimeString().slice(0,8),
+    ip: '192.168.1.42',
+    detail: {ben:'Auto-feed item'}
+  };
+  allAuditLogs.unshift(newLog);
+  const tbody = document.getElementById('audit-tbody');
+  if (tbody) {
+    const ac = actionColors[newLog.action];
+    tbody.insertAdjacentHTML('afterbegin', `
+      <tr class="audit-row" style="background:var(--green-050);animation:none" onclick="viewAuditDetail('${newLog.code}')">
+        <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">${newLog.code}</td>
+        <td><span class="b ${ac.cls}">${ac.label}</span></td>
+        <td style="font-family:var(--font-mono);font-size:10.5px">${newLog.entity}</td>
+        <td style="font-size:11px;color:var(--text-muted)">transaction</td>
+        <td style="font-size:11.5px"><strong>${newLog.user}</strong></td>
+        <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">${newLog.ip}</td>
+        <td><span class="b bg">success</span></td>
+        <td style="font-family:var(--font-mono);font-size:10.5px">${newLog.time}</td>
+      </tr>`);
+    while(tbody.children.length > 25) tbody.removeChild(tbody.lastChild);
+  }
+}, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMS National Control Platform — Strategic Presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════ */
+:root{
+  --ink:    #04080F;
+  --ink-2:  #080E1C;
+  --ink-3:  #0C1426;
+  --navy:   #0F2352;
+  --blue:   #1D4ED8;
+  --blue-v: #3B82F6;
+  --teal:   #0D9488;
+  --teal-v: #2DD4BF;
+  --gold:   #D97706;
+  --red:    #EF4444;
+  --green:  #22C55E;
+  --white:  #FFFFFF;
+  --d-hi:   rgba(255,255,255,1);
+  --d-mid:  rgba(255,255,255,.68);
+  --d-low:  rgba(255,255,255,.38);
+  --d-faint:rgba(255,255,255,.10);
+  --border: rgba(255,255,255,.08);
+  --serif:  'Instrument Serif', Georgia, serif;
+  --sans:   'Outfit', system-ui, sans-serif;
+  --mono:   'JetBrains Mono', monospace;
+  --ease-out-expo: cubic-bezier(0.16,1,0.3,1);
+  --ease-spring:   cubic-bezier(0.34,1.56,0.64,1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;font-size:16px;}
+body{
+  font-family:var(--sans);
+  background:var(--ink);
+  color:var(--d-hi);
+  overflow-x:hidden;
+  cursor:none;
+}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:rgba(45,212,191,.4);border-radius:3px;}
+
+/* ═══════════════════════════════════════
+   CUSTOM CURSOR
+═══════════════════════════════════════ */
+#cursor-dot{
+  position:fixed;width:6px;height:6px;border-radius:50%;
+  background:var(--teal-v);pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .15s,height .15s,background .2s;
+  mix-blend-mode:difference;
+}
+#cursor-ring{
+  position:fixed;width:36px;height:36px;border-radius:50%;
+  border:1.5px solid rgba(45,212,191,.5);pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:transform .12s var(--ease-out-expo),width .3s,height .3s,border-color .3s;
+}
+body:hover #cursor-ring{opacity:1;}
+a:hover~#cursor-ring,.btn:hover~#cursor-ring{width:56px;height:56px;}
+
+/* ═══════════════════════════════════════
+   NOISE OVERLAY
+═══════════════════════════════════════ */
+.noise{
+  position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px;
+}
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:60px;
+  transition:background .4s,border-color .4s;
+}
+.nav.scrolled{
+  background:rgba(4,8,15,.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-brand{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.brand-mark{
+  width:36px;height:36px;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.brand-mark svg{width:36px;height:36px;}
+.brand-text{
+  font-family:var(--sans);font-weight:700;font-size:14px;
+  letter-spacing:-.3px;color:var(--white);
+}
+.brand-sub{font-size:10px;color:var(--d-low);letter-spacing:.5px;}
+.nav-links{display:flex;gap:4px;}
+.nav-a{
+  padding:6px 14px;font-size:12px;font-weight:500;
+  color:var(--d-low);border-radius:100px;
+  text-decoration:none;transition:all .2s;letter-spacing:.2px;
+}
+.nav-a:hover{color:var(--white);background:var(--d-faint);}
+.nav-btn{
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  padding:8px 20px;border-radius:100px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--teal),var(--blue));
+  color:white;letter-spacing:.3px;
+  transition:opacity .2s,transform .2s;
+}
+.nav-btn:hover{opacity:.85;transform:scale(1.03);}
+
+/* ═══════════════════════════════════════
+   HERO
+═══════════════════════════════════════ */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;padding:80px 40px;
+}
+
+/* Particle canvas */
+#particle-canvas{position:absolute;inset:0;pointer-events:none;}
+
+/* Gradient mesh */
+.mesh{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 40%,rgba(13,148,136,.12) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 70%,rgba(29,78,216,.14) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 20%,rgba(45,212,191,.06) 0%,transparent 50%);
+  animation:meshMove 20s ease-in-out infinite;
+}
+@keyframes meshMove{
+  0%,100%{filter:blur(0px);}
+  50%{filter:blur(2px);transform:scale(1.02);}
+}
+
+/* Grid */
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(45,212,191,.07) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(45,212,191,.07) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 70% 60% at 50% 50%,black 20%,transparent 100%);
+  animation:gridDrift 30s linear infinite;
+}
+@keyframes gridDrift{from{background-position:0 0}to{background-position:60px 60px}}
+
+.hero-inner{
+  position:relative;z-index:2;
+  text-align:center;max-width:960px;width:100%;
+}
+
+/* Status badge */
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(45,212,191,.08);
+  border:1px solid rgba(45,212,191,.22);
+  border-radius:100px;padding:7px 18px;
+  font-size:11px;font-weight:600;letter-spacing:1.5px;
+  color:var(--teal-v);text-transform:uppercase;
+  margin-bottom:36px;
+  animation:badgeIn .8s var(--ease-out-expo) both;
+}
+.badge-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--teal-v);
+  box-shadow:0 0 0 2px rgba(45,212,191,.2);
+  animation:pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{box-shadow:0 0 0 2px rgba(45,212,191,.2);}
+  50%{box-shadow:0 0 0 6px rgba(45,212,191,.0);}
+}
+@keyframes badgeIn{from{opacity:0;transform:translateY(16px)scale(.95)}to{opacity:1;transform:none}}
+
+/* Hero headline */
+.hero-h1{
+  font-family:var(--serif);
+  font-size:clamp(52px,7vw,100px);
+  line-height:1.02;
+  letter-spacing:-3px;
+  margin-bottom:28px;
+  animation:headIn .9s .1s var(--ease-out-expo) both;
+}
+.hero-h1 .line{display:block;}
+.hero-h1 .accent{
+  font-style:italic;
+  background:linear-gradient(135deg,var(--teal-v) 0%,#60A5FA 45%,#C084FC 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+@keyframes headIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+
+.hero-sub{
+  font-size:18px;font-weight:300;color:var(--d-mid);
+  max-width:580px;margin:0 auto 52px;line-height:1.8;
+  animation:subIn .9s .2s var(--ease-out-expo) both;
+}
+@keyframes subIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* CTA group */
+.hero-cta{
+  display:flex;align-items:center;justify-content:center;gap:16px;
+  flex-wrap:wrap;margin-bottom:72px;
+  animation:ctaIn .9s .3s var(--ease-out-expo) both;
+}
+@keyframes ctaIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+.btn-primary{
+  position:relative;overflow:hidden;
+  font-family:var(--sans);font-size:15px;font-weight:600;
+  color:white;padding:15px 36px;
+  border:none;border-radius:100px;cursor:pointer;
+  background:linear-gradient(135deg,var(--teal),var(--blue));
+  box-shadow:0 8px 32px rgba(13,148,136,.35),0 0 0 1px rgba(255,255,255,.1) inset;
+  transition:all .25s var(--ease-out-expo);
+  letter-spacing:.3px;
+}
+.btn-primary::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,white,transparent);
+  opacity:0;transition:opacity .25s;
+}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(13,148,136,.5);}
+.btn-primary:hover::before{opacity:.08;}
+
+.btn-secondary{
+  font-family:var(--sans);font-size:15px;font-weight:500;
+  color:var(--d-mid);padding:15px 36px;
+  border:1.5px solid rgba(255,255,255,.15);border-radius:100px;
+  cursor:pointer;background:rgba(255,255,255,.04);
+  transition:all .25s;
+}
+.btn-secondary:hover{color:white;border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.08);}
+
+/* Stats row */
+.hero-stats{
+  display:inline-flex;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;overflow:hidden;
+  background:rgba(255,255,255,.03);
+  backdrop-filter:blur(20px);
+  animation:statsIn 1s .5s var(--ease-out-expo) both;
+}
+@keyframes statsIn{from{opacity:0;transform:translateY(14px)scale(.98)}to{opacity:1;transform:none}}
+.stat{padding:24px 32px;text-align:center;border-right:1px solid rgba(255,255,255,.08);position:relative;}
+.stat:last-child{border-right:none;}
+.stat-val{
+  font-family:var(--serif);font-style:italic;font-size:30px;
+  background:linear-gradient(135deg,var(--teal-v),#93C5FD);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;margin-bottom:7px;
+}
+.stat-lbl{font-size:11px;color:var(--d-low);letter-spacing:.6px;font-weight:500;}
+
+/* Scroll indicator */
+.scroll-hint{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  animation:fadeIn 1s 1.2s both;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.scroll-line{
+  width:1px;height:48px;
+  background:linear-gradient(to bottom,transparent,var(--teal-v),transparent);
+  animation:scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse{0%,100%{opacity:.3}50%{opacity:1}}
+.scroll-text{font-size:10px;letter-spacing:2px;color:var(--d-low);text-transform:uppercase;}
+
+/* ═══════════════════════════════════════
+   REVEAL SYSTEM (Intersection Observer)
+═══════════════════════════════════════ */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s var(--ease-out-expo),transform .8s var(--ease-out-expo);}
+.reveal.in{opacity:1;transform:none;}
+.reveal-d1{transition-delay:.1s;}
+.reveal-d2{transition-delay:.2s;}
+.reveal-d3{transition-delay:.3s;}
+.reveal-d4{transition-delay:.4s;}
+.reveal-left{transform:translateX(-40px);}
+.reveal-right{transform:translateX(40px);}
+.reveal-left.in,.reveal-right.in{transform:none;}
+.reveal-scale{transform:scale(.94);}
+.reveal-scale.in{transform:scale(1);}
+
+/* ═══════════════════════════════════════
+   SECTION WRAPPER
+═══════════════════════════════════════ */
+.section{padding:120px 40px;position:relative;overflow:hidden;}
+.section-inner{max-width:1160px;margin:0 auto;}
+
+.sec-label{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--teal-v);margin-bottom:20px;
+  display:flex;align-items:center;gap:10px;
+}
+.sec-label::before{
+  content:'';display:block;width:32px;height:1px;
+  background:linear-gradient(to right,var(--teal-v),transparent);
+}
+
+.sec-h2{
+  font-family:var(--serif);
+  font-size:clamp(38px,4.5vw,60px);
+  line-height:1.06;letter-spacing:-2px;
+  margin-bottom:22px;color:var(--white);
+}
+.sec-h2 em{font-style:italic;color:#93C5FD;}
+
+.sec-lead{
+  font-size:17px;font-weight:300;color:var(--d-mid);
+  line-height:1.85;max-width:640px;margin-bottom:64px;
+}
+
+.sec-div{
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+}
+
+/* ═══════════════════════════════════════
+   PROBLEM SECTION
+═══════════════════════════════════════ */
+.problem-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:2px;
+  border-radius:20px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.06);
+}
+.prob-card{
+  padding:40px 36px;background:rgba(255,255,255,.02);
+  position:relative;overflow:hidden;
+  transition:background .3s;
+}
+.prob-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.pc1::before{background:linear-gradient(90deg,#EF4444,#F97316);}
+.pc2::before{background:linear-gradient(90deg,#F97316,#EAB308);}
+.pc3::before{background:linear-gradient(90deg,#EAB308,#3B82F6);}
+.pc4::before{background:linear-gradient(90deg,#3B82F6,#8B5CF6);}
+.prob-card:hover{background:rgba(255,255,255,.04);}
+.prob-num{font-family:var(--mono);font-size:10px;color:var(--d-low);letter-spacing:1px;margin-bottom:22px;}
+.prob-svg{margin-bottom:18px;}
+.prob-title{
+  font-family:var(--serif);font-size:22px;font-style:italic;
+  color:var(--white);margin-bottom:12px;letter-spacing:-.5px;
+}
+.prob-body{font-size:14px;color:var(--d-mid);line-height:1.7;}
+
+.thesis{
+  margin-top:48px;padding:44px 48px;
+  border:1px solid rgba(13,148,136,.25);
+  border-radius:16px;
+  background:rgba(13,148,136,.05);
+  position:relative;overflow:hidden;
+}
+.thesis::before{
+  content:'';position:absolute;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(45,212,191,.08),transparent 70%);
+  top:-100px;right:-80px;pointer-events:none;
+}
+.thesis-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--teal-v);margin-bottom:18px;}
+.thesis-text{
+  font-family:var(--serif);font-size:24px;font-style:italic;
+  line-height:1.5;color:var(--white);letter-spacing:-.5px;
+  max-width:800px;
+}
+
+/* ═══════════════════════════════════════
+   GOALS — HORIZONTAL SCROLL CARDS
+═══════════════════════════════════════ */
+.goals-track{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+}
+.goal{
+  padding:32px 28px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.025);
+  position:relative;overflow:hidden;
+  transition:all .3s var(--ease-out-expo);
+  cursor:default;
+}
+.goal:hover{
+  transform:translateY(-5px);
+  border-color:rgba(45,212,191,.2);
+  background:rgba(45,212,191,.04);
+  box-shadow:0 20px 48px rgba(0,0,0,.4);
+}
+.goal-n{
+  position:absolute;top:16px;right:20px;
+  font-family:var(--serif);font-style:italic;font-size:64px;
+  color:rgba(255,255,255,.04);line-height:1;pointer-events:none;
+}
+.goal-icon-wrap{
+  width:48px;height:48px;border-radius:12px;
+  background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.15);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:18px;
+  transition:transform .3s var(--ease-spring);
+}
+.goal:hover .goal-icon-wrap{transform:scale(1.1) rotate(-3deg);}
+.goal-title{
+  font-family:var(--sans);font-weight:600;font-size:15px;
+  color:var(--white);margin-bottom:10px;
+}
+.goal-body{font-size:13px;color:var(--d-mid);line-height:1.65;}
+
+/* ═══════════════════════════════════════
+   BIOMETRIC SECTION — SPLIT
+═══════════════════════════════════════ */
+.bio-split{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+
+/* Bio visual — custom SVG card */
+.bio-card{
+  border-radius:24px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+  background:var(--ink-2);
+  padding:40px;
+  position:relative;
+}
+.bio-card::before{
+  content:'';position:absolute;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(13,148,136,.15),transparent 70%);
+  top:-60px;left:-60px;
+}
+.bio-card::after{
+  content:'';position:absolute;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(29,78,216,.12),transparent 70%);
+  bottom:-40px;right:-40px;
+}
+
+.face-container{position:relative;display:flex;align-items:center;justify-content:center;height:180px;margin-bottom:24px;}
+.face-outer-ring{
+  position:absolute;width:160px;height:160px;border-radius:50%;
+  border:1px dashed rgba(45,212,191,.2);
+  animation:rotateRing 20s linear infinite;
+}
+.face-mid-ring{
+  position:absolute;width:130px;height:130px;border-radius:50%;
+  border:1.5px solid rgba(45,212,191,.3);
+  animation:rotateRing 12s linear infinite reverse;
+}
+@keyframes rotateRing{to{transform:rotate(360deg)}}
+.face-inner{
+  position:relative;width:100px;height:100px;border-radius:50%;
+  border:2px solid rgba(45,212,191,.6);
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(45,212,191,.04);
+  font-size:44px;
+  box-shadow:0 0 30px rgba(45,212,191,.1);
+}
+.scan-line{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--teal-v),transparent);
+  top:0;
+  animation:scan 2.5s ease-in-out infinite;
+  border-radius:1px;
+}
+@keyframes scan{
+  0%{top:0;opacity:0}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{top:100%;opacity:0}
+}
+.face-corners{position:absolute;width:100px;height:100px;}
+.corner-svg{position:absolute;width:16px;height:16px;}
+.corner-svg.tl{top:0;left:0;}
+.corner-svg.tr{top:0;right:0;transform:scaleX(-1);}
+.corner-svg.bl{bottom:0;left:0;transform:scaleY(-1);}
+.corner-svg.br{bottom:0;right:0;transform:scale(-1);}
+
+/* Confidence meter */
+.conf-wrap{position:relative;z-index:1;}
+.conf-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.conf-label-text{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--d-low);}
+.conf-score{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--teal-v);}
+.conf-bar-bg{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-bottom:14px;}
+.conf-bar-fill{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--teal),var(--blue-v));
+  animation:fillBar 2s 1s var(--ease-out-expo) both;
+}
+@keyframes fillBar{from{width:0}to{width:97.7%}}
+.conf-result{
+  display:flex;align-items:center;gap:9px;
+  background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);
+  border-radius:10px;padding:10px 14px;
+  font-size:12.5px;font-weight:600;color:#4ADE80;
+}
+
+/* Bio options */
+.bio-options{display:flex;flex-direction:column;gap:10px;margin-top:28px;}
+.bio-opt{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 18px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.07);
+  transition:all .25s;
+}
+.bio-opt.active{
+  background:rgba(45,212,191,.07);
+  border-color:rgba(45,212,191,.25);
+}
+.bio-opt:not(.active){opacity:.5;}
+.bio-pip{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;
+}
+.active .bio-pip{background:var(--teal-v);box-shadow:0 0 10px var(--teal-v);}
+.inactive .bio-pip{background:rgba(255,255,255,.2);}
+.bio-opt-content{flex:1;}
+.bio-opt-title{font-size:13.5px;font-weight:600;color:var(--white);margin-bottom:3px;}
+.bio-opt-sub{font-size:12px;color:var(--d-low);}
+
+/* ═══════════════════════════════════════
+   OFFLINE SECTION
+═══════════════════════════════════════ */
+.offline-split{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;}
+
+.flow{display:flex;flex-direction:column;gap:0;}
+.flow-step{
+  display:flex;gap:20px;padding:20px 0;
+  border-left:2px solid rgba(255,255,255,.07);
+  padding-left:28px;position:relative;
+  transition:border-color .3s;
+}
+.flow-step.active-step{border-left-color:var(--teal);}
+.flow-step::before{
+  content:attr(data-n);
+  position:absolute;left:-12px;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--ink-2);border:2px solid rgba(255,255,255,.10);
+  font-family:var(--mono);font-size:9px;color:var(--d-low);
+  display:flex;align-items:center;justify-content:center;
+  line-height:22px;text-align:center;
+  transition:all .3s;
+}
+.flow-step.active-step::before{background:var(--teal);border-color:var(--teal);color:white;}
+.flow-text{font-size:14px;color:var(--d-mid);line-height:1.7;padding-top:1px;}
+.flow-text strong{color:var(--white);font-weight:600;}
+
+.offline-stats{display:flex;flex-direction:column;gap:14px;margin-bottom:24px;}
+.off-stat{
+  display:flex;align-items:center;gap:16px;
+  padding:18px 22px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.025);
+  transition:all .25s;
+}
+.off-stat:hover{background:rgba(255,255,255,.04);transform:translateX(4px);}
+.off-stat-val{
+  font-family:var(--serif);font-style:italic;font-size:28px;
+  background:linear-gradient(135deg,var(--teal-v),#93C5FD);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  min-width:60px;
+}
+.off-stat-label{font-size:13px;color:var(--d-mid);}
+
+.sync-box{
+  padding:28px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.025);
+}
+.sync-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--teal-v);margin-bottom:14px;}
+.sync-item{
+  display:flex;align-items:flex-start;gap:8px;
+  font-size:13px;color:var(--d-mid);
+  padding:5px 0;line-height:1.6;
+}
+.sync-dot{width:4px;height:4px;border-radius:50%;background:var(--teal-v);flex-shrink:0;margin-top:7px;}
+
+/* ═══════════════════════════════════════
+   ANALYTICS — THREE LEVELS
+═══════════════════════════════════════ */
+.analytics-levels{border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.06);}
+.al-row{
+  display:grid;grid-template-columns:200px 1fr;
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+.al-row:last-child{border-bottom:none;}
+.al-left{padding:32px 28px;display:flex;flex-direction:column;justify-content:center;}
+.al-left.l1{background:rgba(13,148,136,.09);}
+.al-left.l2{background:rgba(29,78,216,.09);}
+.al-left.l3{background:rgba(139,92,246,.09);}
+.al-phase{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--d-low);margin-bottom:7px;}
+.al-name{font-family:var(--serif);font-style:italic;font-size:18px;margin-bottom:4px;}
+.l1 .al-name{color:var(--teal-v);}
+.l2 .al-name{color:#60A5FA;}
+.l3 .al-name{color:#C084FC;}
+.al-when{font-size:11.5px;color:var(--d-low);}
+.al-right{padding:32px;background:rgba(255,255,255,.02);}
+.al-items{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.al-item{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--d-mid);line-height:1.55;}
+.al-tick{font-size:11px;margin-top:2px;flex-shrink:0;}
+.l1 .al-tick{color:var(--teal-v);}
+.l2 .al-tick{color:#60A5FA;}
+.l3 .al-tick{color:#C084FC;}
+
+/* ═══════════════════════════════════════
+   ROADMAP — PHASED CARDS
+═══════════════════════════════════════ */
+.roadmap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.phase{
+  border-radius:20px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.07);
+  transition:all .35s var(--ease-out-expo);
+}
+.phase:hover{
+  transform:translateY(-6px);
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+  border-color:rgba(255,255,255,.14);
+}
+.phase-hdr{padding:28px 24px 22px;}
+.ph-a{background:linear-gradient(135deg,rgba(13,148,136,.15),rgba(13,148,136,.05));border-top:2px solid var(--teal);}
+.ph-b{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(59,130,246,.05));border-top:2px solid var(--blue-v);}
+.ph-c{background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(139,92,246,.05));border-top:2px solid #8B5CF6;}
+.phase-tag{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--d-low);margin-bottom:10px;}
+.phase-name{
+  font-family:var(--serif);font-style:italic;font-size:26px;
+  color:var(--white);margin-bottom:5px;letter-spacing:-.5px;
+}
+.phase-time{font-size:12px;color:var(--d-low);}
+.phase-body{padding:22px 24px;background:rgba(0,0,0,.25);}
+.phase-item{
+  display:flex;align-items:flex-start;gap:9px;
+  font-size:13px;color:var(--d-mid);
+  padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);
+  line-height:1.5;
+}
+.phase-item:last-child{border-bottom:none;}
+.ph-check{font-size:11px;flex-shrink:0;margin-top:2px;}
+.ph-a .ph-check{color:var(--teal-v);}
+.ph-b .ph-check{color:#60A5FA;}
+.ph-c .ph-check{color:#C084FC;}
+
+/* ═══════════════════════════════════════
+   TECH STACK
+═══════════════════════════════════════ */
+.stack-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:36px;}
+.stack-card{
+  padding:24px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.025);
+  transition:all .25s;
+}
+.stack-card:hover{
+  background:rgba(255,255,255,.04);
+  border-color:rgba(45,212,191,.15);
+  transform:translateY(-2px);
+}
+.stack-layer{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:var(--d-low);margin-bottom:8px;}
+.stack-tech{
+  font-family:var(--serif);font-style:italic;font-size:18px;
+  color:var(--white);margin-bottom:6px;letter-spacing:-.3px;
+}
+.stack-why{font-size:12px;color:var(--d-low);line-height:1.55;}
+
+.perf-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.perf{
+  padding:24px;border-radius:14px;text-align:center;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.025);
+}
+.perf-val{
+  font-family:var(--serif);font-style:italic;font-size:28px;
+  background:linear-gradient(135deg,var(--teal-v),#93C5FD);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:6px;
+}
+.perf-lbl{font-size:11px;color:var(--d-low);}
+
+/* ═══════════════════════════════════════
+   TRUST / CLOSING
+═══════════════════════════════════════ */
+.trust-grid{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center;}
+.trust-list{display:flex;flex-direction:column;gap:10px;}
+.trust-item{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 20px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.025);
+  transition:all .25s;
+}
+.trust-item:hover{
+  border-color:rgba(45,212,191,.22);
+  background:rgba(45,212,191,.04);
+  transform:translateX(4px);
+}
+.trust-tick{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;
+}
+.trust-txt{font-size:13.5px;font-weight:500;color:var(--d-mid);}
+
+.closing{
+  padding:56px;border-radius:24px;
+  background:linear-gradient(135deg,rgba(30,58,138,.18),rgba(13,148,136,.10));
+  border:1px solid rgba(59,130,246,.15);
+  text-align:center;position:relative;overflow:hidden;
+}
+.closing::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 60% at 50% 100%,rgba(45,212,191,.05),transparent);
+}
+.closing-bn{
+  font-family:var(--serif);font-style:italic;
+  font-size:26px;color:var(--white);margin-bottom:10px;
+  line-height:1.4;letter-spacing:-.5px;position:relative;z-index:1;
+}
+.closing-en{font-size:14px;color:var(--d-low);margin-bottom:30px;line-height:1.7;position:relative;z-index:1;}
+
+/* ═══════════════════════════════════════
+   DEMO CTA SECTION
+═══════════════════════════════════════ */
+.demo-cta{
+  background:var(--ink-2);
+  padding:100px 40px;
+  text-align:center;
+  position:relative;overflow:hidden;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.demo-cta::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 50% 80% at 50% 100%,rgba(13,148,136,.08),transparent);
+}
+.demo-cta-inner{position:relative;z-index:1;}
+.demo-cta h2{
+  font-family:var(--serif);font-style:italic;
+  font-size:52px;letter-spacing:-2px;color:var(--white);margin-bottom:18px;
+}
+.demo-cta p{font-size:17px;color:var(--d-mid);max-width:500px;margin:0 auto 36px;line-height:1.7;}
+.demo-tags{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;}
+.dtag{
+  font-size:11px;font-weight:600;padding:6px 14px;border-radius:100px;
+  backdrop-filter:blur(10px);
+}
+.dtag-1{background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.2);color:var(--teal-v);}
+.dtag-2{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);color:#60A5FA;}
+.dtag-3{background:rgba(192,132,252,.08);border:1px solid rgba(192,132,252,.2);color:#C084FC;}
+.dtag-4{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:#FBBF24;}
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+footer{
+  background:var(--ink);
+  border-top:1px solid rgba(255,255,255,.05);
+  padding:28px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;
+}
+.foot-l{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--d-low);}
+.foot-r{font-size:11px;color:rgba(255,255,255,.25);}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:1024px){
+  .goals-track{grid-template-columns:1fr 1fr;}
+  .roadmap-grid,.bio-split,.offline-split,.trust-grid{grid-template-columns:1fr;gap:40px;}
+  .stack-grid{grid-template-columns:1fr 1fr;}
+  .problem-grid{grid-template-columns:1fr;}
+  .perf-row{grid-template-columns:1fr 1fr;}
+  .al-row{grid-template-columns:1fr;}
+  .hero-stats{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- Particle canvas -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- ══ NAV ══════════════════════════════ -->
+<nav class="nav" id="main-nav">
+  <a class="nav-brand" href="#">
+    <div class="brand-mark">
+      <svg viewBox="0 0 36 36" fill="none">
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#0D9488"/><stop offset="1" stop-color="#1D4ED8"/>
+          </linearGradient>
+        </defs>
+        <polygon points="18,2 34,11 34,25 18,34 2,25 2,11" fill="url(#lg1)" opacity=".15"/>
+        <polygon points="18,2 34,11 34,25 18,34 2,25 2,11" fill="none" stroke="url(#lg1)" stroke-width="1.5"/>
+        <polygon points="18,10 26,15 26,21 18,26 10,21 10,15" fill="url(#lg1)" opacity=".5"/>
+        <circle cx="18" cy="18" r="3" fill="url(#lg1)"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-text">OMS Control Platform</div>
+      <div class="brand-sub">Ministry of Food · Bangladesh</div>
+    </div>
+  </a>
+  <nav class="nav-links">
+    <a class="nav-a" href="#problem">Problem</a>
+    <a class="nav-a" href="#biometric">Strategy</a>
+    <a class="nav-a" href="#offline">Architecture</a>
+    <a class="nav-a" href="#roadmap">Roadmap</a>
+  </nav>
+  <button class="nav-btn" id="launch-demo-btn">Launch Demo →</button>
+</nav>
+
+<!-- ══ HERO ══════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="mesh"></div>
+  <div class="hero-grid"></div>
+  <canvas id="particle-canvas" style="position:absolute;inset:0;pointer-events:none;z-index:1;"></canvas>
+  <div class="hero-inner" style="position:relative;z-index:2;">
+    <div class="hero-badge">
+      <div class="badge-dot"></div>
+      Strategic Proposal · March 2026
+    </div>
+    <h1 class="hero-h1">
+      <span class="line">Not a dealer app.</span>
+      <span class="line accent">A national governance</span>
+      <span class="line">infrastructure.</span>
+    </h1>
+    <p class="hero-sub">The OMS National Control Platform verifies every beneficiary, records every grain distributed, enforces every quota — and surfaces the intelligence to govern food security at scale across Bangladesh.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="document.getElementById('problem').scrollIntoView({behavior:'smooth'})">Read the Strategy ↓</button>
+      <button class="btn-secondary" id="hero-demo-btn">Launch Interactive Demo</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-val">300K+</div><div class="stat-lbl">Daily Transactions</div></div>
+      <div class="stat"><div class="stat-val">5,000</div><div class="stat-lbl">Concurrent Users</div></div>
+      <div class="stat"><div class="stat-val">40–50%</div><div class="stat-lbl">Leakage Reduction</div></div>
+      <div class="stat"><div class="stat-val">$120M+</div><div class="stat-lbl">Annual Value Recovered</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <div class="scroll-text">Scroll</div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ PROBLEM ═══════════════════════════ -->
+<section class="section" id="problem" style="background:var(--ink);">
+  <div class="section-inner">
+    <div class="sec-label reveal">01 — The Problem</div>
+    <h2 class="sec-h2 reveal reveal-d1">The governance gap<br>behind the <em>software request</em></h2>
+    <p class="sec-lead reveal reveal-d2">Bangladesh's OMS program serves millions of vulnerable citizens daily. Without a real-time verification layer, four structural vulnerabilities persist — and the government cannot currently distinguish legitimate distribution from systematic leakage.</p>
+
+    <div class="problem-grid reveal reveal-scale reveal-d2">
+      <div class="prob-card pc1">
+        <div class="prob-num">01 / 04</div>
+        <div class="prob-svg">
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <circle cx="22" cy="22" r="20" stroke="#EF4444" stroke-width="1" opacity=".3"/>
+            <path d="M22 8 A14 14 0 0 1 36 22 A14 14 0 0 1 22 36" stroke="#EF4444" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="22" cy="22" r="5" fill="#EF4444" opacity=".6"/>
+            <circle cx="22" cy="10" r="3" fill="#EF4444"/>
+            <circle cx="34" cy="22" r="3" fill="#EF4444" opacity=".7"/>
+          </svg>
+        </div>
+        <div class="prob-title">Duplicate Lifting</div>
+        <div class="prob-body">A beneficiary can collect food grain multiple times in a single day at different centers — with no technical barrier to prevent it.</div>
+      </div>
+      <div class="prob-card pc2">
+        <div class="prob-num">02 / 04</div>
+        <div class="prob-svg">
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <rect x="6" y="14" width="32" height="20" rx="3" stroke="#F97316" stroke-width="1.5" fill="none" opacity=".4"/>
+            <path d="M6 22 L38 22" stroke="#F97316" stroke-width="1" opacity=".3"/>
+            <path d="M14 14 L14 8 M22 14 L22 6 M30 14 L30 8" stroke="#F97316" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
+            <path d="M8 28 L36 28" stroke="#F97316" stroke-width="2" stroke-linecap="round"/>
+            <path d="M8 22 L24 22" stroke="#F97316" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="prob-title">Monthly Quota Leakage</div>
+        <div class="prob-body">Without real-time quota tracking across the network, beneficiaries exceed monthly entitlements across visits — completely undetected.</div>
+      </div>
+      <div class="prob-card pc3">
+        <div class="prob-num">03 / 04</div>
+        <div class="prob-svg">
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <circle cx="22" cy="22" r="16" stroke="#3B82F6" stroke-width="1.5" fill="none" opacity=".4" stroke-dasharray="4 4"/>
+            <path d="M10 10 L34 34 M34 10 L10 34" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+            <circle cx="22" cy="22" r="5" stroke="#3B82F6" stroke-width="2" fill="none"/>
+          </svg>
+        </div>
+        <div class="prob-title">Offline Accountability Gap</div>
+        <div class="prob-body">Rural dealers operate without system access during outages — creating completely unrecorded distribution windows vulnerable to manipulation.</div>
+      </div>
+      <div class="prob-card pc4">
+        <div class="prob-num">04 / 04</div>
+        <div class="prob-svg">
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <path d="M8 34 L16 22 L22 28 L30 14 L36 20" stroke="#8B5CF6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="16" cy="22" r="3" fill="#8B5CF6" opacity=".5"/>
+            <circle cx="22" cy="28" r="3" fill="#8B5CF6" opacity=".7"/>
+            <circle cx="30" cy="14" r="3" fill="#8B5CF6"/>
+            <path d="M8 38 L36 38" stroke="#8B5CF6" stroke-width="1" opacity=".3"/>
+          </svg>
+        </div>
+        <div class="prob-title">Zero Policy Intelligence</div>
+        <div class="prob-body">Allocation decisions are based on estimates, not real consumption data — causing chronic mismatches between supply and actual demand.</div>
+      </div>
+    </div>
+
+    <div class="thesis reveal reveal-d3">
+      <div class="thesis-eyebrow">OUR CORE THESIS</div>
+      <div class="thesis-text">"We understand not just the software requirements, but the governance problem behind them. Every architectural decision is driven by one question: how do we make leakage operationally impossible?"</div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ GOALS ═══════════════════════════ -->
+<section class="section" style="background:var(--ink-2);">
+  <div class="section-inner">
+    <div class="sec-label reveal">02 — Strategic Insight</div>
+    <h2 class="sec-h2 reveal reveal-d1">The SRS reveals<br><em>four hidden goals</em></h2>
+    <p class="sec-lead reveal reveal-d2">A careful reading of the System Requirements Specification surfaces four deeper policy objectives. Winning this bid requires addressing all four — not just the surface requirements.</p>
+    <div class="goals-track">
+      <div class="goal reveal reveal-d1">
+        <div class="goal-n">1</div>
+        <div class="goal-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M11 2L20 6.5V15.5L11 20L2 15.5V6.5L11 2Z" stroke="#2DD4BF" stroke-width="1.5" fill="none"/>
+            <path d="M11 6L16 8.5V13.5L11 16L6 13.5V8.5L11 6Z" fill="#2DD4BF" opacity=".3"/>
+            <circle cx="11" cy="11" r="2" fill="#2DD4BF"/>
+          </svg>
+        </div>
+        <div class="goal-title">Stop Leakage</div>
+        <div class="goal-body">Prevent multiple lifting per day and control monthly quota through real-time validation across all dealers simultaneously.</div>
+      </div>
+      <div class="goal reveal reveal-d2">
+        <div class="goal-n">2</div>
+        <div class="goal-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="2" width="16" height="18" rx="2" stroke="#2DD4BF" stroke-width="1.5" fill="none"/>
+            <path d="M7 7H15M7 11H15M7 15H11" stroke="#2DD4BF" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="goal-title">Create Proof</div>
+        <div class="goal-body">Full audit trail: who accessed what, fields changed, breach attempts, modification results, and timestamps on every action.</div>
+      </div>
+      <div class="goal reveal reveal-d3">
+        <div class="goal-n">3</div>
+        <div class="goal-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M11 3C7 3 4 6 4 10C4 15 11 20 11 20C11 20 18 15 18 10C18 6 15 3 11 3Z" stroke="#2DD4BF" stroke-width="1.5" fill="none"/>
+            <circle cx="11" cy="10" r="3" fill="#2DD4BF" opacity=".5"/>
+            <path d="M11 10 L11 6" stroke="#2DD4BF" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="goal-title">Field Continuity</div>
+        <div class="goal-body">The mobile app must function with local storage and conditional sync on 2G. Field operations can never halt due to connectivity.</div>
+      </div>
+      <div class="goal reveal reveal-d4">
+        <div class="goal-n">4</div>
+        <div class="goal-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M4 16 L8 10 L11 13 L15 6 L18 9" stroke="#2DD4BF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 19H18" stroke="#2DD4BF" stroke-width="1" opacity=".4"/>
+            <circle cx="15" cy="6" r="2.5" fill="#2DD4BF" opacity=".6"/>
+          </svg>
+        </div>
+        <div class="goal-title">Policy Intelligence</div>
+        <div class="goal-body">Transform raw transaction data into demand forecasting, supply planning, poverty insights, and dealer risk scoring.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ BIOMETRIC ══════════════════════════ -->
+<section class="section" id="biometric" style="background:var(--ink);">
+  <div class="section-inner">
+    <div class="sec-label reveal">03 — Biometric Strategy</div>
+    <h2 class="sec-h2 reveal reveal-d1">Resolving the SRS <em>contradiction</em></h2>
+    <div class="bio-split">
+      <div>
+        <p style="font-size:17px;font-weight:300;color:var(--d-mid);line-height:1.8;margin-bottom:28px;" class="reveal reveal-d2">The SRS title says <strong style="color:white">fingerprint</strong>. The scope says <strong style="color:var(--teal-v)">face authentication</strong>. This is not an error — it reflects genuine policy uncertainty. We resolve it with a <strong style="color:white">Biometric Abstraction Layer</strong>.</p>
+        <div class="bio-options reveal reveal-d3">
+          <div class="bio-opt active">
+            <div class="bio-pip"></div>
+            <div class="bio-opt-content">
+              <div class="bio-opt-title">Face Verification — Active Primary</div>
+              <div class="bio-opt-sub">No scanner hardware · touchless · 2–4s · any Android camera</div>
+            </div>
+          </div>
+          <div class="bio-opt">
+            <div class="bio-pip inactive"></div>
+            <div class="bio-opt-content">
+              <div class="bio-opt-title">Fingerprint — Architecture Ready</div>
+              <div class="bio-opt-sub">Policy activation without redesign · zero vendor lock-in</div>
+            </div>
+          </div>
+          <div class="bio-opt">
+            <div class="bio-pip inactive"></div>
+            <div class="bio-opt-content">
+              <div class="bio-opt-title">Multimodal — Future Capability</div>
+              <div class="bio-opt-sub">Combined face + fingerprint · same abstraction layer</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bio-card reveal reveal-right reveal-d2">
+        <div class="face-container">
+          <div class="face-outer-ring"></div>
+          <div class="face-mid-ring"></div>
+          <div class="face-inner">
+            👤
+            <div class="scan-line"></div>
+          </div>
+          <div class="face-corners">
+            <svg class="corner-svg tl" viewBox="0 0 16 16"><path d="M1 15 L1 1 L15 1" stroke="#2DD4BF" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+            <svg class="corner-svg tr" viewBox="0 0 16 16"><path d="M1 15 L1 1 L15 1" stroke="#2DD4BF" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+            <svg class="corner-svg bl" viewBox="0 0 16 16"><path d="M1 15 L1 1 L15 1" stroke="#2DD4BF" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+            <svg class="corner-svg br" viewBox="0 0 16 16"><path d="M1 15 L1 1 L15 1" stroke="#2DD4BF" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div class="conf-wrap">
+          <div class="conf-header">
+            <span class="conf-label-text">CONFIDENCE SCORE</span>
+            <span class="conf-score">97.7%</span>
+          </div>
+          <div class="conf-bar-bg"><div class="conf-bar-fill"></div></div>
+          <div class="conf-result">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8L7 12L13 5" stroke="#4ADE80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            VERIFIED — Amina Khatun (BEN-10021)
+          </div>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--d-low);text-align:center;">2.4s · DEVICE-ABC-001 · Threshold: 85%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ OFFLINE ═══════════════════════════ -->
+<section class="section" id="offline" style="background:var(--ink-2);">
+  <div class="section-inner">
+    <div class="sec-label reveal">04 — Offline-First Architecture</div>
+    <h2 class="sec-h2 reveal reveal-d1">Designed for<br><em>Bangladesh's reality</em></h2>
+    <p class="sec-lead reveal reveal-d2">The SRS requires local data with conditional sync on 2G. This is not a feature toggle — it is a fraud prevention mechanism. A system that records locally but validates centrally cannot be gamed by deliberately working offline.</p>
+    <div class="offline-split">
+      <div class="flow reveal reveal-left reveal-d2">
+        <div class="flow-step" data-n="1"><div class="flow-text">Dealer selects beneficiary from <strong>local cached list</strong> — no server call needed</div></div>
+        <div class="flow-step" data-n="2"><div class="flow-text">App checks <strong>offline eligibility snapshot</strong> — quota and daily lifting status</div></div>
+        <div class="flow-step" data-n="3"><div class="flow-text">Face captured with <strong>real-time guidance</strong> — lighting, position, distance</div></div>
+        <div class="flow-step active-step" data-n="4"><div class="flow-text"><strong>Biometric match runs</strong> against locally cached model — zero internet required</div></div>
+        <div class="flow-step active-step" data-n="5"><div class="flow-text"><strong>Transaction recorded instantly</strong> in local SQLite — guaranteed no data loss</div></div>
+        <div class="flow-step" data-n="6"><div class="flow-text">Exception flow if uncertain — photo + reason code + officer log</div></div>
+        <div class="flow-step" data-n="7"><div class="flow-text"><strong>Auto-sync to central server</strong> when connectivity is detected</div></div>
+        <div class="flow-step" data-n="8"><div class="flow-text">Server <strong>validates, deduplicates, audits</strong> — retroactive enforcement catches all fraud</div></div>
+      </div>
+      <div class="reveal reveal-right reveal-d3">
+        <div class="offline-stats">
+          <div class="off-stat"><div class="off-stat-val">2G</div><div class="off-stat-label">Minimum connectivity supported for full field operation</div></div>
+          <div class="off-stat"><div class="off-stat-val">0</div><div class="off-stat-label">Transactions lost during offline periods — ever</div></div>
+          <div class="off-stat"><div class="off-stat-val">100%</div><div class="off-stat-label">Retroactive fraud prevention enforcement on sync</div></div>
+        </div>
+        <div class="sync-box">
+          <div class="sync-title">SYNC ARCHITECTURE</div>
+          <div class="sync-item"><div class="sync-dot"></div><div><strong style="color:white">UUID transaction IDs</strong> — globally unique, prevents duplicate processing</div></div>
+          <div class="sync-item"><div class="sync-dot"></div><div><strong style="color:white">Idempotent APIs</strong> — safe to retry any sync without side effects</div></div>
+          <div class="sync-item"><div class="sync-dot"></div><div><strong style="color:white">Conflict resolution</strong> — central server always wins on quota/duplicate checks</div></div>
+          <div class="sync-item"><div class="sync-dot"></div><div><strong style="color:white">Anomaly detection</strong> — unusual delayed bulk syncs trigger fraud alerts</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ ANALYTICS ══════════════════════════ -->
+<section class="section" style="background:var(--ink);">
+  <div class="section-inner">
+    <div class="sec-label reveal">05 — Analytics Strategy</div>
+    <h2 class="sec-h2 reveal reveal-d1">Not AI hype.<br><em>Three credible levels.</em></h2>
+    <p class="sec-lead reveal reveal-d2">Vague "AI-powered analytics" lose government bids. We propose a three-level maturity path: explainable dashboards on Day 1, fraud detection by Month 2, predictive intelligence by Month 4.</p>
+    <div class="analytics-levels reveal reveal-scale reveal-d2">
+      <div class="al-row">
+        <div class="al-left l1"><div class="al-phase">LEVEL 01</div><div class="al-name">Descriptive</div><div class="al-when">MVP — Day 1</div></div>
+        <div class="al-right"><div class="al-items">
+          <div class="al-item"><div class="al-tick l1">✓</div>Daily sales by dealer, region, product</div>
+          <div class="al-item"><div class="al-tick l1">✓</div>Dealer-wise distribution patterns</div>
+          <div class="al-item"><div class="al-tick l1">✓</div>Region-wise quota usage rates</div>
+          <div class="al-item"><div class="al-tick l1">✓</div>Stock movement and exception rates</div>
+        </div></div>
+      </div>
+      <div class="al-row">
+        <div class="al-left l2"><div class="al-phase">LEVEL 02</div><div class="al-name">Diagnostic</div><div class="al-when">Pilot — Month 2–3</div></div>
+        <div class="al-right"><div class="al-items">
+          <div class="al-item"><div class="al-tick l2">✓</div>Suspicious repeat patterns (same device/dealer)</div>
+          <div class="al-item"><div class="al-tick l2">✓</div>Late-night / off-hours transaction alerts</div>
+          <div class="al-item"><div class="al-tick l2">✓</div>Multi-dealer single-device anomalies</div>
+          <div class="al-item"><div class="al-tick l2">✓</div>Unexpected quota exhaustion flags</div>
+        </div></div>
+      </div>
+      <div class="al-row">
+        <div class="al-left l3"><div class="al-phase">LEVEL 03</div><div class="al-name">Predictive</div><div class="al-when">National — Month 4+</div></div>
+        <div class="al-right"><div class="al-items">
+          <div class="al-item"><div class="al-tick l3">✓</div>Next-month regional demand forecasting</div>
+          <div class="al-item"><div class="al-tick l3">✓</div>Likely shortage area identification</div>
+          <div class="al-item"><div class="al-tick l3">✓</div>Dealer risk scoring from behavior history</div>
+          <div class="al-item"><div class="al-tick l3">✓</div>Poverty index correlation and calibration</div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ ROADMAP ══════════════════════════ -->
+<section class="section" id="roadmap" style="background:var(--ink-2);">
+  <div class="section-inner">
+    <div class="sec-label reveal">07 — Implementation Roadmap</div>
+    <h2 class="sec-h2 reveal reveal-d1">Three phases.<br><em>Staged validation.</em></h2>
+    <p class="sec-lead reveal reveal-d2">Each phase validates assumptions before wider commitment — a risk management strategy that protects the government's investment at every stage.</p>
+    <div class="roadmap-grid">
+      <div class="phase reveal reveal-d1">
+        <div class="phase-hdr ph-a"><div class="phase-tag">PHASE A</div><div class="phase-name">MVP</div><div class="phase-time">Weeks 1–10</div></div>
+        <div class="phase-body">
+          <div class="phase-item"><span class="ph-check ph-a">✓</span>Dealer login + beneficiary registration</div>
+          <div class="phase-item"><span class="ph-check ph-a">✓</span>Face capture + biometric verification</div>
+          <div class="phase-item"><span class="ph-check ph-a">✓</span>Food distribution transaction</div>
+          <div class="phase-item"><span class="ph-check ph-a">✓</span>Single-day duplicate prevention</div>
+          <div class="phase-item"><span class="ph-check ph-a">✓</span>Monthly quota enforcement</div>
+          <div class="phase-item"><span class="ph-check ph-a">✓</span>Offline storage + sync engine</div>
+          <div class="phase-item"><span class="ph-check ph-a">✓</span>Admin dashboard (Level 1 analytics)</div>
+          <div class="phase-item"><span class="ph-check ph-a">✓</span>Audit trail logging</div>
+        </div>
+      </div>
+      <div class="phase reveal reveal-d2">
+        <div class="phase-hdr ph-b"><div class="phase-tag">PHASE B</div><div class="phase-name">Pilot</div><div class="phase-time">Months 3–6</div></div>
+        <div class="phase-body">
+          <div class="phase-item"><span class="ph-check ph-b">✓</span>Dhaka district controlled rollout</div>
+          <div class="phase-item"><span class="ph-check ph-b">✓</span>Real dealer + beneficiary onboarding</div>
+          <div class="phase-item"><span class="ph-check ph-b">✓</span>Sync conflict observation + tuning</div>
+          <div class="phase-item"><span class="ph-check ph-b">✓</span>Biometric accuracy calibration</div>
+          <div class="phase-item"><span class="ph-check ph-b">✓</span>Level 2 diagnostic analytics</div>
+          <div class="phase-item"><span class="ph-check ph-b">✓</span>Staff training delivery</div>
+          <div class="phase-item"><span class="ph-check ph-b">✓</span>Dashboard validation with Ministry</div>
+        </div>
+      </div>
+      <div class="phase reveal reveal-d3">
+        <div class="phase-hdr ph-c"><div class="phase-tag">PHASE C</div><div class="phase-name">National</div><div class="phase-time">Months 7–18</div></div>
+        <div class="phase-body">
+          <div class="phase-item"><span class="ph-check ph-c">✓</span>All divisions + districts + upazilas</div>
+          <div class="phase-item"><span class="ph-check ph-c">✓</span>Level 3 predictive analytics</div>
+          <div class="phase-item"><span class="ph-check ph-c">✓</span>High-availability + DR deployment</div>
+          <div class="phase-item"><span class="ph-check ph-c">✓</span>Bangladesh Bank payment integration</div>
+          <div class="phase-item"><span class="ph-check ph-c">✓</span>IP Camera monitoring integration</div>
+          <div class="phase-item"><span class="ph-check ph-c">✓</span>Bilingual documentation</div>
+          <div class="phase-item"><span class="ph-check ph-c">✓</span>Full source code handover + training</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ TECH STACK ═════════════════════════ -->
+<section class="section" style="background:var(--ink);">
+  <div class="section-inner">
+    <div class="sec-label reveal">06 — Technology Stack</div>
+    <h2 class="sec-h2 reveal reveal-d1">Conservative, proven,<br><em>institutionally credible</em></h2>
+    <p class="sec-lead reveal reveal-d2">For a government project requiring 10-year sustainability, we recommend the most proven stack — one maintainable by Bangladesh's IT workforce long after our engagement ends.</p>
+    <div class="stack-grid reveal reveal-d2">
+      <div class="stack-card"><div class="stack-layer">BACKEND</div><div class="stack-tech">Spring Boot</div><div class="stack-why">Enterprise-grade, proven in national government deployments. Strong BD developer ecosystem.</div></div>
+      <div class="stack-card"><div class="stack-layer">DATABASE</div><div class="stack-tech">PostgreSQL</div><div class="stack-why">Open-source, zero licensing cost. Excellent for audit queries and 10-year retention.</div></div>
+      <div class="stack-card"><div class="stack-layer">CACHE</div><div class="stack-tech">Redis</div><div class="stack-why">Sub-millisecond eligibility lookups — critical for the &lt;5s transaction response requirement.</div></div>
+      <div class="stack-card"><div class="stack-layer">MOBILE</div><div class="stack-tech">Native Android</div><div class="stack-why">Best camera API for biometric capture. Proven offline reliability on field devices.</div></div>
+      <div class="stack-card"><div class="stack-layer">OFFLINE DB</div><div class="stack-tech">SQLite + SQLCipher</div><div class="stack-why">Encrypted, embedded, battle-tested. Industry standard for offline-first mobile.</div></div>
+      <div class="stack-card"><div class="stack-layer">MESSAGING</div><div class="stack-tech">RabbitMQ / AMQP</div><div class="stack-why">SRS explicitly requires AMQP. Handles async sync, notifications, analytics pipelines.</div></div>
+    </div>
+    <div class="perf-row reveal reveal-d3">
+      <div class="perf"><div class="perf-val">99.9%</div><div class="perf-lbl">System Availability</div></div>
+      <div class="perf"><div class="perf-val">&lt;1s</div><div class="perf-lbl">API Response (p95)</div></div>
+      <div class="perf"><div class="perf-val">&gt;95%</div><div class="perf-lbl">Face Match Accuracy</div></div>
+      <div class="perf"><div class="perf-val">100%</div><div class="perf-lbl">Duplicate Prevention</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ TRUST ══════════════════════════════ -->
+<section class="section" style="background:var(--ink-2);">
+  <div class="section-inner">
+    <div class="sec-label reveal">08 — Why Choose Us</div>
+    <h2 class="sec-h2 reveal reveal-d1">Selling understanding,<br><em>not a black box</em></h2>
+    <div class="trust-grid">
+      <div class="trust-list">
+        <div class="trust-item reveal reveal-left reveal-d1"><div class="trust-tick">✓</div><div class="trust-txt">Complete source code ownership transfer — zero vendor lock-in</div></div>
+        <div class="trust-item reveal reveal-left reveal-d2"><div class="trust-tick">✓</div><div class="trust-txt">Inline code documentation in English and Bengali</div></div>
+        <div class="trust-item reveal reveal-left reveal-d2"><div class="trust-tick">✓</div><div class="trust-txt">Developer Instruction Manual for government developers</div></div>
+        <div class="trust-item reveal reveal-left reveal-d3"><div class="trust-tick">✓</div><div class="trust-txt">Complete REST API documentation — OpenAPI 3.0</div></div>
+        <div class="trust-item reveal reveal-left reveal-d3"><div class="trust-tick">✓</div><div class="trust-txt">Bilingual System Administrator Manual</div></div>
+        <div class="trust-item reveal reveal-left reveal-d4"><div class="trust-tick">✓</div><div class="trust-txt">On-site training workshops — IT team and field staff</div></div>
+        <div class="trust-item reveal reveal-left reveal-d4"><div class="trust-tick">✓</div><div class="trust-txt">Dealer User Guide in Bengali — icon-first for field use</div></div>
+      </div>
+      <div class="closing reveal reveal-right reveal-d2">
+        <div class="closing-bn">"সঠিক সুবিধাভোগী, সঠিক কোটা,<br>সঠিক প্রমাণ, এবং সঠিক নজরদারি।"</div>
+        <div class="closing-en">The right beneficiary. The right quota. The right proof. The right oversight. — At national scale.</div>
+        <button class="btn-primary" id="closing-demo-btn">See It Working → Launch Demo</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DEMO CTA ════════════════════════════ -->
+<section class="demo-cta">
+  <div class="demo-cta-inner">
+    <h2>Interactive MVP Demo</h2>
+    <p>A fully functional prototype demonstrating the complete OMS control platform — live transaction data, biometric verification, Bengali mobile app, and real analytics.</p>
+    <div class="demo-tags">
+      <span class="dtag dtag-1">● Live Transaction Feed</span>
+      <span class="dtag dtag-2">● Biometric Verification</span>
+      <span class="dtag dtag-3">● Analytics Engine</span>
+      <span class="dtag dtag-4">● Bengali Mobile App</span>
+    </div>
+    <button class="btn-primary" id="final-demo-btn" style="font-size:16px;padding:16px 44px;">
+      Open Dashboard Demo →
+    </button>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══════════════════════════════ -->
+<footer>
+  <div class="foot-l">OMS National Control Platform · Strategic Proposal v1.0 · March 2026</div>
+  <div class="foot-r">Ministry of Food · Government of Bangladesh · CONFIDENTIAL</div>
+</footer>
+
+<script>
+/* ── Cursor ── */
+var dot=document.getElementById('cursor-dot');
+var ring=document.getElementById('cursor-ring');
+var mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',function(e){
+  mx=e.clientX;my=e.clientY;
+  dot.style.left=mx+'px';dot.style.top=my+'px';
+});
+function animRing(){
+  rx+=(mx-rx)*.12;ry+=(my-ry)*.12;
+  ring.style.left=rx+'px';ring.style.top=ry+'px';
+  requestAnimationFrame(animRing);
+}
+animRing();
+document.querySelectorAll('button,a,.goal,.phase,.trust-item,.bio-opt').forEach(function(el){
+  el.addEventListener('mouseenter',function(){
+    dot.style.width='10px';dot.style.height='10px';
+    ring.style.width='50px';ring.style.height='50px';
+    ring.style.borderColor='rgba(45,212,191,.8)';
+  });
+  el.addEventListener('mouseleave',function(){
+    dot.style.width='6px';dot.style.height='6px';
+    ring.style.width='36px';ring.style.height='36px';
+    ring.style.borderColor='rgba(45,212,191,.5)';
+  });
+});
+
+/* ── Particle System ── */
+var canvas=document.getElementById('particle-canvas');
+var ctx=canvas.getContext('2d');
+var particles=[];
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resize();
+window.addEventListener('resize',resize);
+
+for(var i=0;i<80;i++){
+  particles.push({
+    x:Math.random()*window.innerWidth,
+    y:Math.random()*window.innerHeight,
+    vx:(Math.random()-.5)*.3,
+    vy:(Math.random()-.5)*.3,
+    r:Math.random()*1.5+.5,
+    a:Math.random()*.4+.1,
+    c:Math.random()>.5?'45,212,191':'59,130,246'
+  });
+}
+
+function drawParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(function(p){
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>canvas.width)p.vx*=-1;
+    if(p.y<0||p.y>canvas.height)p.vy*=-1;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle='rgba('+p.c+','+p.a+')';
+    ctx.fill();
+  });
+  // Draw connections
+  for(var i=0;i<particles.length;i++){
+    for(var j=i+1;j<particles.length;j++){
+      var dx=particles[i].x-particles[j].x;
+      var dy=particles[i].y-particles[j].y;
+      var dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<100){
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.strokeStyle='rgba(45,212,191,'+(0.06*(1-dist/100))+')';
+        ctx.lineWidth=.5;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+/* ── Nav scroll ── */
+var nav=document.getElementById('main-nav');
+window.addEventListener('scroll',function(){
+  nav.classList.toggle('scrolled',window.scrollY>60);
+},{ passive:true });
+
+/* ── Intersection Observer reveals ── */
+var ro=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target);}
+  });
+},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el);});
+
+/* ── Counter animation ── */
+function animCount(el,target,duration,suffix){
+  var start=0,startTime=null;
+  function step(ts){
+    if(!startTime)startTime=ts;
+    var progress=Math.min((ts-startTime)/duration,1);
+    var ease=1-Math.pow(1-progress,4);
+    var val=Math.floor(ease*target);
+    el.textContent=val.toLocaleString()+(suffix||'');
+    if(progress<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ── Demo button routing ── */
+function openDemo(){
+  window.open('OMS_DASHBOARD.html','_blank');
+}
+document.getElementById('launch-demo-btn').addEventListener('click',openDemo);
+document.getElementById('hero-demo-btn').addEventListener('click',openDemo);
+document.getElementById('final-demo-btn').addEventListener('click',openDemo);
+document.getElementById('closing-demo-btn').addEventListener('click',openDemo);
+</script>
+</body>
+</html>

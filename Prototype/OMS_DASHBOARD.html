@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMS Dashboard — Live Control Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════ */
+:root{
+  --ink:     #04080F;
+  --sl-900:  #0F172A;
+  --sl-800:  #1E293B;
+  --sl-700:  #334155;
+  --sl-600:  #475569;
+  --sl-500:  #64748B;
+  --sl-400:  #94A3B8;
+  --sl-300:  #CBD5E1;
+  --sl-200:  #E2E8F0;
+  --sl-100:  #F1F5F9;
+  --sl-050:  #F8FAFC;
+  --white:   #FFFFFF;
+  --navy:    #0F2352;
+  --blue:    #1D4ED8;
+  --blue-v:  #3B82F6;
+  --blue-50: #EFF6FF;
+  --blue-100:#DBEAFE;
+  --teal:    #0D9488;
+  --teal-v:  #14B8A6;
+  --teal-50: #F0FDFA;
+  --teal-100:#CCFBF1;
+  --amber:   #D97706;
+  --amb-50:  #FFFBEB;
+  --amb-100: #FEF3C7;
+  --red:     #DC2626;
+  --red-50:  #FEF2F2;
+  --red-100: #FEE2E2;
+  --green:   #16A34A;
+  --grn-50:  #F0FDF4;
+  --grn-100: #DCFCE7;
+  --sans:    'Outfit', system-ui, sans-serif;
+  --mono:    'JetBrains Mono', monospace;
+  --sh-sm:   0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:   0 4px 16px rgba(0,0,0,.08);
+  --ease:    cubic-bezier(0.16,1,0.3,1);
+  --ease-s:  cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ═══════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:16px;}
+body{
+  font-family:var(--sans);font-size:14px;
+  background:var(--sl-050);color:var(--sl-900);
+  overflow-x:hidden;
+}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--sl-300);border-radius:2px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ═══════════════════════════════════════
+   PAGE LOADER
+═══════════════════════════════════════ */
+#loader{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--sl-900);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  transition:opacity .6s var(--ease),visibility .6s;
+}
+#loader.out{opacity:0;visibility:hidden;}
+.loader-logo{
+  width:52px;height:52px;
+  animation:loaderSpin 1.5s linear infinite;
+}
+@keyframes loaderSpin{to{transform:rotate(360deg)}}
+.loader-text{
+  font-family:var(--mono);font-size:11px;letter-spacing:2px;
+  color:rgba(255,255,255,.4);text-transform:uppercase;
+}
+.loader-bar{
+  width:160px;height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden;
+}
+.loader-fill{
+  height:100%;background:linear-gradient(90deg,var(--teal),var(--blue-v));
+  animation:loaderFill 1.8s var(--ease) forwards;
+}
+@keyframes loaderFill{from{width:0}to{width:100%}}
+
+/* ═══════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════ */
+.topbar{
+  height:52px;background:white;
+  border-bottom:1px solid var(--sl-200);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  position:sticky;top:0;z-index:100;
+  box-shadow:var(--sh-sm);
+}
+.tb-brand{display:flex;align-items:center;gap:10px;}
+.tb-logo{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--teal),var(--blue));
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.tb-logo svg{width:15px;height:15px;fill:white;}
+.tb-title{
+  font-size:13.5px;font-weight:700;color:var(--sl-900);letter-spacing:-.2px;
+}
+.tb-status{display:flex;align-items:center;gap:10px;}
+.tb-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--sl-100);border-radius:100px;
+  padding:4px 12px;font-size:11px;color:var(--sl-600);font-weight:500;
+}
+.live-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#22C55E;box-shadow:0 0 0 2px rgba(34,197,94,.2);
+  animation:livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 2px rgba(34,197,94,.2)}50%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+.tb-alert{color:var(--red);}
+
+/* ═══════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════ */
+.layout{display:flex;min-height:calc(100vh - 52px);}
+
+/* ═══════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════ */
+.sidebar{
+  width:200px;flex-shrink:0;
+  background:white;border-right:1px solid var(--sl-200);
+  padding:10px 0;overflow-y:auto;
+  transition:transform .3s var(--ease);
+}
+.sb-cat{
+  padding:14px 16px 5px;
+  font-family:var(--mono);font-size:9px;font-weight:500;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--sl-300);
+}
+.sb-nav{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 15px;font-size:12.5px;font-weight:500;color:var(--sl-600);
+  cursor:pointer;border-left:2.5px solid transparent;
+  transition:all .15s;position:relative;
+  user-select:none;
+}
+.sb-nav:hover{color:var(--sl-900);background:var(--sl-050);}
+.sb-nav.active{
+  color:var(--navy);background:var(--blue-50);
+  border-left-color:var(--navy);font-weight:600;
+}
+.sb-nav.active::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2.5px;
+  background:var(--navy);
+}
+.sb-i{font-size:15px;width:18px;text-align:center;transition:transform .2s var(--ease-s);}
+.sb-nav:hover .sb-i,.sb-nav.active .sb-i{transform:scale(1.1);}
+.sb-badge{
+  margin-left:auto;background:var(--red);color:white;
+  font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;
+  animation:badgePop .3s var(--ease-s);
+}
+@keyframes badgePop{from{transform:scale(0)}to{transform:scale(1)}}
+
+.sb-progress{
+  margin:14px 12px 0;
+  background:var(--blue-50);border-radius:10px;
+  padding:12px 13px;border:1px solid var(--blue-100);
+}
+.sbp-lbl{
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;
+  color:var(--navy);margin-bottom:5px;font-weight:500;
+}
+.sbp-val{
+  font-size:20px;font-weight:800;color:var(--sl-900);
+  font-variant-numeric:tabular-nums;
+}
+.sbp-sub{font-size:10px;color:var(--sl-500);margin-top:1px;}
+.sbp-bar{height:3px;background:var(--blue-100);border-radius:2px;margin-top:7px;overflow:hidden;}
+.sbp-fill{
+  height:100%;background:var(--navy);border-radius:2px;
+  width:0;transition:width 1.5s 1s var(--ease);
+}
+
+/* ═══════════════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════════════ */
+.main{
+  flex:1;overflow-y:auto;
+  background:var(--sl-050);padding:22px;
+}
+
+/* Tab panels */
+.tab-panel{
+  display:none;
+  animation:panelIn .35s var(--ease) both;
+}
+.tab-panel.active{display:block;}
+@keyframes panelIn{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:none}
+}
+
+/* Page header */
+.pgh{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;}
+.pgh-title{font-size:20px;font-weight:800;color:var(--sl-900);letter-spacing:-.4px;}
+.pgh-sub{font-size:11.5px;color:var(--sl-500);margin-top:3px;}
+.btn-row{display:flex;gap:6px;}
+
+/* Buttons */
+.btn{
+  padding:6px 14px;border-radius:8px;
+  font-family:var(--sans);font-size:11.5px;font-weight:600;
+  cursor:pointer;border:none;
+  transition:all .15s var(--ease);
+  display:inline-flex;align-items:center;gap:5px;
+}
+.btn:active{transform:scale(.96);}
+.btn-p{background:var(--navy);color:white;}
+.btn-p:hover{background:var(--blue);}
+.btn-t{background:var(--teal);color:white;}
+.btn-t:hover{background:var(--teal-v);}
+.btn-o{background:white;border:1.5px solid var(--sl-200);color:var(--sl-600);}
+.btn-o:hover{border-color:var(--sl-400);color:var(--sl-900);}
+.btn-d{background:var(--red);color:white;}
+.btn-s{background:var(--green);color:white;}
+
+/* ═══════════════════════════════════════
+   CARDS
+═══════════════════════════════════════ */
+.card{
+  background:white;border-radius:12px;
+  border:1px solid var(--sl-200);padding:16px 18px;
+  box-shadow:var(--sh-sm);
+  transition:box-shadow .2s;
+}
+.card:hover{box-shadow:var(--sh-md);}
+.card-title{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  text-transform:uppercase;letter-spacing:.9px;color:var(--sl-500);
+  margin-bottom:14px;display:flex;align-items:center;gap:7px;
+}
+
+/* ═══════════════════════════════════════
+   METRIC CARDS
+═══════════════════════════════════════ */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.metric{
+  background:white;border-radius:12px;padding:18px;
+  border:1px solid var(--sl-200);position:relative;overflow:hidden;
+  box-shadow:var(--sh-sm);cursor:default;
+  transition:all .2s var(--ease);
+}
+.metric:hover{transform:translateY(-2px);box-shadow:var(--sh-md);}
+.metric::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:2.5px;
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .5s var(--ease);
+}
+.metric:hover::after{transform:scaleX(1);}
+.mc-b::after{background:linear-gradient(90deg,var(--navy),var(--blue-v));}
+.mc-t::after{background:linear-gradient(90deg,var(--teal),var(--teal-v));}
+.mc-g::after{background:linear-gradient(90deg,var(--green),#4ADE80);}
+.mc-a::after{background:linear-gradient(90deg,var(--amber),#FBBF24);}
+.metric-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--sl-500);}
+.metric-val{
+  font-size:28px;font-weight:800;margin:6px 0 3px;
+  line-height:1;font-variant-numeric:tabular-nums;
+  transition:color .3s;
+}
+.mc-b .metric-val{color:var(--navy);}
+.mc-t .metric-val{color:var(--teal);}
+.mc-g .metric-val{color:var(--green);}
+.mc-a .metric-val{color:var(--amber);}
+.metric-trend{font-size:11px;color:var(--sl-500);}
+.metric-icon{
+  position:absolute;right:14px;top:14px;font-size:22px;opacity:.08;
+  transition:opacity .2s,transform .2s;
+}
+.metric:hover .metric-icon{opacity:.14;transform:scale(1.1);}
+
+/* ═══════════════════════════════════════
+   GRIDS
+═══════════════════════════════════════ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g75{display:grid;grid-template-columns:7fr 5fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.mb14{margin-bottom:14px;}
+
+/* ═══════════════════════════════════════
+   TIMELINE (LIVE FEED)
+═══════════════════════════════════════ */
+.tl{display:flex;flex-direction:column;gap:0;}
+.tl-item{
+  display:flex;gap:11px;padding-bottom:14px;
+  position:relative;
+  animation:tlfadeIn .4s var(--ease) both;
+}
+@keyframes tlfadeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.tl-item:not(:last-child)::before{
+  content:'';position:absolute;left:10px;top:22px;bottom:0;
+  width:1px;background:var(--sl-100);
+}
+.tl-dot{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;flex-shrink:0;
+  transition:transform .2s var(--ease-s);
+}
+.tl-item:hover .tl-dot{transform:scale(1.2);}
+.tl-ok{background:var(--grn-100);}
+.tl-er{background:var(--red-100);}
+.tl-wn{background:var(--amb-100);}
+.tl-in{background:var(--blue-100);}
+.tl-t{font-size:12px;font-weight:600;color:var(--sl-900);}
+.tl-d{font-size:11px;color:var(--sl-500);margin-top:1px;line-height:1.5;}
+.tl-m{font-size:10px;color:var(--sl-400);margin-top:2px;font-family:var(--mono);}
+
+/* ═══════════════════════════════════════
+   BADGES
+═══════════════════════════════════════ */
+.b{
+  display:inline-flex;align-items:center;
+  padding:2px 7px;border-radius:9px;
+  font-size:10px;font-weight:700;
+  transition:transform .15s var(--ease-s);
+}
+.b:hover{transform:scale(1.05);}
+.bg{background:var(--grn-100);color:var(--green);}
+.br{background:var(--red-100);color:var(--red);}
+.by{background:var(--amb-100);color:var(--amber);}
+.bb{background:var(--blue-100);color:var(--navy);}
+.bt{background:var(--teal-100);color:var(--teal);}
+.bs{background:var(--sl-100);color:var(--sl-600);}
+
+/* ═══════════════════════════════════════
+   TABLE
+═══════════════════════════════════════ */
+.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt th{
+  background:var(--sl-050);padding:9px 12px;
+  text-align:left;font-size:10px;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--sl-500);font-weight:600;
+  border-bottom:1px solid var(--sl-200);
+}
+.dt td{
+  padding:11px 12px;border-bottom:1px solid var(--sl-050);
+  color:var(--sl-900);vertical-align:middle;
+}
+.dt tr{transition:background .12s;}
+.dt tr:hover td{background:var(--sl-050);}
+.dt tr:last-child td{border-bottom:none;}
+
+/* ═══════════════════════════════════════
+   BAR CHART
+═══════════════════════════════════════ */
+.bc-row{display:flex;align-items:center;gap:9px;margin-bottom:8px;}
+.bc-lbl{font-size:11px;color:var(--sl-500);width:88px;text-align:right;flex-shrink:0;}
+.bc-track{
+  flex:1;height:16px;background:var(--sl-100);
+  border-radius:3px;overflow:hidden;cursor:pointer;
+}
+.bc-fill{
+  height:100%;border-radius:3px;width:0;
+  transition:width 1.4s var(--ease);
+  position:relative;
+}
+.bc-fill::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.25));
+}
+.bc-v{font-size:11px;font-weight:700;color:var(--sl-700);width:34px;}
+
+/* ═══════════════════════════════════════
+   VERIFICATION STEPS
+═══════════════════════════════════════ */
+.vs{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 13px;border-radius:8px;
+  margin-bottom:5px;border:1px solid var(--sl-200);
+  font-size:12px;transition:all .2s;
+}
+.vs:hover{border-color:var(--sl-300);}
+.vs-done{background:var(--grn-50);border-color:#BBF7D0;}
+.vs-act{background:var(--blue-50);border-color:var(--blue-100);}
+.vs-pend{background:var(--sl-050);color:var(--sl-500);}
+.vs-n{
+  width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;flex-shrink:0;
+  transition:transform .2s var(--ease-s);
+}
+.vs:hover .vs-n{transform:scale(1.15);}
+.vs-done .vs-n{background:var(--green);color:white;}
+.vs-act .vs-n{background:var(--navy);color:white;}
+.vs-pend .vs-n{background:var(--sl-200);color:var(--sl-500);}
+
+/* ═══════════════════════════════════════
+   ALERTS
+═══════════════════════════════════════ */
+.al{
+  padding:10px 13px;border-radius:9px;
+  font-size:12px;display:flex;align-items:flex-start;
+  gap:8px;margin-bottom:9px;
+  transition:all .2s;
+}
+.al:hover{transform:translateX(3px);}
+.al-e{background:var(--red-50);border:1px solid #FCA5A5;color:var(--red);}
+.al-w{background:var(--amb-50);border:1px solid #FDE68A;color:var(--amber);}
+.al-s{background:var(--grn-50);border:1px solid #BBF7D0;color:var(--green);}
+.al-i{background:var(--blue-50);border:1px solid var(--blue-100);color:var(--navy);}
+.al-ic{font-size:14px;flex-shrink:0;margin-top:1px;}
+
+/* ═══════════════════════════════════════
+   FORM
+═══════════════════════════════════════ */
+.fg{margin-bottom:12px;}
+.fl{font-size:11px;font-weight:600;color:var(--sl-600);margin-bottom:4px;display:block;}
+.fi{
+  width:100%;padding:8px 11px;
+  border:1.5px solid var(--sl-200);border-radius:8px;
+  font-family:var(--sans);font-size:12.5px;color:var(--sl-900);
+  outline:none;transition:border .15s,box-shadow .15s;
+}
+.fi:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(30,42,81,.08);}
+.fs{
+  width:100%;padding:8px 11px;
+  border:1.5px solid var(--sl-200);border-radius:8px;
+  font-family:var(--sans);font-size:12.5px;background:white;color:var(--sl-900);
+  outline:none;transition:border .15s;
+}
+.fs:focus{border-color:var(--navy);}
+
+/* ═══════════════════════════════════════
+   FACE VERIFY BOX
+═══════════════════════════════════════ */
+.fv-box{border-radius:12px;overflow:hidden;border:1px solid var(--sl-200);}
+.fv-preview{
+  background:linear-gradient(135deg,var(--sl-900),#1A2A4A);
+  height:155px;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.fv-preview::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center,rgba(13,148,136,.12),transparent 60%);
+}
+.fv-ring{
+  width:88px;height:88px;border-radius:50%;
+  border:2px solid rgba(20,184,166,.6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;position:relative;z-index:1;
+  background:rgba(20,184,166,.04);
+}
+.fv-spin{
+  position:absolute;inset:-10px;border-radius:50%;
+  border:1px dashed rgba(20,184,166,.25);
+  animation:spin 8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fv-scan{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--teal-v),transparent);
+  top:0;z-index:2;
+  animation:fvscan 2.5s ease-in-out infinite;
+}
+@keyframes fvscan{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
+.fv-corners{position:absolute;inset:24px;z-index:1;}
+.fvc{position:absolute;width:13px;height:13px;border-color:rgba(20,184,166,.8);border-style:solid;}
+.fvc.tl{top:0;left:0;border-width:2px 0 0 2px;}
+.fvc.tr{top:0;right:0;border-width:2px 2px 0 0;}
+.fvc.bl{bottom:0;left:0;border-width:0 0 2px 2px;}
+.fvc.br{bottom:0;right:0;border-width:0 2px 2px 0;}
+.fv-conf{padding:12px 14px;background:var(--sl-050);}
+.fv-res{
+  padding:9px 14px;background:var(--grn-50);
+  display:flex;align-items:center;gap:7px;
+  font-size:12px;font-weight:600;color:var(--green);
+}
+
+/* ═══════════════════════════════════════
+   QUOTA RING
+═══════════════════════════════════════ */
+.qr-wrap{position:relative;width:70px;height:70px;flex-shrink:0;}
+.qr-ctr{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.qr-val{font-size:13px;font-weight:800;color:var(--sl-900);}
+.qr-sub{font-size:8px;color:var(--sl-500);font-weight:600;}
+
+/* ═══════════════════════════════════════
+   REGION TILES
+═══════════════════════════════════════ */
+.rg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.rg-tile{
+  padding:13px;border-radius:9px;text-align:center;
+  cursor:pointer;transition:all .2s var(--ease-s);
+}
+.rg-tile:hover{transform:scale(1.05);}
+.rg-tile:active{transform:scale(.97);}
+.rg-name{font-size:10px;font-weight:700;margin-bottom:3px;}
+.rg-val{font-size:20px;font-weight:800;}
+.rg-sub{font-size:10px;opacity:.65;}
+
+/* ═══════════════════════════════════════
+   CHART — LEAKAGE TREND
+═══════════════════════════════════════ */
+.chart-bars{
+  display:flex;align-items:flex-end;gap:4px;
+  height:100px;padding-bottom:8px;
+}
+.chart-bar{
+  flex:1;border-radius:3px 3px 0 0;
+  min-width:8px;cursor:pointer;
+  transition:opacity .2s,transform .2s;
+  position:relative;
+}
+.chart-bar:hover{opacity:.85;transform:translateY(-2px);}
+.chart-bar .tooltip{
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:var(--sl-900);color:white;
+  font-size:10px;padding:3px 7px;border-radius:5px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .15s;
+}
+.chart-bar:hover .tooltip{opacity:1;}
+
+/* ═══════════════════════════════════════
+   ANOMALY
+═══════════════════════════════════════ */
+.anom{
+  padding:10px 12px;border-radius:8px;margin-bottom:8px;
+  cursor:pointer;transition:all .2s;
+}
+.anom:hover{transform:translateX(3px);}
+.anom-h{font-size:11.5px;font-weight:700;margin-bottom:3px;}
+.anom-d{font-size:11px;line-height:1.5;}
+.a-hi{background:var(--red-50);border-left:3px solid var(--red);}
+.a-hi .anom-h{color:var(--red);}
+.a-hi .anom-d{color:var(--red);opacity:.75;}
+.a-md{background:var(--amb-50);border-left:3px solid var(--amber);}
+.a-md .anom-h{color:var(--amber);}
+.a-md .anom-d{color:var(--amber);opacity:.75;}
+
+/* ═══════════════════════════════════════
+   SERVICE HEALTH
+═══════════════════════════════════════ */
+.sh-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;border-radius:8px;margin-bottom:5px;
+  font-size:12px;font-weight:500;
+  transition:transform .15s;cursor:default;
+}
+.sh-row:hover{transform:translateX(2px);}
+
+/* ═══════════════════════════════════════
+   MOBILE FRAMES
+═══════════════════════════════════════ */
+.mf-wrap{display:flex;justify-content:center;}
+.mf{
+  width:196px;background:var(--sl-800);border-radius:22px;padding:12px;
+  box-shadow:0 20px 50px rgba(0,0,0,.28);
+  transition:transform .3s var(--ease-s);
+}
+.mf:hover{transform:translateY(-4px) rotateX(3deg);}
+.mf-notch{width:56px;height:5px;background:rgba(255,255,255,.08);border-radius:3px;margin:0 auto 10px;}
+.mf-scr{
+  background:var(--sl-900);border-radius:12px;
+  padding:12px;min-height:250px;
+}
+.mf-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mf-ttl{font-size:11.5px;font-weight:700;color:white;}
+.mf-tm{font-size:9.5px;color:var(--sl-500);font-family:var(--mono);}
+.mf-row{
+  background:rgba(255,255,255,.05);border-radius:6px;
+  padding:8px 10px;margin-bottom:4px;
+  display:flex;align-items:center;gap:8px;
+  transition:background .15s;cursor:pointer;
+}
+.mf-row:hover{background:rgba(255,255,255,.09);}
+.mf-ri{font-size:13px;}
+.mf-rt{font-size:10px;color:var(--sl-400);}
+.mf-rv{margin-left:auto;font-size:10px;font-weight:700;color:var(--teal-v);}
+.mf-btn{
+  width:100%;
+  background:linear-gradient(135deg,var(--teal),var(--blue-v));
+  color:white;font-size:10.5px;font-weight:700;
+  padding:9px;border-radius:7px;text-align:center;
+  margin-top:8px;cursor:pointer;font-family:var(--sans);
+  border:none;transition:opacity .15s,transform .15s;
+}
+.mf-btn:hover{opacity:.9;transform:scale(1.02);}
+
+/* ═══════════════════════════════════════
+   OFFLINE PILLS
+═══════════════════════════════════════ */
+.oi{
+  display:inline-flex;align-items:center;gap:5px;
+  border-radius:9px;padding:4px 9px;
+  font-size:10.5px;font-weight:600;
+  transition:transform .15s var(--ease-s);
+}
+.oi:hover{transform:scale(1.04);}
+.oi-off{background:var(--amb-100);color:var(--amber);}
+.oi-on{background:var(--grn-100);color:var(--green);}
+
+/* ═══════════════════════════════════════
+   TOAST NOTIFICATION
+═══════════════════════════════════════ */
+#toast-container{
+  position:fixed;top:70px;right:20px;z-index:1000;
+  display:flex;flex-direction:column;gap:8px;
+  pointer-events:none;
+}
+.toast{
+  background:white;border-radius:10px;
+  border:1px solid var(--sl-200);
+  padding:12px 16px;
+  box-shadow:0 8px 32px rgba(0,0,0,.12);
+  display:flex;align-items:center;gap:10px;
+  font-size:12.5px;font-weight:500;color:var(--sl-900);
+  max-width:300px;pointer-events:all;
+  animation:toastIn .4s var(--ease) both;
+}
+.toast.out{animation:toastOut .3s var(--ease) forwards;}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)translateY(-4px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+.toast-icon{font-size:16px;flex-shrink:0;}
+.toast-bar{
+  position:absolute;bottom:0;left:0;height:2px;
+  background:linear-gradient(90deg,var(--teal),var(--blue-v));
+  border-radius:0 0 2px 2px;
+  animation:toastBar 3s linear both;
+}
+@keyframes toastBar{from{width:100%}to{width:0}}
+
+/* ═══════════════════════════════════════
+   BACK TO PRESENTATION
+═══════════════════════════════════════ */
+.back-btn{
+  display:flex;align-items:center;gap:7px;
+  background:var(--sl-100);border:1.5px solid var(--sl-200);
+  border-radius:8px;padding:5px 12px;
+  font-size:11.5px;font-weight:600;color:var(--sl-700);
+  cursor:pointer;transition:all .15s;
+  text-decoration:none;
+}
+.back-btn:hover{background:white;border-color:var(--sl-300);color:var(--sl-900);}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:1000px){
+  .metrics{grid-template-columns:1fr 1fr;}
+  .g75,.g2,.g3{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- Loader -->
+<div id="loader">
+  <svg class="loader-logo" viewBox="0 0 52 52" fill="none">
+    <defs>
+      <linearGradient id="lg" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#0D9488"/><stop offset="1" stop-color="#1D4ED8"/>
+      </linearGradient>
+    </defs>
+    <polygon points="26,2 50,15 50,37 26,50 2,37 2,15" fill="none" stroke="url(#lg)" stroke-width="2"/>
+    <polygon points="26,12 40,19.5 40,32.5 26,40 12,32.5 12,19.5" fill="url(#lg)" opacity=".3"/>
+    <circle cx="26" cy="26" r="5" fill="url(#lg)"/>
+  </svg>
+  <div class="loader-text">Initializing OMS Control Platform</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="tb-brand">
+    <a class="back-btn" href="OMS_PRESENTATION.html">← Back</a>
+    <div style="width:1px;height:24px;background:var(--sl-200);margin:0 4px;"></div>
+    <div class="tb-logo">
+      <svg viewBox="0 0 16 16"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z"/></svg>
+    </div>
+    <div>
+      <div class="tb-title">OMS National Control Platform</div>
+    </div>
+  </div>
+  <div class="tb-status">
+    <div class="tb-pill"><div class="live-dot"></div>System Live</div>
+    <div class="tb-pill">📡 5,000 online</div>
+    <div class="tb-pill">📅 20 March 2026 — <span id="clock">09:41</span> BDT</div>
+    <div class="tb-pill tb-alert">⚠ 3 Alerts</div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-cat">Main</div>
+    <div class="sb-nav active" onclick="showTab('t-dash',this)"><span class="sb-i">📊</span>Dashboard</div>
+    <div class="sb-nav" onclick="showTab('t-dist',this)"><span class="sb-i">🌾</span>Distribution</div>
+    <div class="sb-nav" onclick="showTab('t-ben',this)"><span class="sb-i">👥</span>Beneficiaries</div>
+    <div class="sb-nav" onclick="showTab('t-dealer',this)"><span class="sb-i">🏪</span>Dealers<span class="sb-badge">2</span></div>
+    <div class="sb-cat">Operations</div>
+    <div class="sb-nav" onclick="showTab('t-verify',this)"><span class="sb-i">🔍</span>Verification</div>
+    <div class="sb-nav" onclick="showTab('t-analytics',this)"><span class="sb-i">📈</span>Analytics</div>
+    <div class="sb-nav" onclick="showTab('t-monitor',this)"><span class="sb-i">👁</span>Monitoring<span class="sb-badge">3</span></div>
+    <div class="sb-cat">Admin</div>
+    <div class="sb-nav" onclick="showTab('t-audit',this)"><span class="sb-i">📋</span>Audit Log</div>
+    <div class="sb-nav" onclick="showTab('t-mobile',this)"><span class="sb-i">📱</span>Mobile App</div>
+    <div class="sb-progress">
+      <div class="sbp-lbl">TODAY'S PROGRESS</div>
+      <div class="sbp-val" id="live-count">0</div>
+      <div class="sbp-sub">of 1,800 target</div>
+      <div class="sbp-bar"><div class="sbp-fill" id="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="main-area">
+
+    <!-- ══ DASHBOARD ══════════════════════ -->
+    <div id="t-dash" class="tab-panel active">
+      <div class="pgh">
+        <div><div class="pgh-title">Control Dashboard</div><div class="pgh-sub">Dhaka Division · Real-time overview · 20 March 2026</div></div>
+        <div class="btn-row">
+          <button class="btn btn-o" onclick="toast('📤 Report exported to PDF','success')">📤 Export</button>
+          <button class="btn btn-p" onclick="refreshDash()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric mc-b">
+          <div class="metric-icon">🌾</div>
+          <div class="metric-lbl">Today's Transactions</div>
+          <div class="metric-val" id="m1">0</div>
+          <div class="metric-trend">▲ 8.3% vs yesterday</div>
+        </div>
+        <div class="metric mc-t">
+          <div class="metric-icon">👥</div>
+          <div class="metric-lbl">Beneficiaries Served</div>
+          <div class="metric-val" id="m2">0</div>
+          <div class="metric-trend">▲ 5.1% this week</div>
+        </div>
+        <div class="metric mc-g">
+          <div class="metric-icon">🛡</div>
+          <div class="metric-lbl">Duplicates Blocked</div>
+          <div class="metric-val" id="m3">0</div>
+          <div class="metric-trend">100% prevention rate</div>
+        </div>
+        <div class="metric mc-a">
+          <div class="metric-icon">⚖️</div>
+          <div class="metric-lbl">Food Distributed</div>
+          <div class="metric-val">6.2T</div>
+          <div class="metric-trend">Rice + Flour combined</div>
+        </div>
+      </div>
+      <div class="g75">
+        <div class="card">
+          <div class="card-title">⚡ Live Transaction Feed</div>
+          <div class="tl" id="live-feed">
+            <div class="tl-item"><div class="tl-dot tl-ok">✓</div><div><div class="tl-t">Amina Khatun — 5kg Rice</div><div class="tl-d">Rahman Center · Face: 97.7% · <span class="b bg">VERIFIED</span></div><div class="tl-m">09:41:02 · TXN-20260320-7001</div></div></div>
+            <div class="tl-item"><div class="tl-dot tl-er">✗</div><div><div class="tl-t">Duplicate Blocked — Mohammad Ali</div><div class="tl-d">Already collected 5kg at 07:23 · <span class="b br">BLOCKED</span></div><div class="tl-m">09:38:45 · DUPLICATE_ATTEMPT</div></div></div>
+            <div class="tl-item"><div class="tl-dot tl-ok">✓</div><div><div class="tl-t">Rina Begum — 3kg Flour</div><div class="tl-d">Karim Depot · Face: 94.1% · <span class="b bg">VERIFIED</span></div><div class="tl-m">09:36:18 · TXN-20260320-6998</div></div></div>
+            <div class="tl-item"><div class="tl-dot tl-wn">!</div><div><div class="tl-t">Exception — Jabbar Mia</div><div class="tl-d">Face uncertain 68% — Officer review required · <span class="b by">REVIEW</span></div><div class="tl-m">09:33:07 · EXC-20260320-015</div></div></div>
+            <div class="tl-item"><div class="tl-dot tl-in">↑</div><div><div class="tl-t">Salma Khanom — 5kg Rice (Offline Sync)</div><div class="tl-d">Recorded 09:21 offline, synced 09:34 · <span class="b bt">SYNCED</span></div><div class="tl-m">09:34:02 · TXN-20260320-6989</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card mb14">
+            <div class="card-title">🏆 Dealer Compliance</div>
+            <div class="bc-row"><div class="bc-lbl">Rahman Ctr</div><div class="bc-track"><div class="bc-fill" data-w="96" style="background:linear-gradient(90deg,var(--teal),var(--teal-v))"><div class="tooltip">96% — Excellent</div></div></div><div class="bc-v">96%</div></div>
+            <div class="bc-row"><div class="bc-lbl">Karim Depot</div><div class="bc-track"><div class="bc-fill" data-w="91" style="background:linear-gradient(90deg,var(--teal),var(--teal-v))"><div class="tooltip">91% — Very Good</div></div></div><div class="bc-v">91%</div></div>
+            <div class="bc-row"><div class="bc-lbl">Hasan Store</div><div class="bc-track"><div class="bc-fill" data-w="88" style="background:linear-gradient(90deg,var(--teal),var(--teal-v))"><div class="tooltip">88% — Good</div></div></div><div class="bc-v">88%</div></div>
+            <div class="bc-row"><div class="bc-lbl">Ali Center</div><div class="bc-track"><div class="bc-fill" data-w="74" style="background:linear-gradient(90deg,var(--amber),#FBBF24)"><div class="tooltip">74% — Warning</div></div></div><div class="bc-v">74%</div></div>
+            <div class="bc-row"><div class="bc-lbl">Khan Depot</div><div class="bc-track"><div class="bc-fill" data-w="61" style="background:linear-gradient(90deg,var(--red),#F87171)"><div class="tooltip">61% — At Risk</div></div></div><div class="bc-v">61%</div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🗺 Region Distribution</div>
+            <div class="rg-grid">
+              <div class="rg-tile" style="background:var(--blue-50)" onclick="toast('📊 Dhaka district details loading…','info')"><div class="rg-name" style="color:var(--navy)">Dhaka</div><div class="rg-val" style="color:var(--navy)">428</div><div class="rg-sub" style="color:var(--sl-500)">txns</div></div>
+              <div class="rg-tile" style="background:var(--grn-50)" onclick="toast('📊 Mirpur details loading…','info')"><div class="rg-name" style="color:var(--green)">Mirpur</div><div class="rg-val" style="color:var(--green)">312</div><div class="rg-sub" style="color:var(--sl-500)">txns</div></div>
+              <div class="rg-tile" style="background:var(--amb-50)" onclick="toast('📊 Uttara details loading…','info')"><div class="rg-name" style="color:var(--amber)">Uttara</div><div class="rg-val" style="color:var(--amber)">267</div><div class="rg-sub" style="color:var(--sl-500)">txns</div></div>
+              <div class="rg-tile" style="background:var(--teal-50)" onclick="toast('📊 Gulshan details loading…','info')"><div class="rg-name" style="color:var(--teal)">Gulshan</div><div class="rg-val" style="color:var(--teal)">240</div><div class="rg-sub" style="color:var(--sl-500)">txns</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ DISTRIBUTION ═════════════════ -->
+    <div id="t-dist" class="tab-panel">
+      <div class="pgh"><div><div class="pgh-title">Food Distribution</div><div class="pgh-sub">Record a new transaction with biometric verification</div></div></div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">📝 New Transaction</div>
+          <div class="fg"><label class="fl">Beneficiary Code</label><input class="fi" value="BEN-10021" oninput="checkBen(this)"></div>
+          <div class="fg"><label class="fl">Name (auto-loaded)</label><input class="fi" id="ben-name" value="Amina Khatun" readonly style="background:var(--sl-050)"></div>
+          <div class="fg"><label class="fl">Product</label><select class="fs"><option>Rice (চাল)</option><option>Flour (আটা)</option></select></div>
+          <div class="fg"><label class="fl">Quantity (kg)</label><input class="fi" type="number" value="5" min="1" max="10"></div>
+          <div style="background:var(--grn-50);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid #BBF7D0">
+            <div style="font-size:9.5px;font-weight:700;color:var(--green);margin-bottom:9px;font-family:var(--mono);letter-spacing:.8px">QUOTA STATUS</div>
+            <div style="display:flex;align-items:center;gap:16px">
+              <div class="qr-wrap">
+                <svg width="70" height="70" viewBox="0 0 70 70">
+                  <circle cx="35" cy="35" r="28" fill="none" stroke="#DCFCE7" stroke-width="7"/>
+                  <circle cx="35" cy="35" r="28" fill="none" stroke="#16A34A" stroke-width="7" stroke-dasharray="88 176" stroke-linecap="round" transform="rotate(-90 35 35)" style="transition:stroke-dasharray 1s var(--ease)" id="quota-circle"/>
+                </svg>
+                <div class="qr-ctr"><div class="qr-val">5kg</div><div class="qr-sub">left</div></div>
+              </div>
+              <div><div style="font-size:13px;font-weight:700;color:var(--sl-900)">5 kg remaining</div><div style="font-size:11px;color:var(--sl-500);margin-top:2px">March 2026 · 10kg quota</div><div style="font-size:11px;color:var(--green);margin-top:4px">✅ Eligible · Not collected today</div></div>
+            </div>
+          </div>
+          <div class="al al-s"><span class="al-ic">✅</span><div><strong>Ready to distribute.</strong> Quota available. No same-day lifting recorded.</div></div>
+          <button class="btn btn-t" style="width:100%;padding:10px;font-size:13px;margin-top:5px;border-radius:10px;" onclick="doDistribute()">🔐 Verify Face & Distribute</button>
+          <div id="dist-success" style="display:none;margin-top:10px"></div>
+        </div>
+        <div>
+          <div class="card mb14">
+            <div class="card-title">🛡 Duplicate Prevention Engine</div>
+            <div class="al al-e"><span class="al-ic">🚫</span><div><strong>BLOCKED: Mohammad Ali (BEN-10045)</strong><br>Collected 5kg Rice at 07:23 today from Mirpur Center. TXN-20260320-6891.</div></div>
+            <div style="font-size:11px;color:var(--sl-500);margin-top:6px">Today blocked: <strong style="color:var(--red)">49</strong> · Month savings: <strong style="color:var(--green)">~4,235 kg</strong></div>
+          </div>
+          <div class="card">
+            <div class="card-title">📡 Offline Sync Status</div>
+            <div class="al al-w mb14"><span class="al-ic">📴</span><div><strong>Karim Depot offline (54 min)</strong><br>23 transactions queued. Last sync: 08:47.</div></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="oi oi-off">📴 Karim Depot (23)</span>
+              <span class="oi oi-off">📴 Noor Center (7)</span>
+              <span class="oi oi-on">🟢 Rahman Center</span>
+              <span class="oi oi-on">🟢 Hasan Store</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ BENEFICIARIES ════════════════ -->
+    <div id="t-ben" class="tab-panel">
+      <div class="pgh"><div><div class="pgh-title">Beneficiary Management</div><div class="pgh-sub">12,840 enrolled · Dhaka Division</div></div><button class="btn btn-t" onclick="toast('📝 Enrollment form opening…','success')">+ Enroll</button></div>
+      <div class="card">
+        <div class="card-title">👥 Beneficiary Records</div>
+        <table class="dt">
+          <thead><tr><th>Code</th><th>Name</th><th>Area</th><th>March Quota</th><th>Remaining</th><th>Today</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:var(--mono);font-size:10px">BEN-10021</td><td><strong>Amina Khatun</strong></td><td>Mirpur-10</td><td>10 kg</td><td>5 kg</td><td><span class="b bg">Collected ✓</span></td><td><span class="b bg">Eligible</span></td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">BEN-10045</td><td><strong>Mohammad Ali</strong></td><td>Mirpur-10</td><td>10 kg</td><td>0 kg</td><td><span class="b br">DUPLICATE BLOCKED</span></td><td><span class="b br">Exhausted</span></td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">BEN-10087</td><td><strong>Rina Begum</strong></td><td>Uttara</td><td>10 kg</td><td>7 kg</td><td><span class="b bg">Collected ✓</span></td><td><span class="b bg">Eligible</span></td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">BEN-10102</td><td><strong>Jabbar Mia</strong></td><td>Gulshan</td><td>10 kg</td><td>10 kg</td><td><span class="b by">Exception</span></td><td><span class="b by">Under Review</span></td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">BEN-10156</td><td><strong>Salma Khanom</strong></td><td>Banani</td><td>10 kg</td><td>5 kg</td><td><span class="b bt">Sync'd ✓</span></td><td><span class="b bg">Eligible</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ DEALERS ══════════════════════ -->
+    <div id="t-dealer" class="tab-panel">
+      <div class="pgh"><div><div class="pgh-title">Dealer Management</div><div class="pgh-sub">2 pending approvals · 47 active dealers</div></div><button class="btn btn-p" onclick="toast('📋 Registration form ready','success')">+ Register</button></div>
+      <div class="al al-w mb14"><span class="al-ic">⏳</span><div><strong>2 dealers awaiting approval.</strong> Review and respond within 48 hours per SOP.</div></div>
+      <div class="card">
+        <div class="card-title">🏪 Registered Dealers</div>
+        <table class="dt">
+          <thead><tr><th>ID</th><th>Name</th><th>Area</th><th>Today</th><th>Compliance</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:var(--mono);font-size:10px">DLR-0041</td><td><strong>Rahman OMS Center</strong><br><span style="font-size:10px;color:var(--sl-500)">Md. Abdur Rahman</span></td><td>Mirpur-10</td><td>187 txns</td><td><span class="b bg">96% ★★★★★</span></td><td><span class="b bg">Active</span></td><td><button class="btn btn-o" style="padding:4px 9px;font-size:10.5px" onclick="toast('👤 Rahman Center details loaded','info')">View</button></td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">DLR-0039</td><td><strong>Karim Grain Depot</strong></td><td>Uttara</td><td>143 txns</td><td><span class="b bg">91%</span></td><td><span class="b bt">Offline</span></td><td><button class="btn btn-o" style="padding:4px 9px;font-size:10.5px" onclick="toast('📴 Karim Depot is offline — 23 txns queued','warning')">View</button></td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">DLR-0052</td><td><strong>Ali Distribution Center</strong></td><td>Gulshan</td><td>98 txns</td><td><span class="b by">74%</span></td><td><span class="b bg">Active</span></td><td><button class="btn btn-o" style="padding:4px 9px;font-size:10.5px" onclick="toast('⚠️ Ali Center has compliance warning','warning')">View</button></td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">DLR-0058</td><td><strong>Khan Food Point</strong></td><td>Demra</td><td>21 txns</td><td><span class="b br">61%</span></td><td><span class="b by">Under Review</span></td><td><button class="btn btn-d" style="padding:4px 9px;font-size:10.5px" onclick="toast('🔴 Anomaly investigation started for DLR-0058','error')">Investigate</button></td></tr>
+            <tr style="background:var(--amb-50)"><td style="font-family:var(--mono);font-size:10px">DLR-0061</td><td><strong>Hossain Agro Store</strong></td><td>Banani</td><td>—</td><td><span class="b bs">Pending</span></td><td><span class="b by">Approval</span></td><td style="display:flex;gap:4px"><button class="btn btn-s" style="padding:4px 9px;font-size:10.5px" onclick="toast('✅ DLR-0061 approved successfully','success')">Approve</button><button class="btn btn-d" style="padding:4px 9px;font-size:10.5px" onclick="toast('❌ DLR-0061 application rejected','error')">Reject</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ VERIFICATION ═════════════════ -->
+    <div id="t-verify" class="tab-panel">
+      <div class="pgh"><div><div class="pgh-title">Biometric Verification</div><div class="pgh-sub">Face-first · Biometric Abstraction Layer · 97.4% first-attempt match rate</div></div></div>
+      <div class="g2">
+        <div>
+          <div class="card mb14">
+            <div class="card-title">🔍 Live Verification Session</div>
+            <div class="fv-box">
+              <div class="fv-preview">
+                <div class="fv-ring">
+                  👤
+                  <div class="fv-spin"></div>
+                  <div class="fv-scan"></div>
+                </div>
+                <div class="fv-corners"><div class="fvc tl"></div><div class="fvc tr"></div><div class="fvc bl"></div><div class="fvc br"></div></div>
+              </div>
+              <div class="fv-conf">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--sl-500);margin-bottom:5px"><span>Confidence Score</span><span style="font-weight:700;color:var(--teal)">97.7%</span></div>
+                <div style="height:5px;background:var(--sl-100);border-radius:3px;overflow:hidden"><div style="height:100%;width:97.7%;background:linear-gradient(90deg,var(--teal),var(--blue-v));border-radius:3px;transition:width 1s var(--ease)"></div></div>
+              </div>
+              <div class="fv-res">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8L7 12L13 5" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                VERIFIED — Amina Khatun (BEN-10021)
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">📊 Today's Stats</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;text-align:center">
+              <div style="background:var(--grn-50);border-radius:9px;padding:12px;cursor:pointer;transition:transform .15s var(--ease-s)" onmouseenter="this.style.transform='scale(1.04)'" onmouseleave="this.style.transform='scale(1)'"><div style="font-size:22px;font-weight:800;color:var(--green)">1,198</div><div style="font-size:10px;color:var(--sl-500)">Matched ✅</div></div>
+              <div style="background:var(--amb-50);border-radius:9px;padding:12px;cursor:pointer;transition:transform .15s var(--ease-s)" onmouseenter="this.style.transform='scale(1.04)'" onmouseleave="this.style.transform='scale(1)'"><div style="font-size:22px;font-weight:800;color:var(--amber)">34</div><div style="font-size:10px;color:var(--sl-500)">Retried ⚠️</div></div>
+              <div style="background:var(--red-50);border-radius:9px;padding:12px;cursor:pointer;transition:transform .15s var(--ease-s)" onmouseenter="this.style.transform='scale(1.04)'" onmouseleave="this.style.transform='scale(1)'"><div style="font-size:22px;font-weight:800;color:var(--red)">15</div><div style="font-size:10px;color:var(--sl-500)">Exception 🔐</div></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card mb14">
+            <div class="card-title">🔄 Verification Flow</div>
+            <div class="vs vs-done"><div class="vs-n">1</div>Beneficiary lookup — BEN-10021 found in local cache</div>
+            <div class="vs vs-done"><div class="vs-n">2</div>Eligibility check — Quota available, no same-day lifting</div>
+            <div class="vs vs-done"><div class="vs-n">3</div>Face captured — Good lighting, centered, clear</div>
+            <div class="vs vs-act"><div class="vs-n">4</div>Biometric match — 97.7% confidence ✓ PASS</div>
+            <div class="vs vs-pend"><div class="vs-n">5</div>Quota deduction &amp; transaction record</div>
+            <div class="vs vs-pend"><div class="vs-n">6</div>Audit log creation &amp; sync queue</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🧬 Biometric Architecture</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 11px;background:var(--grn-50);border-radius:7px;color:var(--green);cursor:pointer;transition:all .15s" onmouseenter="this.style.transform='translateX(3px)'" onmouseleave="this.style.transform='none'"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 6px rgba(22,163,74,.4)"></span><strong>Face Verification</strong> — Active (Primary)</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 11px;background:var(--sl-050);border-radius:7px;color:var(--sl-500);cursor:pointer;transition:all .15s" onmouseenter="this.style.background='var(--sl-100)'" onmouseleave="this.style.background='var(--sl-050)'"><span style="width:8px;height:8px;border-radius:50%;background:var(--sl-200);flex-shrink:0"></span>Fingerprint — Architecture-ready (Policy)</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 11px;background:var(--sl-050);border-radius:7px;color:var(--sl-500);cursor:pointer;transition:all .15s" onmouseenter="this.style.background='var(--sl-100)'" onmouseleave="this.style.background='var(--sl-050)'"><span style="width:8px;height:8px;border-radius:50%;background:var(--sl-200);flex-shrink:0"></span>Multimodal — Future (No redesign required)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ANALYTICS ════════════════════ -->
+    <div id="t-analytics" class="tab-panel">
+      <div class="pgh"><div><div class="pgh-title">Analytics &amp; Intelligence</div><div class="pgh-sub">Descriptive → Diagnostic → Predictive</div></div></div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">📉 Leakage Reduction — 30-Day Trend</div>
+          <div class="chart-bars" id="chart-bars">
+            <div class="chart-bar" style="height:90%;background:var(--red-100)"><div class="tooltip">Feb 18 — 42%</div></div>
+            <div class="chart-bar" style="height:78%;background:#FCA5A5"><div class="tooltip">Feb 22 — 36%</div></div>
+            <div class="chart-bar" style="height:66%;background:#FDBA74"><div class="tooltip">Feb 26 — 30%</div></div>
+            <div class="chart-bar" style="height:54%;background:#FDE68A"><div class="tooltip">Mar 1 — 25%</div></div>
+            <div class="chart-bar" style="height:40%;background:#A7F3D0"><div class="tooltip">Mar 7 — 19%</div></div>
+            <div class="chart-bar" style="height:28%;background:#6EE7B7"><div class="tooltip">Mar 14 — 13%</div></div>
+            <div class="chart-bar" style="height:18%;background:var(--teal-v);opacity:.8"><div class="tooltip">Mar 18 — 8.5%</div></div>
+            <div class="chart-bar" style="height:10%;background:var(--teal)"><div class="tooltip">Today — 7.8%</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;padding-top:4px">
+            <span>Pre-system: <strong style="color:var(--red)">~42%</strong></span>
+            <span>Current: <strong style="color:var(--teal)">~7.8%</strong></span>
+            <span>Reduction: <strong style="color:var(--green)">↓ 34.2%</strong></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🚨 Active Anomalies</div>
+          <div class="anom a-hi" onclick="toast('🔴 Investigation report for DLR-0058 opened','error')"><div class="anom-h">HIGH — Khan Food Point (DLR-0058)</div><div class="anom-d">94% of transactions after 18:00. Expected: 08:00–16:00.</div></div>
+          <div class="anom a-md" onclick="toast('⚠️ Ali Center quota report opened','warning')"><div class="anom-h">MEDIUM — Ali Center (DLR-0052)</div><div class="anom-d">Quota exhaustion 40% faster than Feb baseline.</div></div>
+          <div class="anom a-md" onclick="toast('⚠️ Device audit initiated for DEVICE-XYZ-002','warning')"><div class="anom-h">MEDIUM — DEVICE-XYZ-002</div><div class="anom-d">Used under 2 dealer accounts within same hour.</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔮 Demand Forecast — April 2026</div>
+        <table class="dt">
+          <thead><tr><th>Division</th><th>March Actual (kg)</th><th>April Forecast</th><th>Change</th><th>Recommendation</th></tr></thead>
+          <tbody>
+            <tr><td>Dhaka</td><td>1,240,000</td><td><strong>1,340,000</strong></td><td><span class="b by">+8%</span></td><td style="color:var(--teal);font-weight:600">Increase by 100T</td></tr>
+            <tr><td>Chittagong</td><td>980,000</td><td><strong>1,020,000</strong></td><td><span class="b by">+4%</span></td><td style="color:var(--teal);font-weight:600">Increase by 40T</td></tr>
+            <tr><td>Sylhet</td><td>420,000</td><td><strong>380,000</strong></td><td><span class="b bg">-10%</span></td><td style="color:var(--sl-500)">Reduce 40T (Boro harvest)</td></tr>
+            <tr><td>Rajshahi</td><td>670,000</td><td><strong>720,000</strong></td><td><span class="b by">+7%</span></td><td style="color:var(--teal);font-weight:600">Increase by 50T</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ MONITORING ════════════════════ -->
+    <div id="t-monitor" class="tab-panel">
+      <div class="pgh"><div><div class="pgh-title">System Monitoring</div><div class="pgh-sub">Infrastructure health · 3 active alerts</div></div></div>
+      <div class="metrics">
+        <div class="metric mc-g"><div class="metric-icon">⏱</div><div class="metric-lbl">Uptime (30d)</div><div class="metric-val">99.97%</div><div class="metric-trend">12 min downtime</div></div>
+        <div class="metric mc-b"><div class="metric-icon">⚡</div><div class="metric-lbl">API Response p95</div><div class="metric-val">0.84s</div><div class="metric-trend">Target: &lt;1s ✓</div></div>
+        <div class="metric mc-t"><div class="metric-icon">💾</div><div class="metric-lbl">DB Connections</div><div class="metric-val">847</div><div class="metric-trend">42% of 2,000 pool</div></div>
+        <div class="metric mc-a"><div class="metric-icon">🔄</div><div class="metric-lbl">Sync Queue</div><div class="metric-val">30</div><div class="metric-trend">Pending transactions</div></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">🚨 Active Alerts</div>
+          <div class="al al-e"><span class="al-ic">🔴</span><div><strong>Khan Food Point — Anomalous Pattern</strong><br>Late-night transactions. Auto-flagged for investigation.</div></div>
+          <div class="al al-w"><span class="al-ic">🟡</span><div><strong>Karim Depot — Extended Offline (54 min)</strong><br>23 transactions queued for sync.</div></div>
+          <div class="al al-w"><span class="al-ic">🟡</span><div><strong>15 exceptions pending supervisor sign-off</strong><br>Required within 24 hours per SOP.</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📡 Service Health</div>
+          <div class="sh-row" style="background:var(--grn-50);color:var(--green)">API Gateway <span class="b bg">✅ Operational</span></div>
+          <div class="sh-row" style="background:var(--grn-50);color:var(--green)">PostgreSQL Primary <span class="b bg">✅ Operational</span></div>
+          <div class="sh-row" style="background:var(--grn-50);color:var(--green)">Redis Cache <span class="b bg">✅ Operational</span></div>
+          <div class="sh-row" style="background:var(--grn-50);color:var(--green)">Biometric Service <span class="b bg">✅ Operational</span></div>
+          <div class="sh-row" style="background:var(--amb-50);color:var(--amber)">RabbitMQ Queue <span class="b by">⚠️ 30 queued</span></div>
+          <div class="sh-row" style="background:var(--grn-50);color:var(--green)">SMS Gateway <span class="b bg">✅ Operational</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ AUDIT ════════════════════════ -->
+    <div id="t-audit" class="tab-panel">
+      <div class="pgh"><div><div class="pgh-title">Audit Trail</div><div class="pgh-sub">Tamper-evident append-only log — exportable for government oversight</div></div><button class="btn btn-p" onclick="toast('📤 Audit report exported','success')">📤 Export</button></div>
+      <div class="card">
+        <div class="card-title">📋 Audit Events</div>
+        <table class="dt">
+          <thead><tr><th>Audit Code</th><th>Action</th><th>Entity</th><th>User / Device</th><th>Result</th><th>Time</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:var(--mono);font-size:10px">AUD-1710870000-101</td><td>distribute</td><td>TXN-20260320-7001</td><td>Rahman / DEVICE-ABC-001</td><td><span class="b bg">success</span></td><td style="font-family:var(--mono);font-size:10px">09:41:02</td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">AUD-1710870000-102</td><td>block</td><td>DUPLICATE_ATTEMPT</td><td>Mirpur / DEVICE-DEF-002</td><td><span class="b br">blocked</span></td><td style="font-family:var(--mono);font-size:10px">09:38:45</td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">AUD-1710870000-099</td><td>exception</td><td>VERIFY-20260320-034</td><td>Karim / DEVICE-GHI-003</td><td><span class="b by">review</span></td><td style="font-family:var(--mono);font-size:10px">09:33:07</td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">AUD-1710870000-098</td><td>sync</td><td>BATCH-23-KARIM</td><td>System / Sync Engine</td><td><span class="b bt">synced</span></td><td style="font-family:var(--mono);font-size:10px">09:34:02</td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px">AUD-1710870000-096</td><td>anomaly_flag</td><td>DLR-0058</td><td>Analytics Engine</td><td><span class="b br">flagged</span></td><td style="font-family:var(--mono);font-size:10px">02:17:44</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ MOBILE ════════════════════════ -->
+    <div id="t-mobile" class="tab-panel">
+      <div class="pgh"><div><div class="pgh-title">Dealer Mobile App</div><div class="pgh-sub">Offline-first · Bengali interface · Native Android</div></div></div>
+      <div class="g3">
+        <div>
+          <div style="text-align:center;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--sl-500)">Login Screen</div>
+          <div class="mf-wrap"><div class="mf"><div class="mf-notch"></div><div class="mf-scr">
+            <div style="text-align:center;padding:12px 0 10px">
+              <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--teal),var(--blue-v));border-radius:11px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 6px 16px rgba(13,148,136,.3)">🌾</div>
+              <div style="color:white;font-weight:700;font-size:12px">OMS বিতরণ</div>
+              <div style="color:var(--sl-500);font-size:9.5px;margin-top:2px">ডিলার অ্যাপ</div>
+            </div>
+            <div style="margin-bottom:7px"><div style="font-size:9px;color:var(--sl-500);margin-bottom:3px">ডিলার কোড</div><div style="background:rgba(255,255,255,.06);border-radius:6px;padding:7px 10px;font-size:10px;color:var(--sl-300)">DLR-0041</div></div>
+            <div style="margin-bottom:10px"><div style="font-size:9px;color:var(--sl-500);margin-bottom:3px">পাসওয়ার্ড</div><div style="background:rgba(255,255,255,.06);border-radius:6px;padding:7px 10px;font-size:10px;color:var(--sl-300)">••••••••</div></div>
+            <button class="mf-btn" onclick="toast('✅ Dealer DLR-0041 logged in successfully','success')">লগইন করুন</button>
+            <div style="text-align:center;margin-top:8px;font-size:9px;color:var(--sl-500)"><span style="color:var(--red)">●</span> অফলাইন মোড সক্রিয়</div>
+          </div></div></div></div>
+        </div>
+        <div>
+          <div style="text-align:center;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--sl-500)">Distribution Screen</div>
+          <div class="mf-wrap"><div class="mf"><div class="mf-notch"></div><div class="mf-scr">
+            <div class="mf-hdr"><div class="mf-ttl">খাদ্য বিতরণ</div><div class="mf-tm">09:41</div></div>
+            <div style="background:rgba(13,148,136,.18);border-radius:8px;padding:9px;margin-bottom:8px;text-align:center">
+              <div style="font-size:9px;color:var(--teal-v);margin-bottom:3px">সুবিধাভোগী</div>
+              <div style="font-size:12px;font-weight:700;color:white">আমিনা খাতুন</div>
+              <div style="font-size:9px;color:var(--sl-500)">BEN-10021 · ৫ কেজি বাকি</div>
+            </div>
+            <div style="width:52px;height:52px;border-radius:50%;border:2px solid var(--teal);margin:6px auto;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(13,148,136,.06)">👤</div>
+            <div style="text-align:center;margin-bottom:7px;font-size:10px;color:var(--teal-v);font-weight:700">✓ ফেস যাচাই: ৯৭.৭%</div>
+            <div class="mf-row"><span class="mf-ri">🌾</span><span class="mf-rt">চাল (Rice)</span><span class="mf-rv">৫ কেজি</span></div>
+            <button class="mf-btn" onclick="toast('✅ Distribution confirmed — TXN recorded','success')">বিতরণ নিশ্চিত করুন ✓</button>
+          </div></div></div></div>
+        </div>
+        <div>
+          <div style="text-align:center;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--sl-500)">Offline Sync Screen</div>
+          <div class="mf-wrap"><div class="mf"><div class="mf-notch"></div><div class="mf-scr">
+            <div class="mf-hdr"><div class="mf-ttl">সিঙ্ক স্ট্যাটাস</div><div class="mf-tm">📡 2G</div></div>
+            <div style="text-align:center;padding:10px 0">
+              <div style="font-size:28px">☁️</div>
+              <div style="font-size:12px;font-weight:700;color:white;margin-top:5px">সিঙ্ক হচ্ছে...</div>
+              <div style="font-size:9.5px;color:var(--sl-500);margin-top:2px">২৩টি লেনদেন</div>
+            </div>
+            <div style="height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-bottom:10px;overflow:hidden">
+              <div id="sync-progress" style="height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--blue-v));border-radius:2px;transition:width 3s var(--ease)"></div>
+            </div>
+            <div class="mf-row"><span class="mf-ri">✅</span><span class="mf-rt">সফল</span><span class="mf-rv" id="sync-ok">15</span></div>
+            <div class="mf-row"><span class="mf-ri">⏳</span><span class="mf-rt">বাকি</span><span class="mf-rv">8</span></div>
+            <div class="mf-row"><span class="mf-ri">❌</span><span class="mf-rt">সংঘর্ষ</span><span class="mf-rv">1</span></div>
+          </div></div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+/* ── Page Loader ── */
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    document.getElementById('loader').classList.add('out');
+    // Animate progress bar
+    setTimeout(function(){
+      document.getElementById('progress-fill').style.width='69%';
+    },600);
+    // Count up metrics
+    countUp('m1',1247,1200);
+    countUp('m2',1198,1300);
+    countUp('m3',49,900);
+    countUp('live-count',1247,1200);
+    // Animate bars
+    setTimeout(function(){
+      document.querySelectorAll('.bc-fill').forEach(function(el){
+        el.style.width=el.dataset.w+'%';
+      });
+    },400);
+    // Sync progress
+    setTimeout(function(){
+      document.getElementById('sync-progress').style.width='65%';
+    },800);
+  },2000);
+});
+
+/* ── Counter ── */
+function countUp(id,target,dur){
+  var el=document.getElementById(id);if(!el)return;
+  var start=0,startTime=null;
+  function step(ts){
+    if(!startTime)startTime=ts;
+    var p=Math.min((ts-startTime)/dur,1);
+    var ease=1-Math.pow(1-p,4);
+    el.textContent=Math.floor(ease*target).toLocaleString();
+    if(p<1)requestAnimationFrame(step);
+    else el.textContent=target.toLocaleString();
+  }
+  requestAnimationFrame(step);
+}
+
+/* ── Tab switching ── */
+function showTab(id,el){
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.sb-nav').forEach(function(n){n.classList.remove('active');});
+  var panel=document.getElementById(id);
+  panel.classList.add('active');
+  el.classList.add('active');
+  // Re-animate bars if switching to dashboard
+  if(id==='t-dash'){
+    document.querySelectorAll('.bc-fill').forEach(function(b){
+      var w=b.dataset.w;b.style.width='0';
+      setTimeout(function(){b.style.width=w+'%';},100);
+    });
+  }
+  // Animate sync bar if switching to mobile
+  if(id==='t-mobile'){
+    var sp=document.getElementById('sync-progress');
+    sp.style.width='0';
+    setTimeout(function(){sp.style.width='65%';},200);
+  }
+}
+
+/* ── Toast ── */
+var toastCount=0;
+function toast(msg,type){
+  var icons={success:'✅',error:'🔴',warning:'⚠️',info:'ℹ️'};
+  var colors={success:'#16A34A',error:'#DC2626',warning:'#D97706',info:'#1D4ED8'};
+  var tc=document.getElementById('toast-container');
+  var t=document.createElement('div');
+  t.className='toast';t.style.position='relative';
+  t.style.borderLeft='3px solid '+colors[type||'info'];
+  t.innerHTML='<span class="toast-icon">'+(icons[type||'info'])+'</span><span>'+msg+'</span><div class="toast-bar" style="background:'+colors[type||'info']+'"></div>';
+  tc.appendChild(t);
+  setTimeout(function(){
+    t.classList.add('out');
+    setTimeout(function(){if(t.parentNode)tc.removeChild(t);},300);
+  },3000);
+}
+
+/* ── Distribute action ── */
+function doDistribute(){
+  var btn=event.currentTarget;
+  btn.textContent='🔄 Verifying...';btn.disabled=true;
+  btn.style.opacity='.7';
+  setTimeout(function(){
+    btn.textContent='🔐 Verify Face & Distribute';
+    btn.disabled=false;btn.style.opacity='1';
+    var div=document.getElementById('dist-success');
+    div.style.display='block';
+    div.innerHTML='<div class="al al-s"><span class="al-ic">🎉</span><div><strong>TXN-20260320-7002 recorded.</strong> 5kg Rice distributed to Amina Khatun. Audit trail created.</div></div>';
+    toast('✅ Distribution successful — TXN-20260320-7002','success');
+    // Add to live feed
+    addLiveItem();
+  },1800);
+}
+
+function addLiveItem(){
+  var feed=document.getElementById('live-feed');
+  var item=document.createElement('div');
+  item.className='tl-item';
+  item.style.animationDelay='0s';
+  item.innerHTML='<div class="tl-dot tl-ok">✓</div><div><div class="tl-t">Amina Khatun — 5kg Rice (just now)</div><div class="tl-d">Rahman Center · Face: 97.7% · <span class="b bg">VERIFIED</span></div><div class="tl-m">'+new Date().toTimeString().slice(0,8)+' · TXN-20260320-7002</div></div>';
+  feed.insertBefore(item,feed.firstChild);
+}
+
+/* ── Live clock ── */
+function updateClock(){
+  var now=new Date();
+  var t=now.toTimeString().slice(0,5);
+  var el=document.getElementById('clock');
+  if(el)el.textContent=t;
+}
+updateClock();setInterval(updateClock,30000);
+
+/* ── Refresh dashboard ── */
+var refreshAnim=false;
+function refreshDash(){
+  if(refreshAnim)return;refreshAnim=true;
+  toast('🔄 Dashboard refreshing…','info');
+  ['m1','m2','m3'].forEach(function(id,i){
+    var targets=[1247,1198,49];
+    setTimeout(function(){countUp(id,targets[i],800);},i*100);
+  });
+  setTimeout(function(){refreshAnim=false;toast('✅ Dashboard updated','success');},1000);
+}
+
+/* ── Auto live feed (new transactions every 12s) ── */
+var feedItems=[
+  {type:'ok',name:'Kamal Hossain',kg:'5kg Rice',dealer:'Hasan Store',face:'92.3%',code:'TXN-20260320-7003'},
+  {type:'ok',name:'Nasrin Akter',kg:'3kg Flour',dealer:'Rahman Center',face:'96.1%',code:'TXN-20260320-7004'},
+  {type:'er',name:'Rahima Begum',kg:'Duplicate blocked',dealer:'Ali Center',face:'—',code:'DUPLICATE_ATTEMPT'},
+  {type:'ok',name:'Abdul Karim',kg:'5kg Rice',dealer:'Karim Depot',face:'89.5%',code:'TXN-20260320-7005'},
+];
+var feedIdx=0;
+setInterval(function(){
+  var fi=feedItems[feedIdx%feedItems.length];feedIdx++;
+  var feed=document.getElementById('live-feed');
+  if(!feed)return;
+  var item=document.createElement('div');
+  item.className='tl-item';
+  var dot=fi.type==='ok'?'tl-ok':'tl-er';
+  var sym=fi.type==='ok'?'✓':'✗';
+  var badge=fi.type==='ok'?'<span class="b bg">VERIFIED</span>':'<span class="b br">BLOCKED</span>';
+  var now=new Date().toTimeString().slice(0,8);
+  item.innerHTML='<div class="tl-dot '+dot+'">'+sym+'</div><div><div class="tl-t">'+fi.name+' — '+fi.kg+'</div><div class="tl-d">'+fi.dealer+' · Face: '+fi.face+' · '+badge+'</div><div class="tl-m">'+now+' · '+fi.code+'</div></div>';
+  feed.insertBefore(item,feed.firstChild);
+  while(feed.children.length>8)feed.removeChild(feed.lastChild);
+},12000);
+</script>
+</body>
+</html>

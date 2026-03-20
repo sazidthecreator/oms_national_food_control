@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inspection — OMS National Control Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast-container"></div>
+
+<!-- New Inspection Modal -->
+<div class="modal-overlay" id="modal-inspection">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hdr">
+      <div class="modal-title">🔍 Field Inspection Report</div>
+      <button class="modal-close" onclick="OMS.closeModal('modal-inspection')">✕</button>
+    </div>
+    <div class="g2" style="margin-bottom:0">
+      <div class="fg"><label class="fl">Dealer to Inspect</label>
+        <select class="fs" id="insp-dealer">
+          ${OMS.sampleDealers.map(d=>`<option value="${d.id}">${d.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Inspection Type</label>
+        <select class="fs" id="insp-type">
+          <option>Routine Monthly</option>
+          <option>Complaint-based</option>
+          <option>Follow-up</option>
+          <option>Random Spot Check</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin:12px 0 8px;text-transform:uppercase;letter-spacing:.5px">Checklist</div>
+    ${[
+      ['chk1','Dealer present during distribution hours'],
+      ['chk2','Biometric device functioning correctly'],
+      ['chk3','Stock records match allotment'],
+      ['chk4','No unauthorized persons handling distribution'],
+      ['chk5','Beneficiary queue managed orderly'],
+      ['chk6','Price board clearly displayed'],
+      ['chk7','No excess charging from beneficiaries'],
+      ['chk8','Distribution register maintained'],
+    ].map(([id,label])=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--slate-050);font-size:12px">
+        <input type="checkbox" id="${id}" style="width:14px;height:14px;accent-color:var(--teal-500)">
+        <label for="${id}" style="color:var(--text-primary);cursor:pointer">${label}</label>
+      </div>`).join('')}
+    <div class="fg" style="margin-top:12px"><label class="fl">Observations</label>
+      <textarea class="fi" rows="3" id="insp-notes" placeholder="Describe findings, issues, or commendations..."></textarea>
+    </div>
+    <div class="g2" style="margin:0">
+      <div class="fg" style="margin-bottom:0"><label class="fl">Overall Rating</label>
+        <select class="fs" id="insp-rating">
+          <option value="5">★★★★★ Excellent</option>
+          <option value="4">★★★★☆ Good</option>
+          <option value="3" selected>★★★☆☆ Satisfactory</option>
+          <option value="2">★★☆☆☆ Needs Improvement</option>
+          <option value="1">★☆☆☆☆ Critical Issues</option>
+        </select>
+      </div>
+      <div class="fg" style="margin-bottom:0"><label class="fl">Action Required</label>
+        <select class="fs" id="insp-action">
+          <option>No action — pass</option>
+          <option>Warning issued</option>
+          <option>Follow-up inspection scheduled</option>
+          <option>Suspension recommended</option>
+          <option>Escalated to district officer</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="OMS.closeModal('modal-inspection')">Cancel</button>
+      <button class="btn btn-t" style="flex:1" onclick="submitInspection()">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Inspection Modal -->
+<div class="modal-overlay" id="modal-view-insp">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-hdr">
+      <div class="modal-title" id="view-insp-title">Inspection Report</div>
+      <button class="modal-close" onclick="OMS.closeModal('modal-view-insp')">✕</button>
+    </div>
+    <div id="view-insp-body"></div>
+  </div>
+</div>
+
+<script>
+const inspections = [
+  { id:'INS-2026-0041', dealer:'Rahman OMS Center', dealerId:'DLR-0041', date:'2026-03-15', type:'Routine Monthly', rating:5, action:'No action — pass', inspector:'Md. Rafiqul Islam', status:'complete', score:96, notes:'All records in order. Beneficiaries served promptly. No complaints.' },
+  { id:'INS-2026-0039', dealer:'Karim Grain Depot',  dealerId:'DLR-0039', date:'2026-03-10', type:'Random Spot Check', rating:4, action:'No action — pass', inspector:'Salma Akter', status:'complete', score:88, notes:'Minor queue management issue noted. Device working correctly.' },
+  { id:'INS-2026-0052', dealer:'Ali Distribution',   dealerId:'DLR-0052', date:'2026-03-08', type:'Complaint-based', rating:3, action:'Warning issued', inspector:'Md. Karim Uddin', status:'complete', score:72, notes:'Complaint received about slow service. Warning issued. Follow-up scheduled.' },
+  { id:'INS-2026-0058', dealer:'Khan Food Point',    dealerId:'DLR-0058', date:'2026-03-18', type:'Follow-up', rating:2, action:'Escalated to district officer', inspector:'Farida Begum', status:'pending', score:58, notes:'Late-night distribution pattern confirmed. Escalated for investigation.' },
+  { id:'INS-2026-0020', dealer:'Hasan OMS Store',    dealerId:'DLR-0039', date:'2026-03-05', type:'Routine Monthly', rating:5, action:'No action — pass', inspector:'Md. Rafiqul Islam', status:'complete', score:94, notes:'Excellent compliance. Model dealer for district.' },
+];
+
+let activeFilter = 'all';
+
+document.getElementById('root').innerHTML = `
+  ${OMS.getSharedCSS()}
+  <style>
+    .insp-card{background:white;border-radius:var(--r-lg);border:1px solid var(--border-l);padding:16px 18px;box-shadow:var(--sh-sm);cursor:pointer;transition:all .15s}
+    .insp-card:hover{transform:translateY(-1px);box-shadow:var(--sh-md);border-color:var(--teal-400)}
+    .stars{color:#F59E0B;font-size:12px}
+    .score-bar-wrap{display:flex;align-items:center;gap:8px}
+    .score-bar{flex:1;height:6px;background:var(--slate-100);border-radius:3px;overflow:hidden}
+    .score-fill{height:100%;border-radius:3px}
+  </style>
+
+  ${OMS.buildTopbar('inspection')}
+  <div class="d-layout">
+    ${OMS.buildSidebar('inspection')}
+    <div class="d-main">
+      <div class="dph">
+        <div>
+          <div class="dph-t">Field Inspection & Monitoring</div>
+          <div class="dph-s">Dealer inspections · Compliance scoring · Field reports</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-o" onclick="OMS.toast('📊 Inspection report exported','success')">📤 Export</button>
+          <button class="btn btn-t" onclick="OMS.openModal('modal-inspection')">+ New Inspection</button>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="dm-grid mb14">
+        <div class="dm-card mc-b"><div class="dm-icon">🔍</div><div class="dm-lbl">Inspections This Month</div><div class="dm-val" data-count="24">0</div><div class="dm-trend">5 pending follow-up</div></div>
+        <div class="dm-card mc-g"><div class="dm-icon">✅</div><div class="dm-lbl">Pass Rate</div><div class="dm-val">79%</div><div class="dm-trend">▲ 4% vs last month</div></div>
+        <div class="dm-card mc-a"><div class="dm-icon">⚠️</div><div class="dm-lbl">Warnings Issued</div><div class="dm-val" data-count="6">0</div><div class="dm-trend">3 escalated</div></div>
+        <div class="dm-card mc-t"><div class="dm-icon">🗓</div><div class="dm-lbl">Scheduled Today</div><div class="dm-val">3</div><div class="dm-trend">Next: 14:00 BDT</div></div>
+      </div>
+
+      <div class="g75">
+        <!-- Inspections List -->
+        <div>
+          <div class="dc mb14">
+            <div class="dct">📋 Inspection Records
+              <div style="margin-left:auto;display:flex;gap:4px">
+                ${['all','complete','pending'].map(f=>`
+                  <button onclick="filterInspections('${f}')" id="filter-${f}" 
+                    class="btn ${f==='all'?'btn-p':'btn-o'}" style="font-size:10px;padding:3px 9px">${f.charAt(0).toUpperCase()+f.slice(1)}</button>`).join('')}
+              </div>
+            </div>
+            <div id="inspections-list">
+              ${renderInspectionsList(inspections)}
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div>
+          <!-- Compliance Ranking -->
+          <div class="dc mb14">
+            <div class="dct">🏆 Dealer Compliance Scores</div>
+            ${OMS.sampleDealers.map(d => {
+              const color = d.compliance>=85?'var(--teal-500)':d.compliance>=70?'var(--amber-500)':'var(--red-500)';
+              return `<div style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                  <span style="font-weight:600;color:var(--text-primary)">${d.name}</span>
+                  <span style="font-weight:700;color:${color}">${d.compliance}%</span>
+                </div>
+                <div class="score-bar-wrap">
+                  <div class="score-bar"><div class="score-fill" data-w="${d.compliance}" style="width:0;background:${color}"></div></div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+
+          <!-- Upcoming Schedule -->
+          <div class="dc mb14">
+            <div class="dct">🗓 Scheduled Inspections</div>
+            ${[
+              {dealer:'Ali Distribution',date:'Today 14:00',type:'Follow-up',inspector:'Salma Akter'},
+              {dealer:'Hossain Agro',date:'Tomorrow 10:00',type:'Initial',inspector:'Md. Karim'},
+              {dealer:'Rahman Center',date:'Mar 25 09:00',type:'Routine',inspector:'Farida Begum'},
+            ].map(s=>`
+              <div style="padding:9px 11px;border-radius:var(--r-sm);border:1px solid var(--border-l);margin-bottom:7px;display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:var(--text-primary)">${s.dealer}</div>
+                  <div style="font-size:11px;color:var(--text-muted)">${s.type} · ${s.inspector}</div>
+                </div>
+                <div style="font-size:10px;font-weight:600;background:var(--blue-050);color:var(--ink-500);padding:2px 7px;border-radius:9px">${s.date}</div>
+              </div>`).join('')}
+          </div>
+
+          <!-- Alerts -->
+          <div class="dc">
+            <div class="dct">🚨 Inspection Alerts</div>
+            <div class="al al-e"><span class="al-ic">🔴</span><div><strong>Khan Food Point</strong> — Critical: 94% late-night transactions. Escalated.</div></div>
+            <div class="al al-w"><span class="al-ic">🟡</span><div><strong>Ali Distribution</strong> — 3 complaints this month. Follow-up today at 14:00.</div></div>
+            <div class="al al-i"><span class="al-ic">ℹ️</span><div><strong>Karim Depot</strong> — Extended offline detected. Field check recommended.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+OMS.init();
+
+function renderInspectionsList(list) {
+  if (!list.length) return '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No inspections found</div>';
+  return list.map(ins => {
+    const stars = '★'.repeat(ins.rating) + '☆'.repeat(5-ins.rating);
+    const statusCls = ins.status==='complete'?'bg':'by';
+    const scoreColor = ins.score>=85?'var(--green-600)':ins.score>=70?'var(--amber-600)':'var(--red-600)';
+    return `
+      <div class="insp-card mb14" onclick="viewInspection('${ins.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary)">${ins.dealer}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${ins.type} · ${ins.date} · ${ins.inspector}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <span class="b ${statusCls}">${ins.status}</span>
+            <div style="font-size:14px;font-weight:800;color:${scoreColor}">${ins.score}%</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="stars">${stars}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${ins.action}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filterInspections(f) {
+  activeFilter = f;
+  ['all','complete','pending'].forEach(x => {
+    const btn = document.getElementById('filter-'+x);
+    btn.className = `btn ${x===f?'btn-p':'btn-o'}`;
+    btn.style.fontSize='10px'; btn.style.padding='3px 9px';
+  });
+  const filtered = f==='all' ? inspections : inspections.filter(i=>i.status===f);
+  document.getElementById('inspections-list').innerHTML = renderInspectionsList(filtered);
+}
+
+function viewInspection(id) {
+  const ins = inspections.find(i=>i.id===id);
+  if (!ins) return;
+  const stars = '★'.repeat(ins.rating) + '☆'.repeat(5-ins.rating);
+  document.getElementById('view-insp-title').textContent = `${ins.id} — ${ins.dealer}`;
+  document.getElementById('view-insp-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${[['Type',ins.type],['Date',ins.date],['Inspector',ins.inspector],['Score',ins.score+'%']].map(([k,v])=>`
+        <div style="background:var(--slate-050);border-radius:var(--r-sm);padding:9px 11px">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${k}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${v}</div>
+        </div>`).join('')}
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">RATING</div>
+      <div style="font-size:20px;color:#F59E0B">${stars}</div>
+    </div>
+    <div style="background:var(--slate-050);border-radius:var(--r-sm);padding:12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px">OBSERVATIONS</div>
+      <div style="font-size:12.5px;color:var(--text-primary);line-height:1.6">${ins.notes}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;background:${ins.action.includes('No action')?'var(--green-050)':'var(--amber-050)'};border-radius:var(--r-sm);padding:10px 12px">
+      <span style="font-size:14px">${ins.action.includes('No action')?'✅':'⚠️'}</span>
+      <div style="font-size:12px;font-weight:600;color:${ins.action.includes('No action')?'var(--green-600)':'var(--amber-600)'}">${ins.action}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="flex:1" onclick="OMS.closeModal('modal-view-insp')">Close</button>
+      <button class="btn btn-p" style="flex:1" onclick="OMS.toast('📤 Report exported','success');OMS.closeModal('modal-view-insp')">Export PDF</button>
+    </div>`;
+  OMS.openModal('modal-view-insp');
+}
+
+function submitInspection() {
+  const dealer = document.getElementById('insp-dealer').selectedOptions[0].text;
+  const type = document.getElementById('insp-type').value;
+  OMS.closeModal('modal-inspection');
+  OMS.toast(`🔍 Inspection report submitted for ${dealer}`, 'success');
+}
+</script>
+</body>
+</html>

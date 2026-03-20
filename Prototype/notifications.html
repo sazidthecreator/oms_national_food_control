@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications — OMS National Control Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast-container"></div>
+
+<!-- Compose SMS Modal -->
+<div class="modal-overlay" id="modal-sms">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-hdr">
+      <div class="modal-title">📱 Compose SMS Alert</div>
+      <button class="modal-close" onclick="OMS.closeModal('modal-sms')">✕</button>
+    </div>
+    <div class="fg"><label class="fl">Recipient Type</label>
+      <select class="fs" id="sms-target" onchange="updateRecipientCount()">
+        <option value="all_dealers">All Active Dealers (47)</option>
+        <option value="all_beneficiaries">All Beneficiaries (12,840)</option>
+        <option value="offline_dealers">Offline Dealers (2)</option>
+        <option value="low_compliance">Low Compliance Dealers (3)</option>
+        <option value="custom">Custom Phone Number</option>
+      </select>
+    </div>
+    <div id="custom-phone" style="display:none" class="fg">
+      <label class="fl">Phone Number</label>
+      <input class="fi" placeholder="+8801XXXXXXXXX">
+    </div>
+    <div class="fg"><label class="fl">Message Template</label>
+      <select class="fs" id="sms-template" onchange="applyTemplate()">
+        <option value="">— Select template or write custom —</option>
+        <option value="quota">Monthly quota reminder</option>
+        <option value="offline">Offline sync warning</option>
+        <option value="compliance">Compliance warning</option>
+        <option value="distribution">Distribution schedule</option>
+        <option value="payment">Payment reminder</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Message (Bengali/English)</label>
+      <textarea class="fi" rows="4" id="sms-body" placeholder="আপনার মাসিক কোটা শেষ হয়ে যাচ্ছে..."></textarea>
+    </div>
+    <div style="background:var(--slate-050);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--text-muted)">
+      Recipients: <strong id="sms-count" style="color:var(--ink-500)">47</strong> · 
+      Estimated cost: <strong id="sms-cost" style="color:var(--text-primary)">৳4.70</strong> · 
+      Gateway: <span style="color:var(--green-600);font-weight:600">✅ Connected</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="OMS.closeModal('modal-sms')">Cancel</button>
+      <button class="btn btn-o" style="flex:1" onclick="OMS.toast('💾 SMS saved as draft','info')">Save Draft</button>
+      <button class="btn btn-t" style="flex:2" onclick="sendSMS()">📤 Send SMS</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Alert Modal -->
+<div class="modal-overlay" id="modal-payment">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">💳 Payment Integration Status</div>
+      <button class="modal-close" onclick="OMS.closeModal('modal-payment')">✕</button>
+    </div>
+    <div class="al al-i mb14"><span class="al-ic">ℹ️</span><div>Bangladesh Bank payment integration is scheduled for Phase C (Month 7+). Current status: design complete.</div></div>
+    ${[
+      ['Bangladesh Bank API','Design complete','Connecting dealer deposits to BEFTN system'],
+      ['bKash Integration','Planned','Mobile payment for smaller dealers'],
+      ['Nagad Integration','Planned','Alternative mobile payment gateway'],
+      ['Automated Reconciliation','Planned','Auto-match payments to allotments'],
+    ].map(([name,status,desc])=>`
+      <div style="padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border-l);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${name}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${desc}</div>
+        </div>
+        <span class="b ${status==='Design complete'?'bb':'bs'}">${status}</span>
+      </div>`).join('')}
+    <button class="btn btn-o" style="width:100%;margin-top:8px" onclick="OMS.closeModal('modal-payment')">Close</button>
+  </div>
+</div>
+
+<script>
+const notifications = [
+  { id:'NTF-001', type:'system_alert', priority:'high',   title:'Khan Food Point — Anomaly Detected', body:'94% late-night transactions flagged by Analytics Engine.', time:'02:17', read:false, icon:'🔴' },
+  { id:'NTF-002', type:'offline_alert',priority:'medium', title:'Karim Depot — Extended Offline', body:'54 minutes without sync. 23 transactions queued for upload.', time:'09:15', read:false, icon:'📴' },
+  { id:'NTF-003', type:'exception',    priority:'medium', title:'15 Exceptions Pending Review', body:'Supervisor sign-off required within 24 hours per SOP.', time:'08:00', read:false, icon:'⚠️' },
+  { id:'NTF-004', type:'approval',     priority:'low',    title:'Dealer Registration — Hossain Agro', body:'New dealer DLR-0061 submitted registration. Awaiting approval.', time:'07:30', read:true,  icon:'🏪' },
+  { id:'NTF-005', type:'quota',        priority:'low',    title:'Quota Threshold Alert', body:'127 beneficiaries have less than 2kg remaining this month.', time:'06:00', read:true,  icon:'📊' },
+  { id:'NTF-006', type:'sync',         priority:'info',   title:'Batch Sync Completed', body:'23 offline transactions from Karim Depot synced. 1 conflict resolved.', time:'09:34', read:true,  icon:'☁️' },
+  { id:'NTF-007', type:'system',       priority:'info',   title:'System Health: All Services Operational', body:'API response p95: 0.84s. Uptime: 99.97%.', time:'09:00', read:true,  icon:'✅' },
+];
+
+const smsLog = [
+  {id:'SMS-001', recipient:'All Dealers (47)', message:'আজকের বিতরণ সময়: সকাল ৮টা থেকে বিকাল ৪টা। সকল ডিলার সময়মতো উপস্থিত থাকুন।', status:'delivered', sent:'09:00', count:47},
+  {id:'SMS-002', recipient:'Low Compliance (3)', message:'Warning: Your compliance score has dropped below 70%. Please contact your district officer.', status:'delivered', sent:'08:30', count:3},
+  {id:'SMS-003', recipient:'Beneficiaries near quota (127)', message:'আপনার মাসিক কোটা শেষ হয়ে আসছে। এই মাসে আপনার বাকি কোটা: ২ কেজি।', status:'delivered', sent:'07:00', count:127},
+  {id:'SMS-004', recipient:'Offline Dealers (2)', message:'URGENT: Your device has been offline for 45+ minutes. Please reconnect to sync pending transactions.', status:'failed', sent:'09:15', count:2},
+  {id:'SMS-005', recipient:'All Dealers (47)', message:'Monthly distribution target for March: 1,800 transactions. Current: 1,247 (69%). Keep it up!', status:'scheduled', sent:'10:00', count:47},
+];
+
+const templates = {
+  quota: 'আপনার মাসিক কোটা শেষ হয়ে আসছে। এই মাসে বাকি কোটা সময়মতো নিয়ে নিন।\n\nYour monthly quota is almost exhausted. Please collect your remaining allocation before month end.',
+  offline: 'সতর্কতা: আপনার ডিভাইস অফলাইন। অনুগ্রহ করে ইন্টারনেট সংযোগ পুনরুদ্ধার করুন।\n\nWARNING: Your device has been offline. Please reconnect to sync pending transactions.',
+  compliance: 'আপনার কমপ্লায়েন্স স্কোর ৭০%-এর নিচে নেমেছে। অনুগ্রহ করে জেলা কর্মকর্তার সাথে যোগাযোগ করুন।\n\nYour compliance score has dropped below 70%. Contact your district officer immediately.',
+  distribution: 'আজকের বিতরণ সময়সূচি: সকাল ৮টা থেকে বিকাল ৪টা। সকল নিবন্ধিত সুবিধাভোগী বিতরণে অংশ নিতে পারবেন।',
+  payment: 'অনুগ্রহ করে এই মাসের বরাদ্দের জন্য জামানত জমা দিন। শেষ তারিখ: ২৫ মার্চ ২০২৬।\n\nPlease deposit your allotment security before March 25, 2026.',
+};
+
+const recipientCounts = {all_dealers:47,all_beneficiaries:12840,offline_dealers:2,low_compliance:3,custom:1};
+
+document.getElementById('root').innerHTML = `
+  ${OMS.getSharedCSS()}
+  <style>
+    .notif-item{padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--border-l);margin-bottom:8px;cursor:pointer;transition:all .15s;display:flex;gap:12px;align-items:flex-start}
+    .notif-item:hover{background:var(--slate-050);border-color:var(--slate-300)}
+    .notif-item.unread{background:var(--blue-050);border-color:var(--blue-100)}
+    .notif-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .ni-high{background:var(--red-100)}
+    .ni-medium{background:var(--amber-100)}
+    .ni-low{background:var(--green-100)}
+    .ni-info{background:var(--blue-100)}
+    .sms-row{padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border-l);margin-bottom:7px;transition:all .15s}
+    .sms-row:hover{background:var(--slate-050)}
+  </style>
+
+  ${OMS.buildTopbar('notifications')}
+  <div class="d-layout">
+    ${OMS.buildSidebar('notifications')}
+    <div class="d-main">
+      <div class="dph">
+        <div>
+          <div class="dph-t">Notifications & SMS</div>
+          <div class="dph-s">System alerts · SMS gateway · Payment integration</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-o" onclick="OMS.openModal('modal-payment')">💳 Payment Status</button>
+          <button class="btn btn-t" onclick="OMS.openModal('modal-sms')">📱 Send SMS</button>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="dm-grid mb14">
+        <div class="dm-card mc-b"><div class="dm-icon">🔔</div><div class="dm-lbl">Unread Alerts</div><div class="dm-val" data-count="3">0</div><div class="dm-trend">3 require action</div></div>
+        <div class="dm-card mc-t"><div class="dm-icon">📱</div><div class="dm-lbl">SMS Sent Today</div><div class="dm-val" data-count="179">0</div><div class="dm-trend">3 campaigns · 96% delivered</div></div>
+        <div class="dm-card mc-g"><div class="dm-icon">✅</div><div class="dm-lbl">SMS Delivered</div><div class="dm-val">96%</div><div class="dm-trend">Delivery rate this month</div></div>
+        <div class="dm-card mc-a"><div class="dm-icon">💳</div><div class="dm-lbl">Payments Pending</div><div class="dm-val">4</div><div class="dm-trend">Bank API — Phase C</div></div>
+      </div>
+
+      <div class="g2">
+        <!-- Notifications -->
+        <div>
+          <div class="dc mb14">
+            <div class="dct">🔔 System Notifications
+              <div style="margin-left:auto;display:flex;gap:4px">
+                <button class="btn btn-o" style="font-size:10px;padding:3px 8px" onclick="markAllRead()">Mark All Read</button>
+                <button class="btn btn-o" style="font-size:10px;padding:3px 8px" onclick="OMS.toast('🗑 Cleared read notifications','info')">Clear Read</button>
+              </div>
+            </div>
+            <div id="notifications-list">
+              ${notifications.map(n => renderNotification(n)).join('')}
+            </div>
+          </div>
+
+          <!-- SMS Gateway Status -->
+          <div class="dc">
+            <div class="dct">📡 SMS Gateway Status</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              ${[
+                ['Gateway','BSMS Pro','Connected'],
+                ['Sender ID','OMS-FOOD','Active'],
+                ['Balance','৳2,450','~24,500 SMS'],
+                ['Rate','৳0.10/SMS','Standard'],
+              ].map(([k,v,sub])=>`
+                <div style="background:var(--slate-050);border-radius:var(--r-sm);padding:9px 11px">
+                  <div style="font-size:9px;font-weight:700;color:var(--text-muted);margin-bottom:2px">${k}</div>
+                  <div style="font-size:13px;font-weight:700;color:var(--text-primary)">${v}</div>
+                  <div style="font-size:10px;color:var(--green-600)">${sub}</div>
+                </div>`).join('')}
+            </div>
+            <div class="al al-s" style="margin:0"><span class="al-ic">✅</span><div>SMS Gateway operational · Last test: 09:00 · Response: 120ms</div></div>
+          </div>
+        </div>
+
+        <!-- SMS Log -->
+        <div>
+          <div class="dc mb14">
+            <div class="dct">📤 SMS Campaign Log</div>
+            ${smsLog.map(s=>{
+              const statusCls = s.status==='delivered'?'bg':s.status==='failed'?'br':s.status==='scheduled'?'by':'bt';
+              return `<div class="sms-row">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
+                  <div style="font-size:12px;font-weight:700;color:var(--text-primary)">${s.recipient}</div>
+                  <div style="display:flex;gap:5px;align-items:center">
+                    <span class="b ${statusCls}">${s.status}</span>
+                    <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">${s.sent}</span>
+                  </div>
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:5px">${s.message.substring(0,80)}${s.message.length>80?'…':''}</div>
+                <div style="font-size:10px;color:var(--text-muted)">ID: <span class="mono">${s.id}</span> · ${s.count} recipients</div>
+              </div>`;
+            }).join('')}
+          </div>
+
+          <!-- Auto-Alert Rules -->
+          <div class="dc">
+            <div class="dct">⚙️ Auto-Alert Rules</div>
+            ${[
+              {label:'Offline dealer > 30 minutes',enabled:true,action:'SMS to dealer + supervisor'},
+              {label:'Duplicate block rate > 5%',enabled:true,action:'Alert to district officer'},
+              {label:'Quota exhaustion (< 1kg remaining)',enabled:true,action:'SMS to beneficiary'},
+              {label:'Compliance score drops below 70%',enabled:true,action:'Warning SMS to dealer'},
+              {label:'Exception not reviewed in 24h',enabled:false,action:'Escalation to supervisor'},
+              {label:'System downtime > 5 minutes',enabled:true,action:'SMS to all administrators'},
+            ].map(r=>`
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--slate-050)">
+                <div style="width:32px;height:18px;border-radius:9px;background:${r.enabled?'var(--teal-500)':'var(--slate-200)'};position:relative;cursor:pointer;flex-shrink:0;transition:background .2s" onclick="toggleRule(this)">
+                  <div style="width:14px;height:14px;border-radius:50%;background:white;position:absolute;top:2px;${r.enabled?'right:2px':'left:2px'};transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:12px;font-weight:600;color:var(--text-primary)">${r.label}</div>
+                  <div style="font-size:11px;color:var(--text-muted)">${r.action}</div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+OMS.init();
+
+function renderNotification(n) {
+  const iconBg = n.priority==='high'?'ni-high':n.priority==='medium'?'ni-medium':n.priority==='low'?'ni-low':'ni-info';
+  return `<div class="notif-item ${n.read?'':'unread'}" id="notif-${n.id}" onclick="markRead('${n.id}')">
+    <div class="notif-icon ${iconBg}">${n.icon}</div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-size:12.5px;font-weight:${n.read?'500':'700'};color:var(--text-primary)">${n.title}</div>
+        <div style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);flex-shrink:0;margin-left:8px">${n.time}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px;line-height:1.5">${n.body}</div>
+    </div>
+    ${!n.read?`<div style="width:7px;height:7px;border-radius:50%;background:var(--blue-400);flex-shrink:0;margin-top:4px"></div>`:''}
+  </div>`;
+}
+
+function markRead(id) {
+  const n = notifications.find(x=>x.id===id);
+  if (n) { n.read = true; document.getElementById('notif-'+id).className = 'notif-item'; }
+}
+
+function markAllRead() {
+  notifications.forEach(n => n.read = true);
+  document.getElementById('notifications-list').innerHTML = notifications.map(n=>renderNotification(n)).join('');
+  OMS.toast('✅ All notifications marked as read','success');
+}
+
+function updateRecipientCount() {
+  const target = document.getElementById('sms-target').value;
+  const count = recipientCounts[target] || 1;
+  const isCustom = target === 'custom';
+  document.getElementById('custom-phone').style.display = isCustom ? 'block' : 'none';
+  document.getElementById('sms-count').textContent = isCustom ? '1' : count.toLocaleString();
+  document.getElementById('sms-cost').textContent = '৳' + (count * 0.10).toFixed(2);
+}
+
+function applyTemplate() {
+  const key = document.getElementById('sms-template').value;
+  if (templates[key]) document.getElementById('sms-body').value = templates[key];
+}
+
+function sendSMS() {
+  const count = document.getElementById('sms-count').textContent;
+  OMS.closeModal('modal-sms');
+  OMS.toast(`📱 SMS sent to ${count} recipients`, 'success');
+}
+
+function toggleRule(toggle) {
+  const isOn = toggle.style.background.includes('teal');
+  toggle.style.background = isOn ? 'var(--slate-200)' : 'var(--teal-500)';
+  const knob = toggle.querySelector('div');
+  knob.style.right = isOn ? '' : '2px';
+  knob.style.left = isOn ? '2px' : '';
+  OMS.toast(isOn ? '⚠️ Alert rule disabled' : '✅ Alert rule enabled', isOn?'warning':'success');
+}
+</script>
+</body>
+</html>

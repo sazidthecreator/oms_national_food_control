@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMS — Beneficiary Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink-500:#1E3A8A;--blue-400:#2563EB;--blue-100:#DBEAFE;--blue-050:#EFF6FF;--teal-600:#0F766E;--teal-500:#0D9488;--teal-400:#14B8A6;--teal-100:#CCFBF1;--teal-050:#F0FDFA;--amber-600:#B45309;--amber-500:#D97706;--amber-100:#FEF3C7;--amber-050:#FFFBEB;--red-600:#B91C1C;--red-500:#DC2626;--red-100:#FEE2E2;--green-600:#15803D;--green-500:#16A34A;--green-100:#DCFCE7;--green-050:#F0FDF4;--slate-900:#0F172A;--slate-600:#475569;--slate-500:#64748B;--slate-300:#CBD5E1;--slate-200:#E2E8F0;--slate-100:#F1F5F9;--slate-050:#F8FAFC;--white:#FFFFFF;--border-l:var(--slate-200);--text-primary:#0F172A;--text-secondary:var(--slate-600);--text-muted:var(--slate-500);--bg-light:var(--slate-050);--font-display:'Fraunces',Georgia,serif;--font-body:'Plus Jakarta Sans',system-ui,sans-serif;--font-mono:'JetBrains Mono','Courier New',monospace;--r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;--sh-sm:0 1px 3px rgba(0,0,0,.06);--sh-md:0 4px 16px rgba(0,0,0,.08);}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:16px;}body{font-family:var(--font-body);font-size:14px;background:var(--bg-light);color:var(--text-primary);}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--slate-300);border-radius:2px;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(16px)}}
+.d-topbar{background:white;border-bottom:1px solid var(--border-l);height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100;box-shadow:var(--sh-sm);}
+.d-brand{display:flex;align-items:center;gap:9px;cursor:pointer;}
+.d-logo{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,var(--teal-500),var(--blue-400));display:flex;align-items:center;justify-content:center;}
+.d-logo svg{width:14px;height:14px;fill:white;}
+.d-title{font-family:var(--font-display);font-weight:600;font-size:13px;color:var(--slate-900);}
+.d-sub{font-size:10px;color:var(--text-muted);}
+.d-status{display:flex;align-items:center;gap:7px;}
+.d-pill{display:flex;align-items:center;gap:5px;background:var(--slate-100);border-radius:100px;padding:3px 10px;font-size:11px;color:var(--text-secondary);font-weight:500;cursor:pointer;}
+.d-live{width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;animation:blink 2s infinite;}
+.d-alert{color:var(--red-500);}
+.d-layout{display:flex;min-height:calc(100vh - 50px);}
+.d-sidebar{width:192px;flex-shrink:0;background:white;border-right:1px solid var(--border-l);padding:8px 0;overflow-y:auto;}
+.sidebar-cat{padding:10px 14px 4px;font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--slate-300);}
+.d-nav{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;border-left:2.5px solid transparent;transition:all .12s;text-decoration:none;}
+.d-nav:hover{color:var(--text-primary);background:var(--slate-050);}
+.d-nav.active{color:var(--ink-500);background:var(--blue-050);border-left-color:var(--ink-500);font-weight:600;}
+.d-nav-i{font-size:13px;width:16px;text-align:center;}
+.d-badge{margin-left:auto;background:var(--red-500);color:white;font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;}
+.d-progress{margin:10px 10px 0;background:var(--blue-050);border-radius:var(--r-md);padding:10px 12px;border:1px solid var(--blue-100);}
+.dp-label{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--ink-500);margin-bottom:4px;font-weight:500;}
+.dp-val{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--slate-900);}
+.dp-sub{font-size:10px;color:var(--text-muted);}
+.dp-bar{height:3px;background:var(--blue-100);border-radius:2px;margin-top:6px;}
+.dp-fill{height:100%;width:69%;background:var(--ink-500);border-radius:2px;}
+.d-main{flex:1;overflow-y:auto;padding:20px;}
+.dph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.dph-t{font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--slate-900);letter-spacing:-.4px;}
+.dph-s{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.dc{background:white;border-radius:var(--r-lg);border:1px solid var(--border-l);padding:14px 16px;box-shadow:var(--sh-sm);}
+.dct{font-family:var(--font-mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:12px;}
+.dm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.dm-card{background:white;border-radius:var(--r-lg);padding:14px;border:1px solid var(--border-l);position:relative;overflow:hidden;box-shadow:var(--sh-sm);}
+.dm-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;}
+.mc-b::after{background:linear-gradient(90deg,var(--ink-500),var(--blue-400));}
+.mc-t::after{background:linear-gradient(90deg,var(--teal-600),var(--teal-400));}
+.mc-g::after{background:linear-gradient(90deg,var(--green-600),var(--green-500));}
+.mc-a::after{background:linear-gradient(90deg,var(--amber-600),var(--amber-500));}
+.dm-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);}
+.dm-val{font-family:var(--font-display);font-size:24px;font-weight:700;margin:4px 0 2px;line-height:1;}
+.mc-b .dm-val{color:var(--ink-500);}
+.mc-t .dm-val{color:var(--teal-600);}
+.mc-g .dm-val{color:var(--green-600);}
+.mc-a .dm-val{color:var(--amber-600);}
+.dm-trend{font-size:10px;color:var(--text-muted);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.mb12{margin-bottom:12px;}
+.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt th{background:var(--slate-050);padding:8px 11px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-l);}
+.dt td{padding:9px 11px;border-bottom:1px solid var(--slate-050);color:var(--text-primary);vertical-align:middle;}
+.dt tr:hover td{background:var(--slate-050);}
+.dt tr:last-child td{border-bottom:none;}
+.b{display:inline-flex;align-items:center;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:700;}
+.bg{background:var(--green-100);color:var(--green-600);}
+.br{background:var(--red-100);color:var(--red-600);}
+.by{background:var(--amber-100);color:var(--amber-600);}
+.bb{background:var(--blue-100);color:var(--ink-500);}
+.bt{background:var(--teal-100);color:var(--teal-600);}
+.bs{background:var(--slate-100);color:var(--slate-600);}
+.btn{padding:6px 13px;border-radius:var(--r-sm);font-family:var(--font-body);font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .12s;}
+.btn:active{transform:scale(.97);}
+.btn-p{background:var(--ink-500);color:white;}
+.btn-p:hover{background:var(--blue-400);}
+.btn-t{background:var(--teal-500);color:white;}
+.btn-o{background:white;border:1.5px solid var(--border-l);color:var(--text-muted);}
+.btn-o:hover{border-color:var(--slate-300);color:var(--text-primary);}
+.btn-d{background:var(--red-500);color:white;}
+.btn-s{background:var(--green-500);color:white;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:white;border-radius:var(--r-xl);padding:24px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:modalIn .25s ease;}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.modal-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--slate-900);}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);padding:2px 6px;border-radius:4px;}
+.fg{margin-bottom:10px;}
+.fl{font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:3px;display:block;}
+.fi{width:100%;padding:7px 10px;border:1.5px solid var(--border-l);border-radius:var(--r-sm);font-family:var(--font-body);font-size:12px;color:var(--text-primary);outline:none;transition:border .12s;}
+.fi:focus{border-color:var(--ink-500);}
+.fs{width:100%;padding:7px 10px;border:1.5px solid var(--border-l);border-radius:var(--r-sm);font-family:var(--font-body);font-size:12px;background:white;color:var(--text-primary);outline:none;}
+#toast-container{position:fixed;top:60px;right:16px;z-index:2000;display:flex;flex-direction:column;gap:7px;pointer-events:none;}
+.toast{background:white;border-radius:10px;border:1px solid var(--border-l);padding:10px 14px;box-shadow:0 8px 28px rgba(0,0,0,.12);display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:var(--slate-900);max-width:280px;pointer-events:all;animation:toastIn .3s ease;}
+.toast.out{animation:toastOut .25s ease forwards;}
+/* Quota ring */
+.qr-wrap{position:relative;display:inline-flex;}
+.qr-ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+/* Category chips */
+.cat-chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:9px;font-size:10px;font-weight:600;}
+.cat-widow{background:#FEE2E2;color:#9F1239;}
+.cat-elderly{background:#E0E7FF;color:#3730A3;}
+.cat-disabled{background:#D1FAE5;color:#065F46;}
+.cat-poor{background:#FEF9C3;color:#713F12;}
+/* Search bar */
+.search-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.search-input{flex:1;padding:8px 12px;border:1.5px solid var(--border-l);border-radius:var(--r-md);font-family:var(--font-body);font-size:12px;outline:none;}
+.search-input:focus{border-color:var(--ink-500);}
+/* Quota progress */
+.quota-bar{height:6px;background:var(--slate-100);border-radius:3px;overflow:hidden;margin-top:3px;}
+.quota-fill{height:100%;border-radius:3px;}
+.tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--slate-100);padding:3px;border-radius:var(--r-md);width:fit-content;}
+.tab-btn{padding:5px 14px;font-size:12px;font-weight:500;border:none;background:none;cursor:pointer;border-radius:7px;color:var(--text-muted);transition:all .15s;}
+.tab-btn.active{background:white;color:var(--ink-500);font-weight:600;box-shadow:var(--sh-sm);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="d-topbar">
+  <div class="d-brand" onclick="location.href='index.html'">
+    <div class="d-logo"><svg viewBox="0 0 16 16"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z"/></svg></div>
+    <div><div class="d-title">OMS National Control Platform</div><div class="d-sub">Ministry of Food · Bangladesh</div></div>
+  </div>
+  <div class="d-status">
+    <div class="d-pill"><div class="d-live"></div>System Live</div>
+    <div class="d-pill">📅 20 March 2026</div>
+    <div class="d-pill d-alert" onclick="location.href='notifications.html'">⚠ 3 Alerts</div>
+  </div>
+</div>
+<div class="d-layout">
+  <div class="d-sidebar">
+    <div class="sidebar-cat">Main</div>
+    <a href="index.html" class="d-nav"><span class="d-nav-i">📊</span>Dashboard</a>
+    <a href="offices.html" class="d-nav"><span class="d-nav-i">🏛</span>Offices & Programs</a>
+    <a href="dealers.html" class="d-nav"><span class="d-nav-i">🏪</span>Dealers<span class="d-badge">2</span></a>
+    <a href="beneficiaries.html" class="d-nav active"><span class="d-nav-i">👥</span>Beneficiaries</a>
+    <div class="sidebar-cat">Operations</div>
+    <a href="distribution.html" class="d-nav"><span class="d-nav-i">🌾</span>Distribution</a>
+    <a href="inspection.html" class="d-nav"><span class="d-nav-i">🔍</span>Inspection</a>
+    <a href="analytics.html" class="d-nav"><span class="d-nav-i">📈</span>Analytics</a>
+    <div class="sidebar-cat">Admin</div>
+    <a href="notifications.html" class="d-nav"><span class="d-nav-i">🔔</span>Notifications<span class="d-badge">3</span></a>
+    <a href="audit.html" class="d-nav"><span class="d-nav-i">📋</span>Audit Log</a>
+    <div class="d-progress">
+      <div class="dp-label">TODAY'S PROGRESS</div>
+      <div class="dp-val">1,247</div>
+      <div class="dp-sub">of 1,800 target</div>
+      <div class="dp-bar"><div class="dp-fill"></div></div>
+    </div>
+  </div>
+
+  <div class="d-main">
+    <div class="dph">
+      <div><div class="dph-t">Beneficiary Management</div><div class="dph-s">12,840 enrolled · Dhaka Division · March 2026</div></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-o" onclick="showToast('📤 Exporting beneficiary list','info')">📤 Export</button>
+        <button class="btn btn-t" onclick="openModal('enrollModal')">+ Enroll Beneficiary</button>
+      </div>
+    </div>
+
+    <div class="dm-grid">
+      <div class="dm-card mc-b"><div class="dm-lbl">Total Enrolled</div><div class="dm-val">12,840</div><div class="dm-trend">Dhaka Division</div></div>
+      <div class="dm-card mc-g"><div class="dm-lbl">Served Today</div><div class="dm-val">1,198</div><div class="dm-trend">93.7% coverage</div></div>
+      <div class="dm-card mc-a"><div class="dm-lbl">Quota Exhausted</div><div class="dm-val">234</div><div class="dm-trend">March 2026</div></div>
+      <div class="dm-card mc-t"><div class="dm-lbl">Under Review</div><div class="dm-val">15</div><div class="dm-trend">Pending verification</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-all')">All Beneficiaries</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-quota')">📊 Quota Status</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-exceptions')">⚠ Exceptions (15)</button>
+    </div>
+
+    <!-- ALL -->
+    <div id="tab-all" class="tab-pane active">
+      <div class="search-bar">
+        <input class="search-input" id="ben-search" placeholder="🔍 Search by name, code, NID, or area..." oninput="filterBeneficiaries()">
+        <select class="fs" style="width:auto;padding:8px 12px">
+          <option>All Categories</option>
+          <option>Widow</option>
+          <option>Elderly</option>
+          <option>Disabled</option>
+          <option>Poor Family</option>
+        </select>
+      </div>
+      <div class="dc">
+        <table class="dt" id="ben-table">
+          <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Area</th><th>March Quota</th><th>Remaining</th><th>Today</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="ben-tbody">
+            <tr>
+              <td style="font-family:var(--font-mono);font-size:10px">BEN-10021</td>
+              <td><strong>Amina Khatun</strong><br><span style="font-size:10px;color:var(--text-muted)">আমিনা খাতুন</span></td>
+              <td><span class="cat-chip cat-widow">Widow</span></td>
+              <td>Mirpur-10</td>
+              <td>10 kg</td>
+              <td>
+                <div style="min-width:70px">5 kg
+                  <div class="quota-bar"><div class="quota-fill" style="width:50%;background:var(--teal-500)"></div></div>
+                </div>
+              </td>
+              <td><span class="b bg">✓ Collected</span></td>
+              <td><span class="b bg">Active</span></td>
+              <td><button class="btn btn-o" style="padding:3px 9px;font-size:10.5px" onclick="viewBeneficiary('BEN-10021','Amina Khatun')">View</button></td>
+            </tr>
+            <tr style="background:var(--red-100)">
+              <td style="font-family:var(--font-mono);font-size:10px">BEN-10045</td>
+              <td><strong>Mohammad Ali</strong><br><span style="font-size:10px;color:var(--text-muted)">মোহাম্মদ আলী</span></td>
+              <td><span class="cat-chip cat-poor">Poor Family</span></td>
+              <td>Mirpur-10</td>
+              <td>10 kg</td>
+              <td>
+                <div style="min-width:70px">0 kg
+                  <div class="quota-bar"><div class="quota-fill" style="width:100%;background:var(--red-500)"></div></div>
+                </div>
+              </td>
+              <td><span class="b br">✗ Blocked</span></td>
+              <td><span class="b br">Exhausted</span></td>
+              <td><button class="btn btn-o" style="padding:3px 9px;font-size:10.5px" onclick="viewBeneficiary('BEN-10045','Mohammad Ali')">View</button></td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);font-size:10px">BEN-10087</td>
+              <td><strong>Rina Begum</strong><br><span style="font-size:10px;color:var(--text-muted)">রিনা বেগম</span></td>
+              <td><span class="cat-chip cat-elderly">Elderly</span></td>
+              <td>Uttara</td>
+              <td>10 kg</td>
+              <td>
+                <div style="min-width:70px">7 kg
+                  <div class="quota-bar"><div class="quota-fill" style="width:30%;background:var(--green-500)"></div></div>
+                </div>
+              </td>
+              <td><span class="b bg">✓ Collected</span></td>
+              <td><span class="b bg">Active</span></td>
+              <td><button class="btn btn-o" style="padding:3px 9px;font-size:10.5px" onclick="viewBeneficiary('BEN-10087','Rina Begum')">View</button></td>
+            </tr>
+            <tr style="background:var(--amber-050)">
+              <td style="font-family:var(--font-mono);font-size:10px">BEN-10102</td>
+              <td><strong>Jabbar Mia</strong><br><span style="font-size:10px;color:var(--text-muted)">জব্বার মিয়া</span></td>
+              <td><span class="cat-chip cat-disabled">Disabled</span></td>
+              <td>Gulshan</td>
+              <td>10 kg</td>
+              <td>
+                <div style="min-width:70px">10 kg
+                  <div class="quota-bar"><div class="quota-fill" style="width:0%;background:var(--amber-500)"></div></div>
+                </div>
+              </td>
+              <td><span class="b by">! Exception</span></td>
+              <td><span class="b by">Under Review</span></td>
+              <td><button class="btn btn-a" style="padding:3px 9px;font-size:10.5px" onclick="viewBeneficiary('BEN-10102','Jabbar Mia')">Review</button></td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);font-size:10px">BEN-10156</td>
+              <td><strong>Salma Khanom</strong><br><span style="font-size:10px;color:var(--text-muted)">সালমা খানম</span></td>
+              <td><span class="cat-chip cat-widow">Widow</span></td>
+              <td>Banani</td>
+              <td>10 kg</td>
+              <td>
+                <div style="min-width:70px">5 kg
+                  <div class="quota-bar"><div class="quota-fill" style="width:50%;background:var(--teal-500)"></div></div>
+                </div>
+              </td>
+              <td><span class="b bt">↑ Synced</span></td>
+              <td><span class="b bg">Active</span></td>
+              <td><button class="btn btn-o" style="padding:3px 9px;font-size:10.5px" onclick="viewBeneficiary('BEN-10156','Salma Khanom')">View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- QUOTA STATUS -->
+    <div id="tab-quota" class="tab-pane">
+      <div class="dc mb12">
+        <div class="dct">📊 March 2026 Quota Overview</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+          <div style="text-align:center;padding:14px;background:var(--green-050);border-radius:var(--r-lg);border:1px solid var(--green-100)">
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--green-600)">8,240</div>
+            <div style="font-size:10px;color:var(--text-muted)">Have Remaining Quota</div>
+          </div>
+          <div style="text-align:center;padding:14px;background:var(--red-100);border-radius:var(--r-lg);border:1px solid var(--red-100)">
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--red-600)">234</div>
+            <div style="font-size:10px;color:var(--text-muted)">Quota Exhausted</div>
+          </div>
+          <div style="text-align:center;padding:14px;background:var(--amber-050);border-radius:var(--r-lg);border:1px solid var(--amber-100)">
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--amber-600)">4,366</div>
+            <div style="font-size:10px;color:var(--text-muted)">Not Yet Collected</div>
+          </div>
+          <div style="text-align:center;padding:14px;background:var(--teal-050);border-radius:var(--r-lg);border:1px solid var(--teal-100)">
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--teal-600)">64.2%</div>
+            <div style="font-size:10px;color:var(--text-muted)">Month Utilization</div>
+          </div>
+        </div>
+        <div style="height:12px;background:var(--slate-100);border-radius:6px;overflow:hidden;margin-bottom:6px">
+          <div style="height:100%;width:64.2%;background:linear-gradient(90deg,var(--teal-500),var(--blue-400));border-radius:6px;transition:width 1.2s ease"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)">
+          <span>0%</span><span style="color:var(--teal-600);font-weight:600">64.2% used (8,234 kg of 12,840 kg allotted)</span><span>100%</span>
+        </div>
+      </div>
+      <div class="dc">
+        <div class="dct">📋 Quota Status by Beneficiary</div>
+        <table class="dt">
+          <thead><tr><th>Code</th><th>Name</th><th>Monthly Quota</th><th>Used</th><th>Remaining</th><th>% Used</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:var(--font-mono);font-size:10px">BEN-10021</td><td>Amina Khatun</td><td>10 kg</td><td>5 kg</td><td>5 kg</td><td><div style="width:80px;height:5px;background:var(--slate-100);border-radius:3px"><div style="width:50%;height:100%;background:var(--teal-500);border-radius:3px"></div></div><span style="font-size:10px;color:var(--text-muted)"> 50%</span></td><td><span class="b bg">✓ Active</span></td></tr>
+            <tr style="background:var(--red-100)"><td style="font-family:var(--font-mono);font-size:10px">BEN-10045</td><td>Mohammad Ali</td><td>10 kg</td><td>10 kg</td><td>0 kg</td><td><div style="width:80px;height:5px;background:var(--slate-100);border-radius:3px"><div style="width:100%;height:100%;background:var(--red-500);border-radius:3px"></div></div><span style="font-size:10px;color:var(--red-600);font-weight:600"> 100%</span></td><td><span class="b br">Exhausted</span></td></tr>
+            <tr><td style="font-family:var(--font-mono);font-size:10px">BEN-10087</td><td>Rina Begum</td><td>10 kg</td><td>3 kg</td><td>7 kg</td><td><div style="width:80px;height:5px;background:var(--slate-100);border-radius:3px"><div style="width:30%;height:100%;background:var(--green-500);border-radius:3px"></div></div><span style="font-size:10px;color:var(--text-muted)"> 30%</span></td><td><span class="b bg">✓ Active</span></td></tr>
+            <tr><td style="font-family:var(--font-mono);font-size:10px">BEN-10156</td><td>Salma Khanom</td><td>10 kg</td><td>5 kg</td><td>5 kg</td><td><div style="width:80px;height:5px;background:var(--slate-100);border-radius:3px"><div style="width:50%;height:100%;background:var(--teal-500);border-radius:3px"></div></div><span style="font-size:10px;color:var(--text-muted)"> 50%</span></td><td><span class="b bg">✓ Active</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EXCEPTIONS -->
+    <div id="tab-exceptions" class="tab-pane">
+      <div class="dc">
+        <div class="dct">⚠ Beneficiaries Requiring Review</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="padding:12px;background:var(--amber-050);border-radius:var(--r-md);border:1px solid var(--amber-100)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div><strong>Jabbar Mia</strong> (BEN-10102) — <span class="cat-chip cat-disabled">Disabled</span></div>
+              <span class="b by">! Exception</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Face verification confidence: 68% (below 85% threshold). Photo captured. Officer sign-off required.</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="approveException('BEN-10102')">✓ Approve Distribution</button>
+              <button class="btn btn-d" style="font-size:11px;padding:4px 10px" onclick="denyException('BEN-10102')">✗ Deny</button>
+              <button class="btn btn-o" style="font-size:11px;padding:4px 10px" onclick="showToast('📷 Photo evidence loading','info')">📷 View Photo</button>
+            </div>
+          </div>
+          <div style="padding:12px;background:var(--amber-050);border-radius:var(--r-md);border:1px solid var(--amber-100)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div><strong>Rahima Begum</strong> (BEN-10203) — <span class="cat-chip cat-widow">Widow</span></div>
+              <span class="b by">! Exception</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Face verification uncertainty due to poor lighting conditions. Exception raised at Uttara Center.</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="approveException('BEN-10203')">✓ Approve Distribution</button>
+              <button class="btn btn-d" style="font-size:11px;padding:4px 10px" onclick="denyException('BEN-10203')">✗ Deny</button>
+              <button class="btn btn-o" style="font-size:11px;padding:4px 10px" onclick="showToast('📷 Photo evidence loading','info')">📷 View Photo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enroll Modal -->
+<div class="modal-overlay" id="enrollModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">👥 Enroll New Beneficiary</div>
+      <button class="modal-close" onclick="closeModal('enrollModal')">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="fg"><label class="fl">Full Name (English)</label><input class="fi" placeholder="Full name"></div>
+      <div class="fg"><label class="fl">পূর্ণ নাম (বাংলা)</label><input class="fi" placeholder="বাংলায় নাম"></div>
+    </div>
+    <div class="fg"><label class="fl">National ID (13 digits)</label><input class="fi" placeholder="1234567890123" maxlength="13"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="fg"><label class="fl">Category</label>
+        <select class="fs"><option>widow</option><option>elderly</option><option>disabled</option><option>poor_family</option><option>other</option></select>
+      </div>
+      <div class="fg"><label class="fl">Phone Number</label><input class="fi" placeholder="+8801XXXXXXXXX"></div>
+    </div>
+    <div class="fg"><label class="fl">Address</label><input class="fi" placeholder="Full address"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="fg"><label class="fl">OMS Center</label>
+        <select class="fs"><option>Mirpur OMS Center</option><option>Uttara Center</option><option>Gulshan Center</option></select>
+      </div>
+      <div class="fg"><label class="fl">Program</label>
+        <select class="fs"><option>OMS-REG-2026 (Regular)</option><option>OMS-RAM-2026 (Ramadan)</option></select>
+      </div>
+    </div>
+    <div style="background:var(--blue-050);border-radius:var(--r-md);padding:10px;margin-bottom:12px;font-size:11px;color:var(--ink-500)">
+      ℹ️ After registration, face photo must be captured for biometric enrollment before the beneficiary can receive food.
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-t" style="flex:1" onclick="enrollBeneficiary()">Enroll & Capture Face</button>
+      <button class="btn btn-o" onclick="closeModal('enrollModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Beneficiary Modal -->
+<div class="modal-overlay" id="viewBenModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="ben-modal-title">Beneficiary Details</div>
+      <button class="modal-close" onclick="closeModal('viewBenModal')">✕</button>
+    </div>
+    <div id="ben-modal-content"></div>
+  </div>
+</div>
+
+<script>
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function viewBeneficiary(id, name) {
+  document.getElementById('ben-modal-title').textContent = `👤 ${name}`;
+  const colors = {'BEN-10021':'var(--green-600)','BEN-10045':'var(--red-600)','BEN-10087':'var(--green-600)','BEN-10102':'var(--amber-600)','BEN-10156':'var(--teal-600)'};
+  const statuses = {'BEN-10021':'Collected','BEN-10045':'Exhausted','BEN-10087':'Collected','BEN-10102':'Exception','BEN-10156':'Synced'};
+  document.getElementById('ben-modal-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:12px;background:var(--slate-050);border-radius:var(--r-md)">
+      <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--teal-500),var(--blue-400));display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>
+      <div>
+        <div style="font-weight:700;font-size:15px">${name}</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">${id}</div>
+        <div style="font-size:11px;color:var(--text-muted)">March 2026 Status: <strong style="color:${colors[id]||'var(--text-primary)'}">${statuses[id]||'Active'}</strong></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:var(--teal-050);border-radius:var(--r-md);padding:10px">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">QUOTA</div>
+        <div style="font-size:18px;font-weight:700;color:var(--teal-600)">5 kg remaining</div>
+        <div style="font-size:11px;color:var(--text-muted)">of 10 kg monthly</div>
+        <div style="height:4px;background:var(--teal-100);border-radius:2px;margin-top:6px"><div style="width:50%;height:100%;background:var(--teal-500);border-radius:2px"></div></div>
+      </div>
+      <div style="background:var(--green-050);border-radius:var(--r-md);padding:10px">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">BIOMETRIC</div>
+        <div style="font-size:18px;font-weight:700;color:var(--green-600)">97.7%</div>
+        <div style="font-size:11px;color:var(--text-muted)">Face confidence</div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px">TRANSACTION HISTORY (March 2026)</div>
+      <div style="font-size:12px;display:flex;flex-direction:column;gap:4px">
+        <div style="padding:6px 10px;background:var(--green-050);border-radius:6px;display:flex;justify-content:space-between"><span>20 Mar — 5kg Rice</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">TXN-7001</span></div>
+        <div style="padding:6px 10px;background:var(--slate-050);border-radius:6px;display:flex;justify-content:space-between"><span>15 Mar — 5kg Rice (synced)</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">TXN-6850</span></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-p" style="flex:1" onclick="showToast('📊 Full history loading','info');closeModal('viewBenModal')">Full History</button>
+      <button class="btn btn-t" onclick="showToast('📷 Re-enrollment started','info');closeModal('viewBenModal')">Re-enroll</button>
+      <button class="btn btn-d" onclick="showToast('⚠️ Deactivation requires supervisor','warning')">Deactivate</button>
+    </div>`;
+  openModal('viewBenModal');
+}
+
+function enrollBeneficiary() {
+  closeModal('enrollModal');
+  showToast('✅ Beneficiary enrolled. Face capture pending.', 'success');
+  setTimeout(() => showToast('📷 Camera ready for face capture', 'info'), 1000);
+}
+
+function approveException(id) {
+  showToast(`✅ Exception approved for ${id}. Distribution allowed.`, 'success');
+}
+
+function denyException(id) {
+  showToast(`❌ Exception denied for ${id}. Beneficiary informed.`, 'error');
+}
+
+function filterBeneficiaries() {
+  const q = document.getElementById('ben-search').value.toLowerCase();
+  document.querySelectorAll('#ben-tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function showToast(msg, type = 'info') {
+  const icons = {success:'✅',error:'🔴',warning:'⚠️',info:'ℹ️'};
+  const colors = {success:'#16A34A',error:'#DC2626',warning:'#D97706',info:'#1D4ED8'};
+  let tc = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.borderLeft = `3px solid ${colors[type]}`;
+  t.innerHTML = `<span style="font-size:14px">${icons[type]}</span><span>${msg}</span>`;
+  tc.appendChild(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

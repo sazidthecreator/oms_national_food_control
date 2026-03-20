@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distribution — OMS National Control Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="oms-shared.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast-container"></div>
+
+<!-- Add Beneficiary Modal -->
+<div class="modal-overlay" id="modal-verify">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hdr">
+      <div class="modal-title">🔐 Biometric Verification</div>
+      <button class="modal-close" onclick="OMS.closeModal('modal-verify')">✕</button>
+    </div>
+    <div id="verify-steps">
+      <div style="text-align:center;padding:20px 0">
+        <div style="width:96px;height:96px;border-radius:50%;border:2px solid rgba(13,148,136,.6);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;background:rgba(13,148,136,.04);" id="face-ring">
+          👤
+          <div style="position:absolute;inset:-10px;border-radius:50%;border:1px dashed rgba(13,148,136,.28);animation:spin 8s linear infinite"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:1px;margin-bottom:12px" id="verify-status-text">SCANNING FACE...</div>
+        <div style="height:4px;background:var(--slate-100);border-radius:2px;overflow:hidden;margin-bottom:16px">
+          <div id="verify-bar" style="height:100%;width:0;background:linear-gradient(90deg,var(--teal-500),var(--blue-400));border-radius:2px;transition:width .4s ease"></div>
+        </div>
+        <div id="verify-steps-list" style="text-align:left">
+          <div class="vs-item vs-pend" id="vs1"><div class="vs-n">1</div>Beneficiary lookup</div>
+          <div class="vs-item vs-pend" id="vs2"><div class="vs-n">2</div>Eligibility & quota check</div>
+          <div class="vs-item vs-pend" id="vs3"><div class="vs-n">3</div>Face capture</div>
+          <div class="vs-item vs-pend" id="vs4"><div class="vs-n">4</div>Biometric match</div>
+          <div class="vs-item vs-pend" id="vs5"><div class="vs-n">5</div>Transaction record</div>
+        </div>
+        <div id="verify-result" style="display:none;margin-top:14px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Exception Modal -->
+<div class="modal-overlay" id="modal-exception">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">⚠️ Exception Request</div>
+      <button class="modal-close" onclick="OMS.closeModal('modal-exception')">✕</button>
+    </div>
+    <div class="fg"><label class="fl">Beneficiary Code</label><input class="fi" id="exc-ben" placeholder="BEN-10102"></div>
+    <div class="fg"><label class="fl">Exception Reason</label>
+      <select class="fs" id="exc-reason">
+        <option>Face recognition failure - lighting issue</option>
+        <option>Face recognition failure - injury/medical</option>
+        <option>Lost NID - identity confirmed verbally</option>
+        <option>Proxy collection - authorized caregiver</option>
+        <option>System error - manual override required</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Supervisor Notes</label><textarea class="fi" rows="3" placeholder="Describe the exceptional circumstance..."></textarea></div>
+    <div class="fg"><label class="fl">Officer ID</label><input class="fi" value="USR-DIST-007" readonly style="background:var(--slate-050)"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-o" style="flex:1" onclick="OMS.closeModal('modal-exception')">Cancel</button>
+      <button class="btn btn-t" style="flex:1" onclick="submitException()">Submit Exception</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────
+let selectedBeneficiary = null;
+let txnCount = 0;
+let blockedCount = 49;
+const recentTxns = [...OMS.sampleTransactions];
+
+// ── Render ────────────────────────────────────────
+document.getElementById('root').innerHTML = `
+  ${OMS.getSharedCSS()}
+  <style>
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .vs-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--r-sm);margin-bottom:4px;border:1px solid var(--border-l);font-size:12px;}
+    .vs-done{background:var(--green-050);border-color:#BBF7D0;}
+    .vs-act{background:var(--blue-050);border-color:var(--blue-100);}
+    .vs-pend{background:var(--slate-050);color:var(--text-muted);}
+    .vs-n{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;}
+    .vs-done .vs-n{background:var(--green-500);color:white;}
+    .vs-act .vs-n{background:var(--ink-500);color:white;}
+    .vs-pend .vs-n{background:var(--slate-200);color:var(--text-muted);}
+    .oi{display:inline-flex;align-items:center;gap:5px;border-radius:9px;padding:3px 8px;font-size:10.5px;font-weight:600;}
+    .oi-off{background:var(--amber-100);color:var(--amber-600);}
+    .oi-on{background:var(--green-100);color:var(--green-600);}
+    .quota-ring{position:relative;width:70px;height:70px;flex-shrink:0}
+    .quota-ring-ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .feed-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--slate-050);animation:fadeIn .4s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+    .feed-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+  </style>
+
+  ${OMS.buildTopbar('distribution')}
+  <div class="d-layout">
+    ${OMS.buildSidebar('distribution')}
+    <div class="d-main">
+      <div class="dph">
+        <div>
+          <div class="dph-t">Food Distribution</div>
+          <div class="dph-s">Record transactions · Biometric verification · Duplicate prevention</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-o" onclick="OMS.openModal('modal-exception')">⚠️ Exception</button>
+          <button class="btn btn-p" onclick="startNewTransaction()">+ New Transaction</button>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="dm-grid" style="margin-bottom:16px">
+        <div class="dm-card mc-t"><div class="dm-icon">🌾</div><div class="dm-lbl">Today's Distributions</div><div class="dm-val" data-count="1247">0</div><div class="dm-trend">▲ 8.3% vs yesterday</div></div>
+        <div class="dm-card mc-g"><div class="dm-icon">🛡</div><div class="dm-lbl">Duplicates Blocked</div><div class="dm-val" id="blocked-count">49</div><div class="dm-trend">100% prevention rate</div></div>
+        <div class="dm-card mc-b"><div class="dm-icon">⚖️</div><div class="dm-lbl">Food Distributed</div><div class="dm-val">6.2T</div><div class="dm-trend">Rice + Flour combined</div></div>
+        <div class="dm-card mc-a"><div class="dm-icon">⚠️</div><div class="dm-lbl">Exceptions Today</div><div class="dm-val" data-count="15">0</div><div class="dm-trend">Pending review</div></div>
+      </div>
+
+      <div class="g2">
+        <!-- Transaction Form -->
+        <div>
+          <div class="dc mb14">
+            <div class="dct">📝 New Distribution Transaction</div>
+            <div class="fg"><label class="fl">Beneficiary Code</label>
+              <div style="display:flex;gap:6px">
+                <input class="fi" id="ben-code" placeholder="BEN-10021" oninput="lookupBeneficiary(this.value)" style="flex:1">
+                <button class="btn btn-o" style="font-size:11px;padding:5px 10px" onclick="lookupBeneficiary(document.getElementById('ben-code').value)">Lookup</button>
+              </div>
+            </div>
+
+            <div id="ben-info" style="display:none;background:var(--green-050);border-radius:var(--r-md);padding:12px;margin-bottom:11px;border:1px solid #BBF7D0">
+              <div style="font-size:9px;font-weight:700;color:var(--green-600);margin-bottom:8px;font-family:var(--font-mono);letter-spacing:.8px">BENEFICIARY FOUND</div>
+              <div style="display:flex;gap:12px;align-items:center">
+                <div style="font-size:24px;width:40px;height:40px;background:var(--teal-100);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>
+                <div>
+                  <div id="ben-name-display" style="font-size:13px;font-weight:700;color:var(--slate-900)"></div>
+                  <div id="ben-meta" style="font-size:11px;color:var(--text-muted);margin-top:2px"></div>
+                </div>
+                <div id="ben-quota-display" style="margin-left:auto;text-align:right"></div>
+              </div>
+              <div id="ben-status-display" style="margin-top:8px"></div>
+            </div>
+
+            <div id="ben-not-found" style="display:none" class="al al-e">
+              <span class="al-ic">❌</span><div>Beneficiary not found. Check the code and try again.</div>
+            </div>
+
+            <div class="g2" style="margin-bottom:11px">
+              <div class="fg" style="margin:0"><label class="fl">Product</label>
+                <select class="fs" id="product-select">
+                  <option value="rice">Rice (চাল)</option>
+                  <option value="flour">Flour (আটা)</option>
+                </select>
+              </div>
+              <div class="fg" style="margin:0"><label class="fl">Quantity (kg)</label>
+                <input class="fi" type="number" id="qty-input" value="5" min="1" max="10">
+              </div>
+            </div>
+
+            <div class="fg"><label class="fl">Dealer / Center</label>
+              <select class="fs" id="dealer-select">
+                ${OMS.sampleDealers.filter(d=>d.status==='active'||d.status==='offline').map(d=>
+                  `<option value="${d.id}">${d.name} (${d.id})</option>`).join('')}
+              </select>
+            </div>
+
+            <div id="duplicate-check" style="display:none" class="al al-e mb14">
+              <span class="al-ic">🚫</span><div id="duplicate-msg"></div>
+            </div>
+
+            <div id="quota-check" style="display:none" class="al al-e mb14">
+              <span class="al-ic">📉</span><div id="quota-msg"></div>
+            </div>
+
+            <button id="distribute-btn" class="btn btn-t" style="width:100%;padding:10px;font-size:13px;border-radius:var(--r-md)" onclick="startVerification()" disabled>
+              🔐 Verify Face & Distribute
+            </button>
+            <div style="text-align:center;font-size:10px;color:var(--text-muted);margin-top:6px">Select a beneficiary to enable distribution</div>
+          </div>
+
+          <!-- Offline Status -->
+          <div class="dc">
+            <div class="dct">📡 Offline Sync Status</div>
+            <div class="al al-w mb14"><span class="al-ic">📴</span><div><strong>Karim Depot offline 54 min.</strong> 23 transactions queued. Last sync: 08:47.</div></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="oi oi-off">📴 Karim Depot (23)</span>
+              <span class="oi oi-off">📴 Noor Center (7)</span>
+              <span class="oi oi-on">🟢 Rahman Center</span>
+              <span class="oi oi-on">🟢 Hasan Store</span>
+              <span class="oi oi-on">🟢 Ali Center</span>
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
+              Total offline queue: <strong style="color:var(--amber-600)">30 transactions</strong> · 
+              Expected sync: when connectivity restored
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div>
+          <!-- Duplicate Prevention -->
+          <div class="dc mb14">
+            <div class="dct">🛡 Duplicate Prevention Engine</div>
+            <div class="al al-e" style="margin-bottom:10px"><span class="al-ic">🚫</span><div><strong>BLOCKED: Mohammad Ali (BEN-10045)</strong><br>Collected 5kg Rice 07:23 today at Mirpur Center. TXN-20260320-6891.</div></div>
+            <div class="al al-e"><span class="al-ic">🚫</span><div><strong>BLOCKED: Kamal Hossain (BEN-10233)</strong><br>Collected 3kg Flour 08:11 at Uttara Center. TXN-20260320-6910.</div></div>
+            <div style="font-size:11px;color:var(--text-muted);padding-top:8px;border-top:1px solid var(--border-l);margin-top:4px">
+              Today blocked: <strong style="color:var(--red-600)">49</strong> · 
+              Month savings: <strong style="color:var(--green-600)">~4,235 kg</strong> · 
+              Value: <strong style="color:var(--green-600)">~$2,800</strong>
+            </div>
+          </div>
+
+          <!-- Live Feed -->
+          <div class="dc">
+            <div class="dct">⚡ Live Transaction Feed <span id="feed-count" style="margin-left:auto;background:var(--teal-100);color:var(--teal-600);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700">LIVE</span></div>
+            <div id="live-feed" style="max-height:340px;overflow-y:auto">
+              ${recentTxns.map(t => renderFeedItem(t)).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+OMS.init();
+
+// ── Functions ─────────────────────────────────────
+function renderFeedItem(t) {
+  const dotClass = t.status==='accepted'?'tl-ok':t.status==='blocked'?'tl-er':t.status==='exception'?'tl-wn':'tl-in';
+  const sym = t.status==='accepted'?'✓':t.status==='blocked'?'✗':t.status==='exception'?'!':'↑';
+  const badge = t.status==='accepted'?'<span class="b bg">VERIFIED</span>':t.status==='blocked'?'<span class="b br">BLOCKED</span>':t.status==='exception'?'<span class="b by">REVIEW</span>':'<span class="b bt">SYNCED</span>';
+  const sync = t.sync==='offline'?' · Offline Sync':'';
+  return `<div class="feed-item">
+    <div class="feed-dot ${dotClass}">${sym}</div>
+    <div>
+      <div class="tl-t">${t.ben} — ${t.kg}kg ${t.product}${sync}</div>
+      <div class="tl-d">${t.dealer} · Face: ${t.face?t.face+'%':'—'} · ${badge}</div>
+      <div class="tl-m">${t.time} · ${t.id}</div>
+    </div>
+  </div>`;
+}
+
+function lookupBeneficiary(code) {
+  const ben = OMS.sampleBeneficiaries.find(b => b.id.toLowerCase() === code.toLowerCase());
+  const infoEl = document.getElementById('ben-info');
+  const notFoundEl = document.getElementById('ben-not-found');
+  const dupEl = document.getElementById('duplicate-check');
+  const quotaEl = document.getElementById('quota-check');
+  const btn = document.getElementById('distribute-btn');
+
+  if (!ben) {
+    infoEl.style.display = 'none';
+    notFoundEl.style.display = code.length > 3 ? 'flex' : 'none';
+    btn.disabled = true;
+    selectedBeneficiary = null;
+    return;
+  }
+  notFoundEl.style.display = 'none';
+  selectedBeneficiary = ben;
+  infoEl.style.display = 'block';
+
+  document.getElementById('ben-name-display').textContent = `${ben.name} (${ben.nameBn})`;
+  document.getElementById('ben-meta').textContent = `${ben.id} · ${ben.area} · ${ben.category}`;
+
+  const remaining = ben.quota - ben.consumed;
+  const pct = Math.round((ben.consumed / ben.quota) * 100);
+  const r = 28, circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  document.getElementById('ben-quota-display').innerHTML = `
+    <svg width="60" height="60" viewBox="0 0 60 60">
+      <circle cx="30" cy="30" r="${r}" fill="none" stroke="#DCFCE7" stroke-width="6"/>
+      <circle cx="30" cy="30" r="${r}" fill="none" stroke="#16A34A" stroke-width="6" 
+        stroke-dasharray="${dash} ${circ}" stroke-linecap="round" transform="rotate(-90 30 30)"/>
+    </svg>
+    <div style="font-size:10px;color:var(--green-600);font-weight:700">${remaining}kg left</div>`;
+
+  // Check duplicate
+  if (ben.today === 'collected' || ben.today === 'blocked') {
+    dupEl.style.display = 'flex';
+    document.getElementById('duplicate-msg').innerHTML = `<strong>DUPLICATE DETECTED:</strong> ${ben.name} already collected today. Transaction will be blocked.`;
+    btn.disabled = true;
+    btn.style.opacity = '.5';
+  } else if (remaining <= 0) {
+    dupEl.style.display = 'none';
+    quotaEl.style.display = 'flex';
+    document.getElementById('quota-msg').innerHTML = `<strong>QUOTA EXHAUSTED:</strong> Monthly limit of ${ben.quota}kg reached. No further distribution this month.`;
+    btn.disabled = true;
+    btn.style.opacity = '.5';
+  } else {
+    dupEl.style.display = 'none';
+    quotaEl.style.display = 'none';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+
+  const statusMap = {
+    collected: '<div class="al al-s" style="margin:0"><span class="al-ic">✅</span><div>Collected today — second attempt will be blocked</div></div>',
+    blocked:   '<div class="al al-e" style="margin:0"><span class="al-ic">🚫</span><div>Duplicate blocked today</div></div>',
+    exception: '<div class="al al-w" style="margin:0"><span class="al-ic">⚠️</span><div>Exception pending review</div></div>',
+    synced:    '<div class="al al-s" style="margin:0"><span class="al-ic">✅</span><div>Synced today — eligible for distribution</div></div>',
+    default:   `<div class="al al-s" style="margin:0"><span class="al-ic">✅</span><div>Eligible · Not collected today · ${remaining}kg remaining this month</div></div>`
+  };
+  document.getElementById('ben-status-display').innerHTML = statusMap[ben.today] || statusMap.default;
+}
+
+// Try loading first beneficiary
+lookupBeneficiary('BEN-10021');
+
+function startVerification() {
+  if (!selectedBeneficiary) return;
+  OMS.openModal('modal-verify');
+  runVerificationAnimation();
+}
+
+function runVerificationAnimation() {
+  const steps = ['vs1','vs2','vs3','vs4','vs5'];
+  const statusTexts = ['LOOKING UP BENEFICIARY...','CHECKING QUOTA...','CAPTURING FACE...','RUNNING BIOMETRIC MATCH...','RECORDING TRANSACTION...'];
+  let step = 0;
+  const bar = document.getElementById('verify-bar');
+  document.getElementById('verify-result').style.display = 'none';
+
+  steps.forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'vs-item vs-pend';
+    el.querySelector('.vs-n').style.background = '';
+  });
+
+  const interval = setInterval(() => {
+    if (step > 0) {
+      const prev = document.getElementById(steps[step-1]);
+      prev.className = 'vs-item vs-done';
+      prev.querySelector('.vs-n').style.background = '';
+    }
+    if (step < steps.length) {
+      const curr = document.getElementById(steps[step]);
+      curr.className = 'vs-item vs-act';
+      document.getElementById('verify-status-text').textContent = statusTexts[step];
+      bar.style.width = ((step+1)/steps.length*100) + '%';
+      step++;
+    } else {
+      clearInterval(interval);
+      bar.style.width = '100%';
+      document.getElementById('verify-status-text').textContent = 'VERIFICATION COMPLETE';
+      showVerificationResult();
+    }
+  }, 600);
+}
+
+function showVerificationResult() {
+  const ben = selectedBeneficiary;
+  const confidence = (85 + Math.random()*15).toFixed(1);
+  const txnId = `TXN-20260320-${7002 + txnCount++}`;
+  const now = new Date();
+  const timeStr = now.toTimeString().slice(0,8);
+
+  document.getElementById('verify-result').style.display = 'block';
+  document.getElementById('verify-result').innerHTML = `
+    <div style="background:var(--green-050);border:1px solid #BBF7D0;border-radius:var(--r-md);padding:14px;text-align:left">
+      <div style="font-size:13px;font-weight:700;color:var(--green-600);margin-bottom:8px">✅ TRANSACTION RECORDED</div>
+      <div style="font-size:12px;color:var(--slate-700);line-height:1.8">
+        <div>Beneficiary: <strong>${ben.name}</strong></div>
+        <div>Product: <strong>${document.getElementById('product-select').value === 'rice' ? 'Rice (চাল)' : 'Flour (আটা)'}</strong></div>
+        <div>Quantity: <strong>${document.getElementById('qty-input').value} kg</strong></div>
+        <div>Face Match: <strong>${confidence}%</strong></div>
+        <div>Transaction: <strong style="font-family:var(--font-mono)">${txnId}</strong></div>
+        <div>Time: <strong>${timeStr}</strong></div>
+      </div>
+    </div>`;
+
+  // Add to feed
+  const newTxn = {
+    id: txnId, ben: ben.name,
+    dealer: document.getElementById('dealer-select').selectedOptions[0].text.split(' (')[0],
+    kg: parseInt(document.getElementById('qty-input').value),
+    product: document.getElementById('product-select').value === 'rice' ? 'Rice' : 'Flour',
+    face: parseFloat(confidence), status: 'accepted', time: timeStr, sync: 'online'
+  };
+  recentTxns.unshift(newTxn);
+  const feed = document.getElementById('live-feed');
+  feed.insertAdjacentHTML('afterbegin', renderFeedItem(newTxn));
+
+  OMS.toast(`✅ Distributed ${newTxn.kg}kg to ${ben.name} — ${txnId}`, 'success');
+  setTimeout(() => OMS.closeModal('modal-verify'), 2000);
+}
+
+function submitException() {
+  const code = document.getElementById('exc-ben').value || 'BEN-10102';
+  OMS.closeModal('modal-exception');
+  OMS.toast(`⚠️ Exception logged for ${code} — pending supervisor review`, 'warning');
+}
+
+function startNewTransaction() {
+  document.getElementById('ben-code').value = '';
+  document.getElementById('ben-info').style.display = 'none';
+  document.getElementById('ben-not-found').style.display = 'none';
+  document.getElementById('distribute-btn').disabled = true;
+  document.getElementById('ben-code').focus();
+}
+
+// Auto-add feed items
+const feedBens = ['Nasrin Akter','Abdul Karim','Fatema Begum','Rafiq Mia','Shirin Akter'];
+let feedIdx = 0;
+setInterval(() => {
+  const name = feedBens[feedIdx % feedBens.length]; feedIdx++;
+  const t = {
+    id: `TXN-20260320-${7010+feedIdx}`,
+    ben: name, dealer: 'Rahman Center',
+    kg: [3,5][Math.floor(Math.random()*2)],
+    product: ['Rice','Flour'][Math.floor(Math.random()*2)],
+    face: (88+Math.random()*12).toFixed(1),
+    status: Math.random()>.1?'accepted':'exception',
+    time: new Date().toTimeString().slice(0,8), sync:'online'
+  };
+  recentTxns.unshift(t);
+  const feed = document.getElementById('live-feed');
+  if (feed) {
+    feed.insertAdjacentHTML('afterbegin', renderFeedItem(t));
+    while(feed.children.length > 12) feed.removeChild(feed.lastChild);
+  }
+}, 10000);
+</script>
+</body>
+</html>

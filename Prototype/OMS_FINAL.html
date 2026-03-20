@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMS National Control Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS — Single source of truth
+═══════════════════════════════════════════════ */
+:root {
+  /* Brand palette */
+  --ink-900: #050C1A;
+  --ink-800: #0A1628;
+  --ink-700: #0F2040;
+  --ink-600: #1A3058;
+  --ink-500: #1E3A8A;
+  --blue-400: #2563EB;
+  --blue-300: #3B82F6;
+  --blue-100: #DBEAFE;
+  --blue-050: #EFF6FF;
+
+  --teal-600: #0F766E;
+  --teal-500: #0D9488;
+  --teal-400: #14B8A6;
+  --teal-glow: #2DD4BF;
+  --blue-glow: #60A5FA;
+  --purple-glow: #A78BFA;
+  --green-bright: #BBF7D0;
+  --red-bright: var(--red-bright);
+  --teal-100: #CCFBF1;
+  --teal-050: #F0FDFA;
+
+  --amber-600: #B45309;
+  --amber-500: #D97706;
+  --amber-100: #FEF3C7;
+  --amber-050: #FFFBEB;
+
+  --red-600:   #B91C1C;
+  --red-500:   #DC2626;
+  --red-100:   #FEE2E2;
+
+  --green-600: #15803D;
+  --green-500: #16A34A;
+  --green-100: #DCFCE7;
+  --green-050: #F0FDF4;
+
+  --slate-900: #0F172A;
+  --slate-800: #1E293B;
+  --slate-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748B;
+  --slate-300: #CBD5E1;
+  --slate-200: #E2E8F0;
+  --slate-100: #F1F5F9;
+  --slate-050: #F8FAFC;
+  --white:     #FFFFFF;
+
+  /* Semantic aliases */
+  --bg-dark:     var(--ink-900);
+  --surface-dark:var(--ink-800);
+  --bg-light:    var(--slate-050);
+  --surface:     var(--white);
+  --border-l:    var(--slate-200);
+  --border-d:    rgba(255,255,255,0.08);
+  --text-primary:#0F172A;
+  --text-secondary:var(--slate-600);
+  --text-muted:  var(--slate-500);
+  --text-d-hi:   #FFFFFF;
+  --text-d-mid:  rgba(255,255,255,0.70);
+  --text-d-low:  rgba(255,255,255,0.42);
+
+  /* Typography */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  /* Spacing & radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  /* Shadows */
+  --sh-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --sh-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+
+/* ═══════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; font-size:16px; }
+body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-dark);
+  overflow-x: hidden;
+}
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--slate-300); border-radius:3px; }
+
+/* ═══════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════ */
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+.nav {
+  position: fixed; top:0; left:0; right:0; z-index:200;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+  background: rgba(5,12,26,0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-d);
+}
+.nav-brand { display:flex; align-items:center; gap:11px; text-decoration:none; }
+.nav-emblem {
+  width:32px; height:32px; border-radius:8px;
+  background: linear-gradient(135deg, var(--teal-500), var(--blue-400));
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.nav-emblem svg { width:16px; height:16px; fill:white; }
+.nav-wordmark { font-family:var(--font-display); font-weight:600; font-size:14px; color:var(--white); letter-spacing:-0.3px; }
+.nav-tagline { font-size:10px; color:var(--text-d-low); letter-spacing:0.4px; margin-top:1px; }
+.nav-links { display:flex; align-items:center; gap:2px; }
+.nav-a {
+  font-size:12px; font-weight:500; color:var(--text-d-mid);
+  padding:5px 12px; border-radius:var(--r-sm);
+  text-decoration:none; transition:all 0.15s; letter-spacing:0.2px;
+}
+.nav-a:hover, .nav-a.active { color:var(--white); background:rgba(255,255,255,0.08); }
+.nav-demo-btn {
+  font-family:var(--font-body); font-size:12px; font-weight:600;
+  color:var(--white); letter-spacing:0.3px;
+  padding:6px 16px; border-radius:var(--r-sm); border:none; cursor:pointer;
+  background: linear-gradient(135deg, var(--teal-500), var(--blue-400));
+  transition: opacity 0.15s;
+}
+.nav-demo-btn:hover { opacity:0.85; }
+
+/* ═══════════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════════ */
+.hero {
+  min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  padding:120px 40px 80px;
+  text-align:center;
+  position:relative; overflow:hidden;
+  background: var(--ink-900);
+}
+/* Grid texture */
+.hero-grid {
+  position:absolute; inset:0; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(37,99,235,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37,99,235,0.12) 1px, transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(ellipse 75% 65% at 50% 50%, black 30%, transparent 100%);
+  animation: gridPan 24s linear infinite;
+}
+@keyframes gridPan { from{background-position:0 0} to{background-position:52px 52px} }
+
+/* Orbs */
+.hero-orb {
+  position:absolute; border-radius:50%; pointer-events:none;
+  filter:blur(80px);
+}
+.hero-orb-1 { width:600px; height:600px; top:-180px; left:-160px; background:radial-gradient(circle, rgba(13,148,136,0.14) 0%, transparent 70%); }
+.hero-orb-2 { width:500px; height:500px; bottom:-160px; right:-120px; background:radial-gradient(circle, rgba(37,99,235,0.16) 0%, transparent 70%); }
+
+.hero-inner { position:relative; z-index:1; max-width:900px; width:100%; }
+
+.hero-pill {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(13,148,136,0.12);
+  border:1px solid rgba(13,148,136,0.30);
+  border-radius:100px; padding:6px 16px;
+  font-size:11px; font-weight:600; letter-spacing:1.2px;
+  color:#2DD4BF; text-transform:uppercase;
+  margin-bottom:32px;
+  animation: fadeUp 0.7s ease both;
+}
+.hero-pill-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:#2DD4BF; box-shadow:0 0 8px #2DD4BF;
+  animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.hero-h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(46px, 6.5vw, 88px);
+  line-height: 1.04;
+  letter-spacing: -2.5px;
+  color: var(--white);
+  margin-bottom: 24px;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+.hero-h1 .grad {
+  background: linear-gradient(135deg, #34D399 0%, #60A5FA 50%, #A78BFA 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size:18px; font-weight:300; color:var(--text-d-mid);
+  max-width:580px; margin:0 auto 48px; line-height:1.75;
+  animation: fadeUp 0.9s 0.2s ease both;
+}
+.hero-actions {
+  display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;
+  animation: fadeUp 0.9s 0.3s ease both;
+}
+.btn-main {
+  font-family:var(--font-body); font-size:15px; font-weight:600;
+  color:var(--white); padding:13px 30px; border:none; border-radius:var(--r-md);
+  cursor:pointer; letter-spacing:0.2px;
+  background: linear-gradient(135deg, var(--teal-500), var(--blue-400));
+  box-shadow: 0 8px 28px rgba(37,99,235,0.30);
+  transition: all 0.2s;
+}
+.btn-main:hover { transform:translateY(-2px); box-shadow:0 12px 36px rgba(37,99,235,0.42); }
+.btn-ghost {
+  font-family:var(--font-body); font-size:15px; font-weight:500;
+  color:var(--text-d-mid); padding:13px 30px;
+  border:1.5px solid rgba(255,255,255,0.14);
+  border-radius:var(--r-md); cursor:pointer;
+  background:rgba(255,255,255,0.04); transition:all 0.2s;
+}
+.btn-ghost:hover { border-color:rgba(255,255,255,0.28); color:var(--white); background:rgba(255,255,255,0.08); }
+
+/* Stats bar */
+.hero-stats {
+  display:flex; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:var(--r-xl);
+  background:rgba(255,255,255,0.03);
+  backdrop-filter:blur(12px);
+  max-width:680px; margin:56px auto 0;
+  animation: fadeUp 1s 0.5s ease both;
+}
+.hs-item {
+  flex:1; padding:22px 14px; text-align:center;
+  border-right:1px solid rgba(255,255,255,0.09);
+}
+.hs-item:last-child { border-right:none; }
+.hs-val {
+  font-family:var(--font-display); font-size:28px; font-weight:700;
+  background:linear-gradient(135deg,#34D399,#60A5FA);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  line-height:1; margin-bottom:6px;
+}
+.hs-lbl { font-size:11px; color:var(--text-d-low); letter-spacing:0.4px; font-weight:500; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+
+/* ═══════════════════════════════════════════════
+   SECTION DIVIDER
+═══════════════════════════════════════════════ */
+.sec-div {
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);
+}
+
+/* ═══════════════════════════════════════════════
+   NARRATIVE SECTIONS (dark)
+═══════════════════════════════════════════════ */
+.ns {
+  padding:100px 40px;
+  max-width:1160px; margin:0 auto;
+}
+.ns-eyebrow {
+  font-family:var(--font-mono); font-size:10px; font-weight:500;
+  letter-spacing:2px; text-transform:uppercase;
+  color:var(--teal-400); margin-bottom:18px;
+}
+.ns-h2 {
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(34px,4.2vw,54px);
+  line-height:1.08; letter-spacing:-1.5px;
+  color:var(--white); margin-bottom:20px;
+}
+.ns-h2 em { font-style:normal; color:var(--blue-300); }
+.ns-lead {
+  font-size:17px; font-weight:300; color:var(--text-d-mid);
+  line-height:1.8; max-width:660px; margin-bottom:56px;
+}
+
+/* Problem cards */
+.prob-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:2px;
+  border-radius:var(--r-xl); overflow:hidden;
+  border:1px solid rgba(255,255,255,0.07);
+}
+.prob-card {
+  padding:36px 32px;
+  background:rgba(255,255,255,0.025);
+  transition:background 0.2s; position:relative; overflow:hidden;
+}
+.prob-card:hover { background:rgba(255,255,255,0.045); }
+.prob-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2.5px;
+}
+.pc-1::before { background:linear-gradient(90deg,#EF4444,#F97316); }
+.pc-2::before { background:linear-gradient(90deg,#F97316,#EAB308); }
+.pc-3::before { background:linear-gradient(90deg,#EAB308,#2563EB); }
+.pc-4::before { background:linear-gradient(90deg,#2563EB,#8B5CF6); }
+.prob-n { font-family:var(--font-mono); font-size:10px; color:var(--text-d-low); letter-spacing:1px; margin-bottom:18px; }
+.prob-icon { font-size:28px; margin-bottom:14px; display:block; line-height:1; }
+.prob-title { font-family:var(--font-display); font-weight:600; font-size:19px; color:var(--white); margin-bottom:10px; letter-spacing:-0.4px; }
+.prob-desc { font-size:13.5px; color:var(--text-d-mid); line-height:1.65; }
+
+/* Thesis callout */
+.thesis {
+  margin-top:44px; padding:36px 40px;
+  border:1px solid rgba(13,148,136,0.28);
+  border-radius:var(--r-lg);
+  background:rgba(13,148,136,0.06);
+  position:relative; overflow:hidden;
+}
+.thesis::after {
+  content:''; position:absolute;
+  width:240px; height:240px; border-radius:50%;
+  background:radial-gradient(circle,rgba(13,148,136,0.14),transparent 70%);
+  top:-80px; right:-60px; pointer-events:none;
+}
+.thesis-lbl { font-family:var(--font-mono); font-size:10px; letter-spacing:2px; color:#2DD4BF; margin-bottom:14px; }
+.thesis-q { font-family:var(--font-display); font-size:21px; font-weight:600; line-height:1.45; color:var(--white); letter-spacing:-0.4px; }
+
+/* Goals */
+.goals-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.goal-card {
+  padding:26px 22px; border-radius:var(--r-lg);
+  border:1px solid rgba(255,255,255,0.07);
+  background:rgba(255,255,255,0.025);
+  transition:all 0.22s; position:relative;
+}
+.goal-card:hover { transform:translateY(-3px); border-color:rgba(96,165,250,0.25); background:rgba(255,255,255,0.045); }
+.goal-bg-n {
+  font-family:var(--font-display); font-size:54px; font-weight:700;
+  color:rgba(255,255,255,0.04); line-height:1;
+  position:absolute; top:12px; right:16px;
+}
+.goal-icon { font-size:22px; margin-bottom:14px; display:block; line-height:1; }
+.goal-title { font-family:var(--font-display); font-weight:600; font-size:15px; color:var(--white); margin-bottom:8px; letter-spacing:-0.3px; }
+.goal-desc { font-size:12.5px; color:var(--text-d-mid); line-height:1.6; }
+
+/* Biometric split */
+.bio-split { display:grid; grid-template-columns:1fr 1fr; gap:72px; align-items:center; }
+.bio-visual {
+  border-radius:var(--r-xl); overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08);
+  background:var(--ink-800); padding:36px;
+}
+.face-ring-wrap { display:flex; flex-direction:column; align-items:center; gap:20px; }
+.face-ring {
+  width:114px; height:114px; border-radius:50%;
+  border:2px solid rgba(13,148,136,0.55);
+  display:flex; align-items:center; justify-content:center;
+  font-size:50px; position:relative;
+  background:rgba(13,148,136,0.04);
+}
+.face-ring::before {
+  content:''; position:absolute; inset:-10px; border-radius:50%;
+  border:1px dashed rgba(13,148,136,0.22);
+  animation:spin 14s linear infinite;
+}
+.face-ring::after {
+  content:''; position:absolute; inset:-22px; border-radius:50%;
+  border:1px dashed rgba(96,165,250,0.12);
+  animation:spin 22s linear infinite reverse;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+.conf-block { width:100%; }
+.conf-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+.conf-label { font-family:var(--font-mono); font-size:10px; color:var(--text-d-low); letter-spacing:1px; }
+.conf-pct { font-family:var(--font-mono); font-size:20px; font-weight:500; color:#2DD4BF; }
+.conf-track { height:5px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; }
+.conf-fill { height:100%; width:97.7%; background:linear-gradient(90deg,var(--teal-500),var(--blue-400)); border-radius:3px; }
+.conf-result {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(13,148,136,0.10); border:1px solid rgba(13,148,136,0.22);
+  border-radius:var(--r-md); padding:10px 14px;
+  font-size:12.5px; font-weight:600; color:#2DD4BF; width:100%;
+}
+
+.bio-opts { display:flex; flex-direction:column; gap:9px; margin-top:22px; }
+.bio-opt {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:13px 16px; border-radius:var(--r-md);
+  border:1px solid rgba(255,255,255,0.07); font-size:13px;
+}
+.bio-opt.on { background:rgba(13,148,136,0.08); border-color:rgba(13,148,136,0.28); }
+.bio-opt.off { color:var(--text-d-low); }
+.bio-pip { width:9px; height:9px; border-radius:50%; flex-shrink:0; margin-top:3px; }
+.on .bio-pip { background:#2DD4BF; box-shadow:0 0 7px #2DD4BF; }
+.off .bio-pip { background:rgba(255,255,255,0.15); }
+.bio-opt-title { font-weight:600; margin-bottom:2px; }
+.on .bio-opt-title { color:#2DD4BF; }
+.off .bio-opt-title { color:var(--text-d-low); }
+.bio-opt-sub { font-size:12px; line-height:1.5; }
+.on .bio-opt-sub { color:var(--text-d-mid); }
+
+/* Offline flow */
+.flow-list { display:flex; flex-direction:column; max-width:700px; }
+.flow-item {
+  display:flex; gap:18px; padding:18px 0;
+  border-left:2px solid rgba(255,255,255,0.08);
+  padding-left:26px; position:relative;
+  transition:border-color 0.2s;
+}
+.flow-item:hover { border-left-color:rgba(13,148,136,0.45); }
+.flow-item::before {
+  content:attr(data-n);
+  position:absolute; left:-12px; top:20px;
+  width:22px; height:22px; border-radius:50%;
+  background:var(--ink-800); border:2px solid rgba(255,255,255,0.10);
+  font-family:var(--font-mono); font-size:9px; color:var(--text-d-low);
+  display:flex; align-items:center; justify-content:center; line-height:22px; text-align:center;
+}
+.flow-item.hi { border-left-color:var(--teal-500); }
+.flow-item.hi::before { background:var(--teal-500); border-color:var(--teal-500); color:white; }
+.flow-text { font-size:14.5px; color:var(--text-d-mid); line-height:1.65; padding-top:1px; }
+.flow-text strong { color:var(--white); font-weight:600; }
+
+/* Offline mini-stats */
+.os-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:52px; }
+.os-card {
+  padding:26px 22px; border-radius:var(--r-lg);
+  border:1px solid rgba(255,255,255,0.07);
+  background:rgba(255,255,255,0.025); text-align:center;
+}
+.os-val {
+  font-family:var(--font-display); font-size:34px; font-weight:700;
+  background:linear-gradient(135deg,#34D399,#60A5FA);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:7px;
+}
+.os-lbl { font-size:12px; color:var(--text-d-low); }
+
+/* Analytics levels */
+.al-stack { display:flex; flex-direction:column; gap:2px; }
+.al-row { display:grid; grid-template-columns:200px 1fr; overflow:hidden; border-radius:2px; }
+.al-left {
+  padding:28px 24px; display:flex; flex-direction:column; justify-content:center;
+}
+.al-left.l1 { background:rgba(13,148,136,0.11); }
+.al-left.l2 { background:rgba(37,99,235,0.11); }
+.al-left.l3 { background:rgba(139,92,246,0.11); }
+.al-phase { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-d-low); margin-bottom:7px; }
+.al-name { font-family:var(--font-display); font-weight:600; font-size:17px; margin-bottom:3px; }
+.al-when { font-size:11px; color:var(--text-d-low); }
+.l1 .al-name { color:#2DD4BF; }
+.l2 .al-name { color:#60A5FA; }
+.l3 .al-name { color:#A78BFA; }
+.al-right { padding:28px 30px; background:rgba(255,255,255,0.025); }
+.al-items { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.al-item { display:flex; align-items:flex-start; gap:7px; font-size:13px; color:var(--text-d-mid); }
+.al-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; margin-top:6px; }
+
+/* Roadmap */
+.roadmap-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.phase-card { border-radius:var(--r-lg); overflow:hidden; border:1px solid rgba(255,255,255,0.08); }
+.phase-hdr { padding:26px 22px 18px; background:rgba(255,255,255,0.025); }
+.phase-hdr.pa { border-top:2.5px solid #2DD4BF; }
+.phase-hdr.pb { border-top:2.5px solid #60A5FA; }
+.phase-hdr.pc { border-top:2.5px solid #A78BFA; }
+.phase-tag { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-d-low); margin-bottom:10px; }
+.phase-name { font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:-0.5px; color:var(--white); margin-bottom:4px; }
+.phase-time { font-size:12px; color:var(--text-d-low); }
+.phase-body { padding:20px 22px; background:rgba(0,0,0,0.22); }
+.phase-item {
+  display:flex; align-items:flex-start; gap:9px;
+  font-size:12.5px; color:var(--text-d-mid);
+  padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.phase-item:last-child { border-bottom:none; }
+.pa .phase-check { color:#2DD4BF; font-size:11px; flex-shrink:0; margin-top:2px; }
+.pb .phase-check { color:#60A5FA; font-size:11px; flex-shrink:0; margin-top:2px; }
+.pc .phase-check { color:#A78BFA; font-size:11px; flex-shrink:0; margin-top:2px; }
+
+/* Tech arch */
+.arch-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:36px; }
+.arch-card {
+  padding:22px; border-radius:var(--r-lg);
+  border:1px solid rgba(255,255,255,0.07);
+  background:rgba(255,255,255,0.025); transition:all 0.2s;
+}
+.arch-card:hover { border-color:rgba(96,165,250,0.22); background:rgba(255,255,255,0.04); }
+.arch-layer { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--text-d-low); margin-bottom:9px; }
+.arch-tech { font-family:var(--font-display); font-weight:600; font-size:17px; color:var(--white); margin-bottom:6px; letter-spacing:-0.3px; }
+.arch-why { font-size:12px; color:var(--text-d-low); line-height:1.55; }
+.perf-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.perf-card {
+  padding:22px; border-radius:var(--r-lg); text-align:center;
+  border:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.025);
+}
+.perf-val {
+  font-family:var(--font-display); font-size:26px; font-weight:700;
+  background:linear-gradient(135deg,#34D399,#60A5FA);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:5px;
+}
+.perf-lbl { font-size:11px; color:var(--text-d-low); }
+
+/* Trust */
+.trust-grid { display:grid; grid-template-columns:1fr 1fr; gap:44px; align-items:center; }
+.trust-list { display:flex; flex-direction:column; gap:10px; }
+.trust-item {
+  display:flex; align-items:center; gap:13px;
+  padding:14px 18px; border-radius:var(--r-md);
+  border:1px solid rgba(255,255,255,0.07);
+  background:rgba(255,255,255,0.025); transition:all 0.2s;
+}
+.trust-item:hover { border-color:rgba(45,212,191,0.28); background:rgba(45,212,191,0.04); }
+.trust-tick {
+  width:26px; height:26px; border-radius:6px; flex-shrink:0;
+  background:rgba(45,212,191,0.12);
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px;
+}
+.trust-txt { font-size:13.5px; font-weight:500; color:var(--text-d-mid); }
+.closing-box {
+  padding:44px; border-radius:var(--r-xl);
+  background:linear-gradient(135deg,rgba(30,58,138,0.18),rgba(13,148,136,0.12));
+  border:1px solid rgba(96,165,250,0.18); text-align:center;
+}
+.closing-bn { font-family:var(--font-display); font-size:22px; font-weight:600; color:var(--white); margin-bottom:8px; line-height:1.4; letter-spacing:-0.4px; }
+.closing-en { font-size:14px; color:var(--text-d-low); margin-bottom:24px; line-height:1.6; }
+
+/* Section block (dark wrapper) */
+.dark-section { background:var(--ink-900); }
+.dark-alt { background:var(--ink-800); }
+
+/* ═══════════════════════════════════════════════
+   DEMO DIVIDER
+═══════════════════════════════════════════════ */
+.demo-banner {
+  background:var(--ink-900); padding:72px 40px;
+  text-align:center;
+  border-top:1px solid rgba(255,255,255,0.07);
+  border-bottom:1px solid var(--border-l);
+}
+.demo-banner h2 {
+  font-family:var(--font-display); font-size:40px; font-weight:700;
+  color:var(--white); letter-spacing:-1px; margin-bottom:14px;
+}
+.demo-banner p { font-size:16px; color:var(--text-d-mid); max-width:520px; margin:0 auto 28px; }
+.demo-tags { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.dtag {
+  font-size:11px; font-weight:600; padding:5px 13px; border-radius:100px;
+}
+.dtag-g { background:rgba(45,212,191,0.12); border:1px solid rgba(45,212,191,0.25); color:#2DD4BF; }
+.dtag-b { background:rgba(96,165,250,0.12); border:1px solid rgba(96,165,250,0.25); color:#60A5FA; }
+.dtag-p { background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.25); color:#A78BFA; }
+.dtag-a { background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.25); color:#FBBF24; }
+
+/* ═══════════════════════════════════════════════
+   DASHBOARD SHELL
+═══════════════════════════════════════════════ */
+#app { background:var(--bg-light); }
+
+/* Topbar */
+.d-topbar {
+  background:var(--white); border-bottom:1px solid var(--border-l);
+  height:50px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 22px; position:sticky; top:0; z-index:100;
+  box-shadow:var(--sh-sm);
+}
+.d-brand { display:flex; align-items:center; gap:9px; }
+.d-logo {
+  width:28px; height:28px; border-radius:6px;
+  background:linear-gradient(135deg,var(--teal-500),var(--blue-400));
+  display:flex; align-items:center; justify-content:center;
+}
+.d-logo svg { width:14px; height:14px; fill:white; }
+.d-title { font-family:var(--font-display); font-weight:600; font-size:13.5px; color:var(--slate-900); letter-spacing:-0.2px; }
+.d-status { display:flex; align-items:center; gap:10px; }
+.d-pill {
+  display:flex; align-items:center; gap:5px;
+  background:var(--slate-100); border-radius:100px;
+  padding:3px 11px; font-size:11px; color:var(--text-secondary); font-weight:500;
+}
+.d-live { width:6px; height:6px; border-radius:50%; background:#22C55E; box-shadow:0 0 6px #22C55E; animation:blink 2s infinite; }
+.d-alert { color:var(--red-500); }
+
+/* Layout */
+.d-layout { display:flex; min-height:calc(100vh - 50px); }
+
+/* Sidebar */
+.d-sidebar {
+  width:196px; flex-shrink:0;
+  background:var(--white); border-right:1px solid var(--border-l);
+  padding:10px 0; overflow-y:auto;
+}
+.d-cat {
+  padding:14px 16px 5px;
+  font-family:var(--font-mono); font-size:9px; font-weight:500;
+  letter-spacing:1.2px; text-transform:uppercase; color:var(--slate-300);
+}
+.d-nav {
+  display:flex; align-items:center; gap:9px;
+  padding:8px 15px; font-size:12.5px; font-weight:500; color:var(--text-secondary);
+  cursor:pointer; border-left:2.5px solid transparent; transition:all 0.12s;
+}
+.d-nav:hover { color:var(--text-primary); background:var(--slate-050); }
+.d-nav.active { color:var(--ink-500); background:var(--blue-050); border-left-color:var(--ink-500); font-weight:600; }
+.d-nav-i { font-size:14px; width:17px; text-align:center; }
+.d-badge { margin-left:auto; background:var(--red-500); color:white; font-size:9px; padding:1px 5px; border-radius:8px; font-weight:700; }
+
+/* Progress block */
+.d-progress {
+  margin:12px 12px 0;
+  background:var(--blue-050); border-radius:var(--r-md);
+  padding:11px 13px; border:1px solid var(--blue-100);
+}
+.dp-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--ink-500); margin-bottom:5px; font-weight:500; }
+.dp-val { font-family:var(--font-display); font-size:19px; font-weight:700; color:var(--slate-900); }
+.dp-sub { font-size:10px; color:var(--text-muted); }
+.dp-bar { height:3px; background:var(--blue-100); border-radius:2px; margin-top:6px; }
+.dp-fill { height:100%; width:69%; background:var(--ink-500); border-radius:2px; }
+
+/* Main */
+.d-main { flex:1; overflow-y:auto; background:var(--bg-light); padding:22px; }
+.dp { display:none; }
+.dp.active { display:block; }
+
+/* Page header */
+.dph { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:18px; }
+.dph-t { font-family:var(--font-display); font-size:19px; font-weight:700; color:var(--slate-900); letter-spacing:-0.4px; }
+.dph-s { font-size:11.5px; color:var(--text-muted); margin-top:2px; }
+.d-btn { padding:6px 13px; border-radius:var(--r-sm); font-family:var(--font-body); font-size:11.5px; font-weight:600; cursor:pointer; border:none; transition:all 0.12s; }
+.d-btn-p { background:var(--ink-500); color:white; }
+.d-btn-p:hover { background:var(--blue-400); }
+.d-btn-t { background:var(--teal-500); color:white; }
+.d-btn-t:hover { background:var(--teal-600); }
+.d-btn-o { background:white; border:1.5px solid var(--border-l); color:var(--text-muted); }
+.d-btn-o:hover { border-color:var(--slate-300); color:var(--text-primary); }
+.d-btn-d { background:var(--red-500); color:white; }
+.d-btn-s { background:var(--green-500); color:white; }
+
+/* Cards */
+.dc {
+  background:white; border-radius:var(--r-lg); border:1px solid var(--border-l);
+  padding:16px 18px; box-shadow:var(--sh-sm);
+}
+.dct {
+  font-family:var(--font-mono); font-size:10px; font-weight:500;
+  text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted);
+  margin-bottom:13px; display:flex; align-items:center; gap:6px;
+}
+
+/* Metric grid */
+.dm-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+.dm-card {
+  background:white; border-radius:var(--r-lg); padding:16px;
+  border:1px solid var(--border-l); position:relative; overflow:hidden;
+  box-shadow:var(--sh-sm); transition:transform 0.14s;
+}
+.dm-card:hover { transform:translateY(-1px); }
+.dm-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2.5px; }
+.mc-b::after { background:linear-gradient(90deg,var(--ink-500),var(--blue-400)); }
+.mc-t::after { background:linear-gradient(90deg,var(--teal-600),var(--teal-400)); }
+.mc-g::after { background:linear-gradient(90deg,var(--green-600),var(--green-500)); }
+.mc-a::after { background:linear-gradient(90deg,var(--amber-600),var(--amber-500)); }
+.dm-lbl { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); }
+.dm-val { font-family:var(--font-display); font-size:27px; font-weight:700; margin:5px 0 3px; line-height:1; }
+.mc-b .dm-val { color:var(--ink-500); }
+.mc-t .dm-val { color:var(--teal-600); }
+.mc-g .dm-val { color:var(--green-600); }
+.mc-a .dm-val { color:var(--amber-600); }
+.dm-trend { font-size:11px; color:var(--text-muted); }
+.dm-icon { position:absolute; right:13px; top:13px; font-size:20px; opacity:0.10; }
+
+/* Grid helpers */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.g75 { display:grid; grid-template-columns:7fr 5fr; gap:14px; margin-bottom:14px; }
+.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px; }
+.mb14 { margin-bottom:14px; }
+
+/* Table */
+.dt { width:100%; border-collapse:collapse; font-size:12px; }
+.dt th { background:var(--slate-050); padding:8px 12px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:600; border-bottom:1px solid var(--border-l); }
+.dt td { padding:10px 12px; border-bottom:1px solid var(--slate-050); color:var(--text-primary); vertical-align:middle; }
+.dt tr:last-child td { border-bottom:none; }
+.dt tr:hover td { background:var(--slate-050); }
+
+/* Badges */
+.b { display:inline-flex; align-items:center; padding:2px 7px; border-radius:9px; font-size:10px; font-weight:700; }
+.bg { background:var(--green-100); color:var(--green-600); }
+.br { background:var(--red-100); color:var(--red-600); }
+.by { background:var(--amber-100); color:var(--amber-600); }
+.bb { background:var(--blue-100); color:var(--ink-500); }
+.bt { background:var(--teal-100); color:var(--teal-600); }
+.bs { background:var(--slate-100); color:var(--slate-600); }
+
+/* Timeline */
+.tl { display:flex; flex-direction:column; }
+.tl-row { display:flex; gap:11px; padding-bottom:13px; position:relative; }
+.tl-row:not(:last-child)::before { content:''; position:absolute; left:10px; top:22px; bottom:0; width:1px; background:var(--border-l); }
+.tl-dot { width:21px; height:21px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; }
+.tl-ok { background:var(--green-100); }
+.tl-er { background:var(--red-100); }
+.tl-wn { background:var(--amber-100); }
+.tl-in { background:var(--blue-100); }
+.tl-t { font-size:12px; font-weight:600; color:var(--slate-900); }
+.tl-d { font-size:11px; color:var(--text-muted); margin-top:1px; }
+.tl-m { font-size:10px; color:var(--text-muted); margin-top:2px; font-family:var(--font-mono); }
+
+/* Bar chart */
+.bc-row { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+.bc-lbl { font-size:11px; color:var(--text-muted); width:88px; text-align:right; flex-shrink:0; }
+.bc-track { flex:1; height:17px; background:var(--slate-100); border-radius:3px; overflow:hidden; }
+.bc-fill { height:100%; border-radius:3px; transition:width 1.4s cubic-bezier(0.4,0,0.2,1); }
+.bc-v { font-size:11px; font-weight:600; color:var(--text-primary); width:34px; }
+
+/* Verification steps */
+.vs-item { display:flex; align-items:center; gap:9px; padding:9px 13px; border-radius:var(--r-sm); margin-bottom:5px; border:1px solid var(--border-l); font-size:12px; }
+.vs-done { background:var(--green-050); border-color:#BBF7D0; }
+.vs-act  { background:var(--blue-050); border-color:var(--blue-100); }
+.vs-pend { background:var(--slate-050); color:var(--text-muted); }
+.vs-n { width:19px; height:19px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; flex-shrink:0; }
+.vs-done .vs-n { background:var(--green-500); color:white; }
+.vs-act .vs-n  { background:var(--ink-500); color:white; }
+.vs-pend .vs-n { background:var(--slate-200); color:var(--text-muted); }
+
+/* Alerts */
+.da { padding:10px 13px; border-radius:var(--r-sm); font-size:12px; display:flex; align-items:flex-start; gap:8px; margin-bottom:9px; }
+.da-e { background:var(--red-100);    border:1px solid var(--red-bright); color:var(--red-600); }
+.da-w { background:var(--amber-100);  border:1px solid #FDE68A; color:var(--amber-600); }
+.da-s { background:var(--green-100);  border:1px solid var(--green-bright); color:var(--green-600); }
+.da-i { background:var(--blue-050);   border:1px solid var(--blue-100); color:var(--ink-500); }
+.da-ic { font-size:13px; flex-shrink:0; margin-top:1px; }
+
+/* Region tiles */
+.rg-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:9px; }
+.rg-tile { padding:12px 10px; border-radius:var(--r-md); text-align:center; cursor:pointer; transition:transform 0.12s; }
+.rg-tile:hover { transform:scale(1.03); }
+.rg-name { font-size:10px; font-weight:700; margin-bottom:3px; }
+.rg-val { font-family:var(--font-display); font-size:19px; font-weight:700; }
+.rg-sub { font-size:10px; opacity:0.7; }
+
+/* Form elements */
+.df-g { margin-bottom:11px; }
+.df-l { font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px; display:block; }
+.df-i { width:100%; padding:7px 10px; border:1.5px solid var(--border-l); border-radius:var(--r-sm); font-family:var(--font-body); font-size:12px; color:var(--text-primary); outline:none; transition:border 0.12s; }
+.df-i:focus { border-color:var(--ink-500); }
+.df-s { width:100%; padding:7px 10px; border:1.5px solid var(--border-l); border-radius:var(--r-sm); font-family:var(--font-body); font-size:12px; background:white; color:var(--text-primary); outline:none; }
+
+/* Quota ring */
+.q-ring { display:flex; align-items:center; gap:16px; }
+.q-ring-wrap { position:relative; width:68px; height:68px; flex-shrink:0; }
+.q-ring-ctr { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.q-val { font-family:var(--font-display); font-size:13px; font-weight:700; color:var(--slate-900); line-height:1; }
+.q-sub { font-size:8px; color:var(--text-muted); font-weight:600; }
+
+/* Face verify */
+.fv-box { border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--border-l); }
+.fv-prev { background:linear-gradient(135deg,var(--ink-900),var(--ink-700)); height:150px; display:flex; align-items:center; justify-content:center; position:relative; }
+.fv-ring { width:84px; height:84px; border-radius:50%; border:2px solid rgba(13,148,136,0.55); display:flex; align-items:center; justify-content:center; font-size:38px; position:relative; }
+.fv-ring::before { content:''; position:absolute; inset:-9px; border-radius:50%; border:1px dashed rgba(13,148,136,0.28); animation:spin 8s linear infinite; }
+.fv-corners { position:absolute; inset:24px; }
+.fv-c { position:absolute; width:13px; height:13px; border-color:rgba(13,148,136,0.75); border-style:solid; }
+.fv-c.tl { top:0; left:0; border-width:2px 0 0 2px; }
+.fv-c.tr { top:0; right:0; border-width:2px 2px 0 0; }
+.fv-c.bl { bottom:0; left:0; border-width:0 0 2px 2px; }
+.fv-c.br { bottom:0; right:0; border-width:0 2px 2px 0; }
+.fv-conf { padding:11px 13px; background:var(--slate-050); }
+.fv-result { padding:9px 13px; background:var(--green-050); display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--green-600); }
+
+/* Offline indicators */
+.oi { display:inline-flex; align-items:center; gap:5px; border-radius:9px; padding:3px 8px; font-size:10.5px; font-weight:600; }
+.oi-off { background:var(--amber-100); color:var(--amber-600); }
+.oi-on  { background:var(--green-100); color:var(--green-600); }
+
+/* Anomaly */
+.anom { padding:9px 11px; border-radius:var(--r-sm); margin-bottom:7px; }
+.anom-h { font-size:11.5px; font-weight:700; margin-bottom:2px; }
+.anom-d { font-size:11px; }
+.a-hi { background:var(--red-100); border-left:2.5px solid var(--red-500); }
+.a-hi .anom-h { color:var(--red-600); }
+.a-hi .anom-d { color:var(--red-600); opacity:0.8; }
+.a-md { background:var(--amber-100); border-left:2.5px solid var(--amber-500); }
+.a-md .anom-h { color:var(--amber-600); }
+.a-md .anom-d { color:var(--amber-600); opacity:0.8; }
+
+/* Service health rows */
+.sh-row { display:flex; align-items:center; justify-content:space-between; padding:7px 11px; border-radius:var(--r-sm); margin-bottom:5px; font-size:12px; font-weight:500; }
+
+/* Mobile frames */
+.mf-wrap { display:flex; justify-content:center; }
+.mf { width:194px; background:var(--ink-800); border-radius:22px; padding:11px; box-shadow:0 18px 48px rgba(0,0,0,0.28); }
+.mf-notch { width:55px; height:5px; background:rgba(255,255,255,0.08); border-radius:3px; margin:0 auto 9px; }
+.mf-screen { background:var(--ink-900); border-radius:12px; padding:11px; min-height:245px; }
+.mf-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
+.mf-ttl { font-size:11px; font-weight:700; color:white; font-family:var(--font-display); }
+.mf-t { font-size:9.5px; color:var(--slate-500); font-family:var(--font-mono); }
+.mf-row { background:rgba(255,255,255,0.05); border-radius:6px; padding:7px 9px; margin-bottom:4px; display:flex; align-items:center; gap:7px; }
+.mf-ri { font-size:12px; }
+.mf-rt { font-size:10px; color:var(--slate-400); }
+.mf-rv { margin-left:auto; font-size:10px; font-weight:600; color:#2DD4BF; }
+.mf-btn { width:100%; background:linear-gradient(135deg,var(--teal-500),var(--blue-400)); color:white; font-size:10.5px; font-weight:700; padding:8px; border-radius:6px; text-align:center; margin-top:7px; cursor:pointer; font-family:var(--font-body); }
+
+/* Footer */
+.site-footer {
+  background:var(--ink-900); border-top:1px solid rgba(255,255,255,0.07);
+  padding:28px 40px;
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+}
+.sf-l { font-family:var(--font-display); font-size:13px; color:var(--text-d-low); }
+.sf-r { font-size:11px; color:var(--text-d-low); }
+
+/* ═══ Responsive ═══════════════════════════════ */
+@media(max-width:1050px){
+  .goals-grid { grid-template-columns:1fr 1fr; }
+  .roadmap-grid { grid-template-columns:1fr; }
+  .arch-grid { grid-template-columns:1fr 1fr; }
+  .bio-split,.trust-grid { grid-template-columns:1fr; gap:32px; }
+  .prob-grid { grid-template-columns:1fr; }
+  .dm-grid { grid-template-columns:1fr 1fr; }
+  .g75,.g2,.g3 { grid-template-columns:1fr; }
+  .perf-row { grid-template-columns:1fr 1fr; }
+  .al-row { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══════════════════════════════════════ -->
+<nav class="nav">
+  <a class="nav-brand" href="#hero">
+    <div class="nav-emblem">
+      <svg viewBox="0 0 16 16"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z"/></svg>
+    </div>
+    <div>
+      <div class="nav-wordmark">OMS National Control Platform</div>
+      <div class="nav-tagline">Ministry of Food · Bangladesh</div>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a class="nav-a" href="#problem">Problem</a>
+    <a class="nav-a" href="#biometric">Strategy</a>
+    <a class="nav-a" href="#offline">Architecture</a>
+    <a class="nav-a" href="#roadmap">Roadmap</a>
+    <a class="nav-a" href="#demo-section">Live Demo</a>
+  </div>
+  <button class="nav-demo-btn" onclick="document.getElementById('demo-section').scrollIntoView({behavior:'smooth'})">
+    Launch Demo →
+  </button>
+</nav>
+
+<!-- ══ HERO ══════════════════════════════════════ -->
+<section id="hero" class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-inner">
+    <div class="hero-pill">
+      <span class="hero-pill-dot"></span>
+      Strategic Proposal · March 2026
+    </div>
+    <h1 class="hero-h1">
+      Not a dealer app.<br>
+      A <span class="grad">national governance</span><br>
+      infrastructure.
+    </h1>
+    <p class="hero-sub">
+      The OMS National Control Platform verifies every beneficiary, records every grain distributed, enforces every quota — and surfaces the intelligence to govern food security at scale across Bangladesh.
+    </p>
+    <div class="hero-actions">
+      <button class="btn-main" onclick="document.getElementById('problem').scrollIntoView({behavior:'smooth'})">
+        Read the Strategy ↓
+      </button>
+      <button class="btn-ghost" onclick="document.getElementById('demo-section').scrollIntoView({behavior:'smooth'})">
+        Launch Interactive Demo
+      </button>
+    </div>
+    <div class="hero-stats">
+      <div class="hs-item"><div class="hs-val">300K+</div><div class="hs-lbl">Daily Transactions</div></div>
+      <div class="hs-item"><div class="hs-val">5,000</div><div class="hs-lbl">Concurrent Users</div></div>
+      <div class="hs-item"><div class="hs-val">40–50%</div><div class="hs-lbl">Leakage Reduction</div></div>
+      <div class="hs-item"><div class="hs-val">$120M+</div><div class="hs-lbl">Annual Value</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ PROBLEM ══════════════════════════════════ -->
+<section id="problem" class="dark-section">
+  <div class="ns">
+    <div class="ns-eyebrow">01 — The Problem</div>
+    <h2 class="ns-h2">The governance gap<br>behind the <em>software request</em></h2>
+    <p class="ns-lead">Bangladesh's OMS program serves millions of vulnerable citizens daily. Without a real-time verification layer, four structural vulnerabilities persist — and the government cannot currently distinguish legitimate distribution from systematic leakage.</p>
+    <div class="prob-grid">
+      <div class="prob-card pc-1">
+        <div class="prob-n">01 / 04</div>
+        <span class="prob-icon">🔄</span>
+        <div class="prob-title">Duplicate Lifting</div>
+        <div class="prob-desc">A beneficiary can collect food grain multiple times in a single day at different centers — with no technical barrier to prevent it.</div>
+      </div>
+      <div class="prob-card pc-2">
+        <div class="prob-n">02 / 04</div>
+        <span class="prob-icon">📉</span>
+        <div class="prob-title">Monthly Quota Leakage</div>
+        <div class="prob-desc">Without real-time quota tracking across the network, beneficiaries exceed monthly entitlements across multiple visits — undetected.</div>
+      </div>
+      <div class="prob-card pc-3">
+        <div class="prob-n">03 / 04</div>
+        <span class="prob-icon">📴</span>
+        <div class="prob-title">Offline Accountability Gap</div>
+        <div class="prob-desc">Rural dealers operate without system access during connectivity outages — creating completely unrecorded distribution windows.</div>
+      </div>
+      <div class="prob-card pc-4">
+        <div class="prob-n">04 / 04</div>
+        <span class="prob-icon">📊</span>
+        <div class="prob-title">Zero Policy Intelligence</div>
+        <div class="prob-desc">Allocation decisions are based on estimates, not real consumption data — causing chronic mismatches between supply and actual demand.</div>
+      </div>
+    </div>
+    <div class="thesis">
+      <div class="thesis-lbl">OUR CORE THESIS</div>
+      <div class="thesis-q">"We understand not just the software requirements, but the governance problem behind them. Every architectural decision is driven by one question: how do we make leakage operationally impossible?"</div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ OPPORTUNITY ══════════════════════════════ -->
+<section id="opportunity" class="dark-alt">
+  <div class="ns">
+    <div class="ns-eyebrow">02 — Strategic Insight</div>
+    <h2 class="ns-h2">The SRS reveals<br><em>four hidden goals</em></h2>
+    <p class="ns-lead">A careful reading of the System Requirements Specification surfaces four deeper policy objectives beneath the visible feature list. Winning this bid requires addressing all four — not just the surface requirements.</p>
+    <div class="goals-grid">
+      <div class="goal-card">
+        <div class="goal-bg-n">1</div>
+        <span class="goal-icon">🛡</span>
+        <div class="goal-title">Stop Leakage</div>
+        <div class="goal-desc">Prevent multiple lifting in one day and control monthly quota through real-time transaction validation across all dealers simultaneously.</div>
+      </div>
+      <div class="goal-card">
+        <div class="goal-bg-n">2</div>
+        <span class="goal-icon">📋</span>
+        <div class="goal-title">Create Proof</div>
+        <div class="goal-desc">Maintain a full audit trail: who accessed what, which fields changed, breach attempts, modification results, and timestamps on every critical action.</div>
+      </div>
+      <div class="goal-card">
+        <div class="goal-bg-n">3</div>
+        <span class="goal-icon">📡</span>
+        <div class="goal-title">Field Continuity</div>
+        <div class="goal-desc">The mobile app must function with local storage and conditional sync on 2G. Field operations can never halt due to connectivity — this is non-negotiable.</div>
+      </div>
+      <div class="goal-card">
+        <div class="goal-bg-n">4</div>
+        <span class="goal-icon">🔮</span>
+        <div class="goal-title">Policy Intelligence</div>
+        <div class="goal-desc">Transform raw transaction data into demand forecasting, supply planning, poverty insights, and dealer risk scoring for evidence-based governance.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ BIOMETRIC ══════════════════════════════════ -->
+<section id="biometric" class="dark-section">
+  <div class="ns">
+    <div class="ns-eyebrow">03 — Biometric Strategy</div>
+    <h2 class="ns-h2">Resolving the SRS <em>contradiction</em></h2>
+    <div class="bio-split">
+      <div>
+        <p class="ns-lead" style="margin-bottom:24px;">The SRS title says <strong style="color:white">fingerprint</strong>. The scope says <strong style="color:var(--teal-glow)">face authentication</strong>. This is not an error — it reflects genuine policy uncertainty. Most vendors will pick one. We resolve it with a <strong style="color:white">Biometric Abstraction Layer</strong>.</p>
+        <div class="bio-opts">
+          <div class="bio-opt on">
+            <div class="bio-pip"></div>
+            <div>
+              <div class="bio-opt-title">Face Verification — Active Primary</div>
+              <div class="bio-opt-sub">No scanner hardware · touchless · 2–4s · any Android camera. Ideal for field scale.</div>
+            </div>
+          </div>
+          <div class="bio-opt off">
+            <div class="bio-pip"></div>
+            <div>
+              <div class="bio-opt-title">Fingerprint — Architecture Ready</div>
+              <div class="bio-opt-sub">Policy activation without system redesign. Zero vendor lock-in.</div>
+            </div>
+          </div>
+          <div class="bio-opt off">
+            <div class="bio-pip"></div>
+            <div>
+              <div class="bio-opt-title">Multimodal — Future Capability</div>
+              <div class="bio-opt-sub">Combined face + fingerprint if policy requires. Same abstraction layer.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bio-visual">
+        <div class="face-ring-wrap">
+          <div class="face-ring">👤</div>
+          <div class="conf-block">
+            <div class="conf-row">
+              <span class="conf-label">CONFIDENCE SCORE</span>
+              <span class="conf-pct">97.7%</span>
+            </div>
+            <div class="conf-track"><div class="conf-fill"></div></div>
+          </div>
+          <div class="conf-result">✅ VERIFIED — Amina Khatun (BEN-10021)</div>
+          <div style="font-size:11px;color:var(--text-d-low);text-align:center;font-family:var(--font-mono)">2.4s · DEVICE-ABC-001 · Threshold 85%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ OFFLINE ════════════════════════════════════ -->
+<section id="offline" class="dark-alt">
+  <div class="ns">
+    <div class="ns-eyebrow">04 — Offline-First Architecture</div>
+    <h2 class="ns-h2">Designed for<br><em>Bangladesh's reality</em></h2>
+    <p class="ns-lead">The SRS requires local data with conditional sync on 2G networks. This is not a feature toggle — it is a fraud prevention mechanism. A system that records locally but validates centrally cannot be gamed by deliberately working offline.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:flex-start;">
+      <div class="flow-list">
+        <div class="flow-item" data-n="1"><div class="flow-text">Dealer selects beneficiary from <strong>local cached list</strong> — no server call needed</div></div>
+        <div class="flow-item" data-n="2"><div class="flow-text">App checks <strong>offline eligibility snapshot</strong> — quota and daily lifting status</div></div>
+        <div class="flow-item" data-n="3"><div class="flow-text">Face captured with <strong>real-time guidance</strong> — lighting, position, distance</div></div>
+        <div class="flow-item hi" data-n="4"><div class="flow-text"><strong>Biometric match runs</strong> against locally cached model — no internet required</div></div>
+        <div class="flow-item hi" data-n="5"><div class="flow-text"><strong>Transaction recorded instantly</strong> in local SQLite — guaranteed no data loss</div></div>
+        <div class="flow-item" data-n="6"><div class="flow-text">Exception flow if uncertain — photo + reason code + officer log</div></div>
+        <div class="flow-item" data-n="7"><div class="flow-text"><strong>Auto-sync to central server</strong> when connectivity is detected</div></div>
+        <div class="flow-item" data-n="8"><div class="flow-text">Server <strong>validates, deduplicates, audits</strong> — retroactive enforcement catches all fraud</div></div>
+      </div>
+      <div>
+        <div class="os-grid">
+          <div class="os-card"><div class="os-val">2G</div><div class="os-lbl">Minimum connectivity supported</div></div>
+          <div class="os-card"><div class="os-val">0</div><div class="os-lbl">Transactions lost offline</div></div>
+          <div class="os-card"><div class="os-val">100%</div><div class="os-lbl">Fraud prevention on sync</div></div>
+        </div>
+        <div style="margin-top:20px;padding:24px;background:rgba(255,255,255,0.025);border-radius:var(--r-lg);border:1px solid rgba(255,255,255,0.07);">
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--teal-400);margin-bottom:12px;">SYNC ARCHITECTURE</div>
+          <div style="font-size:13px;color:var(--text-d-mid);line-height:1.75;">
+            <div style="margin-bottom:7px;">· <strong style="color:white">UUID transaction IDs</strong> — globally unique, prevents duplicate processing</div>
+            <div style="margin-bottom:7px;">· <strong style="color:white">Idempotent APIs</strong> — safe to retry any sync without side effects</div>
+            <div style="margin-bottom:7px;">· <strong style="color:white">Conflict resolution</strong> — central server wins on quota/duplicate checks</div>
+            <div>· <strong style="color:white">Anomaly detection</strong> — unusual delayed bulk syncs trigger alerts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ ANALYTICS ══════════════════════════════════ -->
+<section class="dark-section">
+  <div class="ns">
+    <div class="ns-eyebrow">05 — Analytics Strategy</div>
+    <h2 class="ns-h2">Not AI hype.<br><em>Three credible levels.</em></h2>
+    <p class="ns-lead">Vague "AI-powered analytics" lose government bids. We propose a three-level maturity path: explainable dashboards on Day 1, fraud detection by Month 2, predictive intelligence by Month 4.</p>
+    <div class="al-stack">
+      <div class="al-row">
+        <div class="al-left l1"><div class="al-phase">LEVEL 01</div><div class="al-name">Descriptive</div><div class="al-when">MVP — Day 1</div></div>
+        <div class="al-right"><div class="al-items">
+          <div class="al-item"><div class="al-dot" style="background:var(--teal-glow)"></div>Daily sales by dealer, region, product</div>
+          <div class="al-item"><div class="al-dot" style="background:var(--teal-glow)"></div>Dealer-wise distribution patterns</div>
+          <div class="al-item"><div class="al-dot" style="background:var(--teal-glow)"></div>Region-wise quota usage rates</div>
+          <div class="al-item"><div class="al-dot" style="background:var(--teal-glow)"></div>Stock movement and exception rates</div>
+        </div></div>
+      </div>
+      <div style="height:2px"></div>
+      <div class="al-row">
+        <div class="al-left l2"><div class="al-phase">LEVEL 02</div><div class="al-name">Diagnostic</div><div class="al-when">Pilot — Month 2–3</div></div>
+        <div class="al-right"><div class="al-items">
+          <div class="al-item"><div class="al-dot" style="background:var(--blue-glow)"></div>Suspicious repeat patterns (same device/dealer)</div>
+          <div class="al-item"><div class="al-dot" style="background:var(--blue-glow)"></div>Late-night / off-hours transaction alerts</div>
+          <div class="al-item"><div class="al-dot" style="background:var(--blue-glow)"></div>Multi-dealer single-device anomalies</div>
+          <div class="al-item"><div class="al-dot" style="background:var(--blue-glow)"></div>Unexpected quota exhaustion flags</div>
+        </div></div>
+      </div>
+      <div style="height:2px"></div>
+      <div class="al-row">
+        <div class="al-left l3"><div class="al-phase">LEVEL 03</div><div class="al-name">Predictive</div><div class="al-when">National — Month 4+</div></div>
+        <div class="al-right"><div class="al-items">
+          <div class="al-item"><div class="al-dot" style="background:var(--purple-glow)"></div>Next-month regional demand forecasting</div>
+          <div class="al-item"><div class="al-dot" style="background:var(--purple-glow)"></div>Likely shortage area identification</div>
+          <div class="al-item"><div class="al-dot" style="background:var(--purple-glow)"></div>Dealer risk scoring from behavior history</div>
+          <div class="al-item"><div class="al-dot" style="background:var(--purple-glow)"></div>Poverty index correlation and calibration</div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ ARCHITECTURE ════════════════════════════════ -->
+<section class="dark-alt">
+  <div class="ns">
+    <div class="ns-eyebrow">06 — Technology Stack</div>
+    <h2 class="ns-h2">Conservative, proven,<br><em>institutionally credible</em></h2>
+    <p class="ns-lead">For a government project requiring 10-year sustainability, we recommend the most proven stack available — one maintainable by Bangladesh's IT workforce long after our engagement ends.</p>
+    <div class="arch-grid">
+      <div class="arch-card"><div class="arch-layer">BACKEND</div><div class="arch-tech">Spring Boot</div><div class="arch-why">Enterprise-grade, proven in national-scale government deployments. Strong BD developer ecosystem.</div></div>
+      <div class="arch-card"><div class="arch-layer">DATABASE</div><div class="arch-tech">PostgreSQL</div><div class="arch-why">Open-source, zero licensing cost. Excellent for audit queries and 10-year retention at scale.</div></div>
+      <div class="arch-card"><div class="arch-layer">CACHE</div><div class="arch-tech">Redis</div><div class="arch-why">Sub-millisecond eligibility lookups — critical for the &lt;5s transaction response requirement.</div></div>
+      <div class="arch-card"><div class="arch-layer">MOBILE</div><div class="arch-tech">Native Android</div><div class="arch-why">Best camera API access for biometric capture. Proven offline reliability on field devices.</div></div>
+      <div class="arch-card"><div class="arch-layer">OFFLINE DB</div><div class="arch-tech">SQLite + SQLCipher</div><div class="arch-why">Encrypted, embedded, battle-tested. Industry standard for offline-first mobile applications.</div></div>
+      <div class="arch-card"><div class="arch-layer">MESSAGING</div><div class="arch-tech">RabbitMQ / AMQP</div><div class="arch-why">SRS explicitly requires AMQP support. Handles async sync events, notifications, analytics pipelines.</div></div>
+    </div>
+    <div class="perf-row">
+      <div class="perf-card"><div class="perf-val">99.9%</div><div class="perf-lbl">System Availability</div></div>
+      <div class="perf-card"><div class="perf-val">&lt;1s</div><div class="perf-lbl">API Response (p95)</div></div>
+      <div class="perf-card"><div class="perf-val">&gt;95%</div><div class="perf-lbl">Face Match Accuracy</div></div>
+      <div class="perf-card"><div class="perf-val">100%</div><div class="perf-lbl">Duplicate Prevention</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ ROADMAP ════════════════════════════════════ -->
+<section id="roadmap" class="dark-section">
+  <div class="ns">
+    <div class="ns-eyebrow">07 — Implementation Roadmap</div>
+    <h2 class="ns-h2">Three phases.<br><em>Staged validation.</em></h2>
+    <p class="ns-lead">Each phase validates assumptions before wider commitment — a risk management strategy that protects the government's investment at every stage.</p>
+    <div class="roadmap-grid">
+      <div class="phase-card">
+        <div class="phase-hdr pa"><div class="phase-tag">PHASE A</div><div class="phase-name">MVP</div><div class="phase-time">Weeks 1–10</div></div>
+        <div class="phase-body">
+          <div class="phase-item"><span class="pa phase-check">✓</span>Dealer login + beneficiary registration</div>
+          <div class="phase-item"><span class="pa phase-check">✓</span>Face capture + biometric verification</div>
+          <div class="phase-item"><span class="pa phase-check">✓</span>Food distribution transaction</div>
+          <div class="phase-item"><span class="pa phase-check">✓</span>Single-day duplicate prevention</div>
+          <div class="phase-item"><span class="pa phase-check">✓</span>Monthly quota enforcement</div>
+          <div class="phase-item"><span class="pa phase-check">✓</span>Offline storage + sync engine</div>
+          <div class="phase-item"><span class="pa phase-check">✓</span>Admin dashboard (Level 1 analytics)</div>
+          <div class="phase-item"><span class="pa phase-check">✓</span>Audit trail logging</div>
+        </div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-hdr pb"><div class="phase-tag">PHASE B</div><div class="phase-name">Pilot</div><div class="phase-time">Months 3–6</div></div>
+        <div class="phase-body">
+          <div class="phase-item"><span class="pb phase-check">✓</span>Dhaka district controlled rollout</div>
+          <div class="phase-item"><span class="pb phase-check">✓</span>Real dealer + beneficiary onboarding</div>
+          <div class="phase-item"><span class="pb phase-check">✓</span>Sync conflict observation + tuning</div>
+          <div class="phase-item"><span class="pb phase-check">✓</span>Biometric accuracy calibration</div>
+          <div class="phase-item"><span class="pb phase-check">✓</span>Level 2 diagnostic analytics</div>
+          <div class="phase-item"><span class="pb phase-check">✓</span>Staff training delivery</div>
+          <div class="phase-item"><span class="pb phase-check">✓</span>Dashboard validation with Ministry</div>
+        </div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-hdr pc"><div class="phase-tag">PHASE C</div><div class="phase-name">National</div><div class="phase-time">Months 7–18</div></div>
+        <div class="phase-body">
+          <div class="phase-item"><span class="pc phase-check">✓</span>All divisions + districts + upazilas</div>
+          <div class="phase-item"><span class="pc phase-check">✓</span>Level 3 predictive analytics</div>
+          <div class="phase-item"><span class="pc phase-check">✓</span>High-availability + DR deployment</div>
+          <div class="phase-item"><span class="pc phase-check">✓</span>Bangladesh Bank payment integration</div>
+          <div class="phase-item"><span class="pc phase-check">✓</span>IP Camera monitoring integration</div>
+          <div class="phase-item"><span class="pc phase-check">✓</span>Bilingual documentation</div>
+          <div class="phase-item"><span class="pc phase-check">✓</span>Full source code handover + training</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ TRUST ══════════════════════════════════════ -->
+<section id="trust" class="dark-alt">
+  <div class="ns">
+    <div class="ns-eyebrow">08 — Why Choose Us</div>
+    <h2 class="ns-h2">Selling understanding,<br><em>not a black box</em></h2>
+    <div class="trust-grid">
+      <div class="trust-list">
+        <div class="trust-item"><div class="trust-tick">✓</div><div class="trust-txt">Complete source code ownership transfer — zero vendor lock-in</div></div>
+        <div class="trust-item"><div class="trust-tick">✓</div><div class="trust-txt">Inline code documentation in English and Bengali</div></div>
+        <div class="trust-item"><div class="trust-tick">✓</div><div class="trust-txt">Developer Instruction Manual for government developers</div></div>
+        <div class="trust-item"><div class="trust-tick">✓</div><div class="trust-txt">Complete REST API documentation — OpenAPI 3.0</div></div>
+        <div class="trust-item"><div class="trust-tick">✓</div><div class="trust-txt">Bilingual System Administrator Manual</div></div>
+        <div class="trust-item"><div class="trust-tick">✓</div><div class="trust-txt">On-site training workshops — IT team and field staff</div></div>
+        <div class="trust-item"><div class="trust-tick">✓</div><div class="trust-txt">Dealer User Guide in Bengali — icon-first for field use</div></div>
+      </div>
+      <div class="closing-box">
+        <div class="closing-bn">"সঠিক সুবিধাভোগী, সঠিক কোটা,<br>সঠিক প্রমাণ, এবং সঠিক নজরদারি।"</div>
+        <div class="closing-en">The right beneficiary. The right quota.<br>The right proof. The right oversight. — At national scale.</div>
+        <button class="btn-main" onclick="document.getElementById('demo-section').scrollIntoView({behavior:'smooth'})">
+          See It Working → Launch Demo
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- ══ DEMO BANNER ════════════════════════════════ -->
+<div id="demo-section" class="demo-banner">
+  <h2>Interactive MVP Demo</h2>
+  <p>A fully functional prototype demonstrating the complete OMS control platform — real data flows, biometric verification, offline simulation, analytics, and audit trail.</p>
+  <div class="demo-tags">
+    <span class="dtag dtag-g">● Live Transaction Feed</span>
+    <span class="dtag dtag-b">● Biometric Verification</span>
+    <span class="dtag dtag-p">● Analytics Engine</span>
+    <span class="dtag dtag-a">● Bengali Mobile App</span>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══════════════════════════════════ -->
+<div id="app">
+  <!-- Topbar -->
+  <div class="d-topbar">
+    <div class="d-brand">
+      <div class="d-logo">
+        <svg viewBox="0 0 16 16"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z"/></svg>
+      </div>
+      <div>
+        <div class="d-title">OMS National Control Platform</div>
+      </div>
+    </div>
+    <div class="d-status">
+      <div class="d-pill"><div class="d-live"></div>System Live</div>
+      <div class="d-pill">📡 5,000 online</div>
+      <div class="d-pill">📅 20 March 2026 — 09:41 BDT</div>
+      <div class="d-pill d-alert">⚠ 3 Alerts</div>
+    </div>
+  </div>
+
+  <div class="d-layout">
+    <!-- Sidebar -->
+    <div class="d-sidebar">
+      <div class="d-cat">Main</div>
+      <div class="d-nav active" onclick="showDash('d-dash',this)"><span class="d-nav-i">📊</span>Dashboard</div>
+      <div class="d-nav" onclick="showDash('d-dist',this)"><span class="d-nav-i">🌾</span>Distribution</div>
+      <div class="d-nav" onclick="showDash('d-ben',this)"><span class="d-nav-i">👥</span>Beneficiaries</div>
+      <div class="d-nav" onclick="showDash('d-dealer',this)"><span class="d-nav-i">🏪</span>Dealers<span class="d-badge">2</span></div>
+      <div class="d-cat">Operations</div>
+      <div class="d-nav" onclick="showDash('d-verify',this)"><span class="d-nav-i">🔍</span>Verification</div>
+      <div class="d-nav" onclick="showDash('d-analytics',this)"><span class="d-nav-i">📈</span>Analytics</div>
+      <div class="d-nav" onclick="showDash('d-monitor',this)"><span class="d-nav-i">👁</span>Monitoring<span class="d-badge">3</span></div>
+      <div class="d-cat">Admin</div>
+      <div class="d-nav" onclick="showDash('d-audit',this)"><span class="d-nav-i">📋</span>Audit Log</div>
+      <div class="d-nav" onclick="showDash('d-mobile',this)"><span class="d-nav-i">📱</span>Mobile App</div>
+      <div class="d-progress">
+        <div class="dp-label">TODAY'S PROGRESS</div>
+        <div class="dp-val">1,247</div>
+        <div class="dp-sub">of 1,800 target</div>
+        <div class="dp-bar"><div class="dp-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="d-main">
+
+      <!-- DASHBOARD TAB -->
+      <div id="d-dash" class="dp active">
+        <div class="dph">
+          <div><div class="dph-t">Control Dashboard</div><div class="dph-s">Dhaka Division · Real-time overview · 20 March 2026</div></div>
+          <div style="display:flex;gap:6px"><button class="d-btn d-btn-o" style="font-size:11px;padding:5px 10px">📤 Export</button><button class="d-btn d-btn-p" style="font-size:11px;padding:5px 10px">🔄 Refresh</button></div>
+        </div>
+        <div class="dm-grid">
+          <div class="dm-card mc-b"><div class="dm-icon">🌾</div><div class="dm-lbl">Today's Transactions</div><div class="dm-val">1,247</div><div class="dm-trend">▲ 8.3% vs yesterday</div></div>
+          <div class="dm-card mc-t"><div class="dm-icon">👥</div><div class="dm-lbl">Beneficiaries Served</div><div class="dm-val">1,198</div><div class="dm-trend">▲ 5.1% this week</div></div>
+          <div class="dm-card mc-g"><div class="dm-icon">🛡</div><div class="dm-lbl">Duplicates Blocked</div><div class="dm-val">49</div><div class="dm-trend">100% prevention rate</div></div>
+          <div class="dm-card mc-a"><div class="dm-icon">⚖️</div><div class="dm-lbl">Food Distributed</div><div class="dm-val">6.2T</div><div class="dm-trend">Rice + Flour combined</div></div>
+        </div>
+        <div class="g75">
+          <div class="dc">
+            <div class="dct">⚡ Live Transaction Feed</div>
+            <div class="tl">
+              <div class="tl-row"><div class="tl-dot tl-ok">✓</div><div><div class="tl-t">Amina Khatun — 5kg Rice</div><div class="tl-d">Rahman Center · Face: 97.7% · <span class="b bg">VERIFIED</span></div><div class="tl-m">09:41:02 · TXN-20260320-7001</div></div></div>
+              <div class="tl-row"><div class="tl-dot tl-er">✗</div><div><div class="tl-t">Duplicate Blocked — Mohammad Ali</div><div class="tl-d">Already collected 5kg at 07:23 today · <span class="b br">BLOCKED</span></div><div class="tl-m">09:38:45 · DUPLICATE_ATTEMPT</div></div></div>
+              <div class="tl-row"><div class="tl-dot tl-ok">✓</div><div><div class="tl-t">Rina Begum — 3kg Flour</div><div class="tl-d">Karim Depot · Face: 94.1% · <span class="b bg">VERIFIED</span></div><div class="tl-m">09:36:18 · TXN-20260320-6998</div></div></div>
+              <div class="tl-row"><div class="tl-dot tl-wn">!</div><div><div class="tl-t">Exception — Jabbar Mia</div><div class="tl-d">Face uncertain (68%) — Officer review required · <span class="b by">REVIEW</span></div><div class="tl-m">09:33:07 · EXC-20260320-015</div></div></div>
+              <div class="tl-row"><div class="tl-dot tl-in">↑</div><div><div class="tl-t">Salma Khanom — 5kg Rice (Offline Sync)</div><div class="tl-d">Recorded 09:21 offline, synced 09:34 · <span class="b bt">SYNCED</span></div><div class="tl-m">09:34:02 · TXN-20260320-6989</div></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="dc mb14">
+              <div class="dct">🏆 Dealer Compliance</div>
+              <div class="bc-row"><div class="bc-lbl">Rahman Ctr</div><div class="bc-track"><div class="bc-fill" style="width:96%;background:linear-gradient(90deg,var(--teal-500),var(--teal-400))"></div></div><div class="bc-v">96%</div></div>
+              <div class="bc-row"><div class="bc-lbl">Karim Depot</div><div class="bc-track"><div class="bc-fill" style="width:91%;background:linear-gradient(90deg,var(--teal-500),var(--teal-400))"></div></div><div class="bc-v">91%</div></div>
+              <div class="bc-row"><div class="bc-lbl">Hasan Store</div><div class="bc-track"><div class="bc-fill" style="width:88%;background:linear-gradient(90deg,var(--teal-500),var(--teal-400))"></div></div><div class="bc-v">88%</div></div>
+              <div class="bc-row"><div class="bc-lbl">Ali Center</div><div class="bc-track"><div class="bc-fill" style="width:74%;background:linear-gradient(90deg,var(--amber-500),var(--amber-600))"></div></div><div class="bc-v">74%</div></div>
+              <div class="bc-row"><div class="bc-lbl">Khan Depot</div><div class="bc-track"><div class="bc-fill" style="width:61%;background:linear-gradient(90deg,var(--red-500),var(--red-600))"></div></div><div class="bc-v">61%</div></div>
+            </div>
+            <div class="dc">
+              <div class="dct">🗺 Region Distribution</div>
+              <div class="rg-grid">
+                <div class="rg-tile" style="background:var(--blue-050)"><div class="rg-name" style="color:var(--ink-500)">Dhaka</div><div class="rg-val" style="color:var(--ink-500)">428</div><div class="rg-sub" style="color:var(--text-muted)">txns</div></div>
+                <div class="rg-tile" style="background:var(--green-050)"><div class="rg-name" style="color:var(--green-600)">Mirpur</div><div class="rg-val" style="color:var(--green-600)">312</div><div class="rg-sub" style="color:var(--text-muted)">txns</div></div>
+                <div class="rg-tile" style="background:var(--amber-050)"><div class="rg-name" style="color:var(--amber-600)">Uttara</div><div class="rg-val" style="color:var(--amber-600)">267</div><div class="rg-sub" style="color:var(--text-muted)">txns</div></div>
+                <div class="rg-tile" style="background:var(--teal-050)"><div class="rg-name" style="color:var(--teal-600)">Gulshan</div><div class="rg-val" style="color:var(--teal-600)">240</div><div class="rg-sub" style="color:var(--text-muted)">txns</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DISTRIBUTION TAB -->
+      <div id="d-dist" class="dp">
+        <div class="dph"><div><div class="dph-t">Food Distribution</div><div class="dph-s">Record a new transaction with biometric verification</div></div></div>
+        <div class="g2">
+          <div class="dc">
+            <div class="dct">📝 New Transaction</div>
+            <div class="df-g"><label class="df-l">Beneficiary Code</label><input class="df-i" value="BEN-10021"></div>
+            <div class="df-g"><label class="df-l">Name (auto-loaded)</label><input class="df-i" value="Amina Khatun" readonly style="background:var(--slate-050)"></div>
+            <div class="df-g"><label class="df-l">Product</label><select class="df-s"><option>Rice (চাল)</option><option>Flour (আটা)</option></select></div>
+            <div class="df-g"><label class="df-l">Quantity (kg)</label><input class="df-i" type="number" value="5" min="1" max="10"></div>
+            <div style="background:var(--green-050);border-radius:var(--r-md);padding:13px;margin-bottom:11px;border:1px solid var(--green-bright)">
+              <div style="font-size:9.5px;font-weight:700;color:var(--green-600);margin-bottom:8px;font-family:var(--font-mono);letter-spacing:0.8px">QUOTA STATUS</div>
+              <div class="q-ring">
+                <div class="q-ring-wrap">
+                  <svg width="68" height="68" viewBox="0 0 68 68"><circle cx="34" cy="34" r="28" fill="none" stroke="#DCFCE7" stroke-width="7"/><circle cx="34" cy="34" r="28" fill="none" stroke="#16A34A" stroke-width="7" stroke-dasharray="88 176" stroke-linecap="round" transform="rotate(-90 34 34)"/></svg>
+                  <div class="q-ring-ctr"><div class="q-val">5kg</div><div class="q-sub">left</div></div>
+                </div>
+                <div><div style="font-size:13px;font-weight:600;color:var(--slate-900)">5 kg remaining</div><div style="font-size:11px;color:var(--text-muted)">March 2026 · 10kg quota</div><div style="font-size:11px;color:var(--green-600);margin-top:3px">✅ Eligible · Not collected today</div></div>
+              </div>
+            </div>
+            <div class="da da-s"><span class="da-ic">✅</span><div><strong>Ready to distribute.</strong> Quota available. No same-day lifting recorded.</div></div>
+            <button class="d-btn d-btn-t" style="width:100%;padding:9px;font-size:12.5px;margin-top:4px" onclick="document.getElementById('dt-ok').style.display='block'">🔐 Verify Face & Distribute</button>
+            <div id="dt-ok" style="display:none;margin-top:9px"><div class="da da-s"><span class="da-ic">🎉</span><div><strong>TXN-20260320-7002 recorded.</strong> 5kg Rice distributed to Amina Khatun. Audit trail created.</div></div></div>
+          </div>
+          <div>
+            <div class="dc mb14">
+              <div class="dct">🛡 Duplicate Prevention</div>
+              <div class="da da-e"><span class="da-ic">🚫</span><div><strong>BLOCKED: Mohammad Ali (BEN-10045)</strong><br>Collected 5kg Rice at 07:23 today from Mirpur Center. TXN-20260320-6891.</div></div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:5px">Today blocked: <strong style="color:var(--red-500)">49</strong> · Month savings: <strong style="color:var(--green-600)">~4,235 kg</strong></div>
+            </div>
+            <div class="dc">
+              <div class="dct">📡 Offline Dealers</div>
+              <div class="da da-w mb14"><span class="da-ic">📴</span><div><strong>Karim Depot offline (54 min)</strong><br>23 transactions queued. Last sync: 08:47.</div></div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <span class="oi oi-off">📴 Karim Depot (23)</span>
+                <span class="oi oi-off">📴 Noor Center (7)</span>
+                <span class="oi oi-on">🟢 Rahman Center</span>
+                <span class="oi oi-on">🟢 Hasan Store</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BENEFICIARIES TAB -->
+      <div id="d-ben" class="dp">
+        <div class="dph"><div><div class="dph-t">Beneficiary Management</div><div class="dph-s">12,840 enrolled · Dhaka Division</div></div><button class="d-btn d-btn-t" style="font-size:11px;padding:5px 10px">+ Enroll</button></div>
+        <div class="dc">
+          <div class="dct">👥 Beneficiary Records</div>
+          <table class="dt">
+            <thead><tr><th>Code</th><th>Name</th><th>Area</th><th>March Quota</th><th>Remaining</th><th>Today</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">BEN-10021</td><td><strong>Amina Khatun</strong></td><td>Mirpur-10</td><td>10 kg</td><td>5 kg</td><td><span class="b bg">Collected ✓</span></td><td><span class="b bg">Eligible</span></td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">BEN-10045</td><td><strong>Mohammad Ali</strong></td><td>Mirpur-10</td><td>10 kg</td><td>0 kg</td><td><span class="b br">DUPLICATE BLOCKED</span></td><td><span class="b br">Exhausted</span></td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">BEN-10087</td><td><strong>Rina Begum</strong></td><td>Uttara</td><td>10 kg</td><td>7 kg</td><td><span class="b bg">Collected ✓</span></td><td><span class="b bg">Eligible</span></td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">BEN-10102</td><td><strong>Jabbar Mia</strong></td><td>Gulshan</td><td>10 kg</td><td>10 kg</td><td><span class="b by">Exception</span></td><td><span class="b by">Under Review</span></td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">BEN-10156</td><td><strong>Salma Khanom</strong></td><td>Banani</td><td>10 kg</td><td>5 kg</td><td><span class="b bt">Sync'd ✓</span></td><td><span class="b bg">Eligible</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DEALERS TAB -->
+      <div id="d-dealer" class="dp">
+        <div class="dph"><div><div class="dph-t">Dealer Management</div><div class="dph-s">2 pending approvals · 47 active dealers</div></div><button class="d-btn d-btn-p" style="font-size:11px;padding:5px 10px">+ Register</button></div>
+        <div class="da da-w mb14"><span class="da-ic">⏳</span><div><strong>2 dealers awaiting approval.</strong> Review and respond within 48 hours per SOP.</div></div>
+        <div class="dc">
+          <div class="dct">🏪 Registered Dealers</div>
+          <table class="dt">
+            <thead><tr><th>ID</th><th>Name</th><th>Area</th><th>Today</th><th>Compliance</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">DLR-0041</td><td><strong>Rahman OMS Center</strong><br><span style="font-size:10px;color:var(--text-muted)">Md. Abdur Rahman</span></td><td>Mirpur-10</td><td>187 txns</td><td><span class="b bg">96% ★★★★★</span></td><td><span class="b bg">Active</span></td><td><button class="d-btn d-btn-o" style="font-size:10.5px;padding:4px 9px">View</button></td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">DLR-0039</td><td><strong>Karim Grain Depot</strong></td><td>Uttara</td><td>143 txns</td><td><span class="b bg">91%</span></td><td><span class="b bt">Offline</span></td><td><button class="d-btn d-btn-o" style="font-size:10.5px;padding:4px 9px">View</button></td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">DLR-0052</td><td><strong>Ali Distribution Center</strong></td><td>Gulshan</td><td>98 txns</td><td><span class="b by">74%</span></td><td><span class="b bg">Active</span></td><td><button class="d-btn d-btn-o" style="font-size:10.5px;padding:4px 9px">View</button></td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">DLR-0058</td><td><strong>Khan Food Point</strong></td><td>Demra</td><td>21 txns</td><td><span class="b br">61%</span></td><td><span class="b by">Under Review</span></td><td><button class="d-btn d-btn-d" style="font-size:10.5px;padding:4px 9px">Investigate</button></td></tr>
+              <tr style="background:var(--amber-050)"><td style="font-family:var(--font-mono);font-size:10px">DLR-0061</td><td><strong>Hossain Agro Store</strong></td><td>Banani</td><td>—</td><td><span class="b bs">Pending</span></td><td><span class="b by">Approval</span></td><td style="display:flex;gap:4px"><button class="d-btn d-btn-s" style="font-size:10.5px;padding:4px 9px">Approve</button><button class="d-btn d-btn-d" style="font-size:10.5px;padding:4px 9px">Reject</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VERIFICATION TAB -->
+      <div id="d-verify" class="dp">
+        <div class="dph"><div><div class="dph-t">Biometric Verification</div><div class="dph-s">Face-first · Biometric Abstraction Layer · 97.4% first-attempt match rate</div></div></div>
+        <div class="g2">
+          <div>
+            <div class="dc mb14">
+              <div class="dct">🔍 Live Verification Session</div>
+              <div class="fv-box">
+                <div class="fv-prev"><div class="fv-ring">👤<div class="fv-corners"><div class="fv-c tl"></div><div class="fv-c tr"></div><div class="fv-c bl"></div><div class="fv-c br"></div></div></div></div>
+                <div class="fv-conf"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:5px"><span>Confidence Score</span><span style="font-weight:700;color:var(--teal-500)">97.7%</span></div><div style="height:5px;background:var(--slate-100);border-radius:3px;overflow:hidden"><div style="height:100%;width:97.7%;background:linear-gradient(90deg,var(--teal-500),var(--blue-400));border-radius:3px"></div></div></div>
+                <div class="fv-result">✅ VERIFIED — Amina Khatun (BEN-10021)</div>
+              </div>
+            </div>
+            <div class="dc">
+              <div class="dct">📊 Today's Stats</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;text-align:center">
+                <div style="background:var(--green-050);border-radius:var(--r-md);padding:11px"><div style="font-family:var(--font-display);font-size:21px;font-weight:700;color:var(--green-600)">1,198</div><div style="font-size:10px;color:var(--text-muted)">Matched ✅</div></div>
+                <div style="background:var(--amber-050);border-radius:var(--r-md);padding:11px"><div style="font-family:var(--font-display);font-size:21px;font-weight:700;color:var(--amber-600)">34</div><div style="font-size:10px;color:var(--text-muted)">Retried ⚠️</div></div>
+                <div style="background:var(--red-100);border-radius:var(--r-md);padding:11px"><div style="font-family:var(--font-display);font-size:21px;font-weight:700;color:var(--red-600)">15</div><div style="font-size:10px;color:var(--text-muted)">Exception 🔐</div></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="dc mb14">
+              <div class="dct">🔄 Verification Flow</div>
+              <div class="vs-item vs-done"><div class="vs-n">1</div>Beneficiary lookup — BEN-10021 found in local cache</div>
+              <div class="vs-item vs-done"><div class="vs-n">2</div>Eligibility check — Quota available, no same-day lifting</div>
+              <div class="vs-item vs-done"><div class="vs-n">3</div>Face captured — Good lighting, centered, clear</div>
+              <div class="vs-item vs-act"><div class="vs-n">4</div>Biometric match — 97.7% confidence ✓ PASS</div>
+              <div class="vs-item vs-pend"><div class="vs-n">5</div>Quota deduction & transaction record</div>
+              <div class="vs-item vs-pend"><div class="vs-n">6</div>Audit log creation & sync queue</div>
+            </div>
+            <div class="dc">
+              <div class="dct">🧬 Biometric Architecture</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 11px;background:var(--green-050);border-radius:var(--r-sm);color:var(--green-600)"><span style="width:8px;height:8px;border-radius:50%;background:var(--green-500);flex-shrink:0"></span><strong>Face Verification</strong> — Active (Primary)</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 11px;background:var(--slate-050);border-radius:var(--r-sm);color:var(--text-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--slate-200);flex-shrink:0"></span>Fingerprint — Architecture-ready (Policy activation)</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 11px;background:var(--slate-050);border-radius:var(--r-sm);color:var(--text-muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--slate-200);flex-shrink:0"></span>Multimodal — Future capability (No redesign required)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANALYTICS TAB -->
+      <div id="d-analytics" class="dp">
+        <div class="dph"><div><div class="dph-t">Analytics & Intelligence</div><div class="dph-s">Descriptive → Diagnostic → Predictive</div></div></div>
+        <div class="g2">
+          <div class="dc">
+            <div class="dct">📉 Leakage Reduction — 30-Day Trend</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:100px;margin-bottom:8px">
+              <div style="flex:1;border-radius:3px 3px 0 0;height:90%;background:var(--red-100)"></div>
+              <div style="flex:1;border-radius:3px 3px 0 0;height:78%;background:var(--red-bright)"></div>
+              <div style="flex:1;border-radius:3px 3px 0 0;height:66%;background:var(--amber-100)"></div>
+              <div style="flex:1;border-radius:3px 3px 0 0;height:54%;background:var(--amber-050)"></div>
+              <div style="flex:1;border-radius:3px 3px 0 0;height:40%;background:var(--teal-100)"></div>
+              <div style="flex:1;border-radius:3px 3px 0 0;height:28%;background:var(--teal-050)"></div>
+              <div style="flex:1;border-radius:3px 3px 0 0;height:18%;background:var(--teal-400)"></div>
+              <div style="flex:1;border-radius:3px 3px 0 0;height:10%;background:var(--teal-500)"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px">
+              <span>Pre-system: <strong style="color:var(--red-500)">~42%</strong></span>
+              <span>Current: <strong style="color:var(--teal-500)">~7.8%</strong></span>
+              <span>Reduction: <strong style="color:var(--green-500)">↓ 34.2%</strong></span>
+            </div>
+          </div>
+          <div class="dc">
+            <div class="dct">🚨 Active Anomalies</div>
+            <div class="anom a-hi"><div class="anom-h">HIGH — Khan Food Point (DLR-0058)</div><div class="anom-d">94% of transactions after 18:00. Expected: 08:00–16:00.</div></div>
+            <div class="anom a-md"><div class="anom-h">MEDIUM — Ali Center (DLR-0052)</div><div class="anom-d">Quota exhaustion 40% faster than Feb baseline.</div></div>
+            <div class="anom a-md"><div class="anom-h">MEDIUM — DEVICE-XYZ-002</div><div class="anom-d">Used under 2 dealer accounts within same hour.</div></div>
+          </div>
+        </div>
+        <div class="dc">
+          <div class="dct">🔮 Demand Forecast — April 2026</div>
+          <table class="dt">
+            <thead><tr><th>Division</th><th>March Actual (kg)</th><th>April Forecast</th><th>Change</th><th>Recommendation</th></tr></thead>
+            <tbody>
+              <tr><td>Dhaka</td><td>1,240,000</td><td><strong>1,340,000</strong></td><td><span class="b by">+8%</span></td><td style="color:var(--teal-600);font-weight:600">Increase by 100T</td></tr>
+              <tr><td>Chittagong</td><td>980,000</td><td><strong>1,020,000</strong></td><td><span class="b by">+4%</span></td><td style="color:var(--teal-600);font-weight:600">Increase by 40T</td></tr>
+              <tr><td>Sylhet</td><td>420,000</td><td><strong>380,000</strong></td><td><span class="b bg">-10%</span></td><td style="color:var(--text-muted)">Reduce 40T (Boro harvest)</td></tr>
+              <tr><td>Rajshahi</td><td>670,000</td><td><strong>720,000</strong></td><td><span class="b by">+7%</span></td><td style="color:var(--teal-600);font-weight:600">Increase by 50T</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MONITORING TAB -->
+      <div id="d-monitor" class="dp">
+        <div class="dph"><div><div class="dph-t">System Monitoring</div><div class="dph-s">Infrastructure health · 3 active alerts</div></div></div>
+        <div class="dm-grid">
+          <div class="dm-card mc-g"><div class="dm-icon">⏱</div><div class="dm-lbl">Uptime (30d)</div><div class="dm-val">99.97%</div><div class="dm-trend">12 min downtime</div></div>
+          <div class="dm-card mc-b"><div class="dm-icon">⚡</div><div class="dm-lbl">API Response p95</div><div class="dm-val">0.84s</div><div class="dm-trend">Target: &lt;1s ✓</div></div>
+          <div class="dm-card mc-t"><div class="dm-icon">💾</div><div class="dm-lbl">DB Connections</div><div class="dm-val">847</div><div class="dm-trend">42% of 2,000 pool</div></div>
+          <div class="dm-card mc-a"><div class="dm-icon">🔄</div><div class="dm-lbl">Sync Queue</div><div class="dm-val">30</div><div class="dm-trend">Pending transactions</div></div>
+        </div>
+        <div class="g2">
+          <div class="dc">
+            <div class="dct">🚨 Active Alerts</div>
+            <div class="da da-e"><span class="da-ic">🔴</span><div><strong>Khan Food Point — Anomalous Pattern</strong><br>Late-night transactions. Auto-flagged for investigation.</div></div>
+            <div class="da da-w"><span class="da-ic">🟡</span><div><strong>Karim Depot — Extended Offline (54 min)</strong><br>23 transactions queued for sync.</div></div>
+            <div class="da da-w"><span class="da-ic">🟡</span><div><strong>15 exceptions pending supervisor sign-off</strong><br>Required within 24 hours per SOP.</div></div>
+          </div>
+          <div class="dc">
+            <div class="dct">📡 Service Health</div>
+            <div class="sh-row" style="background:var(--green-050);color:var(--green-600)">API Gateway <span class="b bg">✅ Operational</span></div>
+            <div class="sh-row" style="background:var(--green-050);color:var(--green-600)">PostgreSQL Primary <span class="b bg">✅ Operational</span></div>
+            <div class="sh-row" style="background:var(--green-050);color:var(--green-600)">Redis Cache <span class="b bg">✅ Operational</span></div>
+            <div class="sh-row" style="background:var(--green-050);color:var(--green-600)">Biometric Service <span class="b bg">✅ Operational</span></div>
+            <div class="sh-row" style="background:var(--amber-050);color:var(--amber-600)">RabbitMQ Queue <span class="b by">⚠️ 30 queued</span></div>
+            <div class="sh-row" style="background:var(--green-050);color:var(--green-600)">SMS Gateway <span class="b bg">✅ Operational</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUDIT TAB -->
+      <div id="d-audit" class="dp">
+        <div class="dph"><div><div class="dph-t">Audit Trail</div><div class="dph-s">Tamper-evident append-only log — exportable for government oversight</div></div><button class="d-btn d-btn-p" style="font-size:11px;padding:5px 10px">📤 Export</button></div>
+        <div class="dc">
+          <div class="dct">📋 Audit Events</div>
+          <table class="dt">
+            <thead><tr><th>Audit Code</th><th>Action</th><th>Entity</th><th>User / Device</th><th>Result</th><th>Timestamp</th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">AUD-1710870000-101</td><td>distribute</td><td>TXN-20260320-7001</td><td>Rahman / DEVICE-ABC-001</td><td><span class="b bg">success</span></td><td style="font-family:var(--font-mono);font-size:10px">09:41:02</td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">AUD-1710870000-102</td><td>block</td><td>DUPLICATE_ATTEMPT</td><td>Mirpur / DEVICE-DEF-002</td><td><span class="b br">blocked</span></td><td style="font-family:var(--font-mono);font-size:10px">09:38:45</td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">AUD-1710870000-099</td><td>exception</td><td>VERIFY-20260320-034</td><td>Karim / DEVICE-GHI-003</td><td><span class="b by">review</span></td><td style="font-family:var(--font-mono);font-size:10px">09:33:07</td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">AUD-1710870000-098</td><td>sync</td><td>BATCH-23-KARIM</td><td>System / Sync Engine</td><td><span class="b bt">synced</span></td><td style="font-family:var(--font-mono);font-size:10px">09:34:02</td></tr>
+              <tr><td style="font-family:var(--font-mono);font-size:10px">AUD-1710870000-096</td><td>anomaly_flag</td><td>DLR-0058</td><td>Analytics Engine</td><td><span class="b br">flagged</span></td><td style="font-family:var(--font-mono);font-size:10px">02:17:44</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MOBILE TAB -->
+      <div id="d-mobile" class="dp">
+        <div class="dph"><div><div class="dph-t">Dealer Mobile App</div><div class="dph-s">Offline-first · Bengali interface · Native Android</div></div></div>
+        <div class="g3">
+          <div>
+            <div style="text-align:center;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--text-muted)">Login Screen</div>
+            <div class="mf-wrap"><div class="mf"><div class="mf-notch"></div><div class="mf-screen">
+              <div style="text-align:center;padding:12px 0 10px"><div style="width:42px;height:42px;background:linear-gradient(135deg,var(--teal-500),var(--blue-400));border-radius:10px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:19px">🌾</div><div style="color:white;font-weight:700;font-size:11.5px;font-family:var(--font-display)">OMS বিতরণ</div><div style="color:var(--slate-500);font-size:9.5px;margin-top:2px">ডিলার অ্যাপ</div></div>
+              <div style="margin-bottom:7px"><div style="font-size:9px;color:var(--slate-500);margin-bottom:3px">ডিলার কোড</div><div style="background:rgba(255,255,255,0.06);border-radius:5px;padding:7px 9px;font-size:10px;color:var(--slate-300)">DLR-0041</div></div>
+              <div style="margin-bottom:10px"><div style="font-size:9px;color:var(--slate-500);margin-bottom:3px">পাসওয়ার্ড</div><div style="background:rgba(255,255,255,0.06);border-radius:5px;padding:7px 9px;font-size:10px;color:var(--slate-300)">••••••••</div></div>
+              <div class="mf-btn">লগইন করুন</div>
+              <div style="text-align:center;margin-top:7px;font-size:9px;color:var(--slate-500)"><span style="color:var(--red-500)">●</span> অফলাইন মোড সক্রিয়</div>
+            </div></div></div></div>
+          </div>
+          <div>
+            <div style="text-align:center;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--text-muted)">Distribution Screen</div>
+            <div class="mf-wrap"><div class="mf"><div class="mf-notch"></div><div class="mf-screen">
+              <div class="mf-hdr"><div class="mf-ttl">খাদ্য বিতরণ</div><div class="mf-t">09:41</div></div>
+              <div style="background:rgba(13,148,136,0.18);border-radius:7px;padding:8px;margin-bottom:7px;text-align:center"><div style="font-size:9px;color:var(--teal-glow);margin-bottom:3px">সুবিধাভোগী</div><div style="font-size:11.5px;font-weight:700;color:white;font-family:var(--font-display)">আমিনা খাতুন</div><div style="font-size:9px;color:var(--slate-500)">BEN-10021 · ৫ কেজি বাকি</div></div>
+              <div style="width:50px;height:50px;border-radius:50%;border:2px solid var(--teal-500);margin:6px auto;display:flex;align-items:center;justify-content:center;font-size:23px">👤</div>
+              <div style="text-align:center;margin-bottom:7px;font-size:10px;color:var(--teal-glow);font-weight:600">✓ ফেস যাচাই: ৯৭.৭%</div>
+              <div class="mf-row"><span class="mf-ri">🌾</span><span class="mf-rt">চাল (Rice)</span><span class="mf-rv">৫ কেজি</span></div>
+              <div class="mf-btn">বিতরণ নিশ্চিত করুন ✓</div>
+            </div></div></div></div>
+          </div>
+          <div>
+            <div style="text-align:center;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--text-muted)">Offline Sync Screen</div>
+            <div class="mf-wrap"><div class="mf"><div class="mf-notch"></div><div class="mf-screen">
+              <div class="mf-hdr"><div class="mf-ttl">সিঙ্ক স্ট্যাটাস</div><div class="mf-t">📡 2G</div></div>
+              <div style="text-align:center;padding:9px 0"><div style="font-size:26px">☁️</div><div style="font-size:11.5px;font-weight:700;color:white;margin-top:5px;font-family:var(--font-display)">সিঙ্ক হচ্ছে...</div><div style="font-size:9.5px;color:var(--slate-500);margin-top:2px">২৩টি লেনদেন</div></div>
+              <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:9px"><div style="height:100%;width:65%;background:var(--teal-500);border-radius:2px"></div></div>
+              <div class="mf-row"><span class="mf-ri">✅</span><span class="mf-rt">সফল</span><span class="mf-rv">15</span></div>
+              <div class="mf-row"><span class="mf-ri">⏳</span><span class="mf-rt">বাকি</span><span class="mf-rv">8</span></div>
+              <div class="mf-row"><span class="mf-ri">❌</span><span class="mf-rt">সংঘর্ষ</span><span class="mf-rv">1</span></div>
+            </div></div></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /d-main -->
+  </div><!-- /d-layout -->
+</div><!-- /app -->
+
+<!-- ══ FOOTER ════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="sf-l">OMS National Control Platform · Strategic Proposal v1.0 · March 2026</div>
+  <div class="sf-r">Ministry of Food · Government of Bangladesh · CONFIDENTIAL</div>
+</footer>
+
+<script>
+function showDash(id, el) {
+  document.querySelectorAll('.dp').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.d-nav').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* Animate bar fills on load */
+window.addEventListener('load', function() {
+  var fills = document.querySelectorAll('.bc-fill');
+  fills.forEach(function(f) {
+    var w = f.style.width;
+    f.style.width = '0';
+    setTimeout(function() { f.style.width = w; }, 300);
+  });
+});
+
+/* Active nav highlight on scroll */
+var secs = document.querySelectorAll('section[id], div[id="demo-section"]');
+var navAs = document.querySelectorAll('.nav-a');
+window.addEventListener('scroll', function() {
+  var cur = '';
+  secs.forEach(function(s) {
+    if (window.scrollY >= s.offsetTop - 140) cur = s.id;
+  });
+  navAs.forEach(function(a) {
+    a.classList.remove('active');
+    if (a.getAttribute('href') === '#' + cur) a.classList.add('active');
+  });
+}, { passive: true });
+</script>
+
+</body>
+</html>

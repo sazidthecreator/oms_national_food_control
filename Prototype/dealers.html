@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMS — Dealer Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink-500:#1E3A8A;--blue-400:#2563EB;--blue-100:#DBEAFE;--blue-050:#EFF6FF;--teal-600:#0F766E;--teal-500:#0D9488;--teal-400:#14B8A6;--teal-100:#CCFBF1;--teal-050:#F0FDFA;--amber-600:#B45309;--amber-500:#D97706;--amber-100:#FEF3C7;--amber-050:#FFFBEB;--red-600:#B91C1C;--red-500:#DC2626;--red-100:#FEE2E2;--green-600:#15803D;--green-500:#16A34A;--green-100:#DCFCE7;--green-050:#F0FDF4;--slate-900:#0F172A;--slate-600:#475569;--slate-500:#64748B;--slate-300:#CBD5E1;--slate-200:#E2E8F0;--slate-100:#F1F5F9;--slate-050:#F8FAFC;--white:#FFFFFF;--border-l:var(--slate-200);--text-primary:#0F172A;--text-secondary:var(--slate-600);--text-muted:var(--slate-500);--bg-light:var(--slate-050);--font-display:'Fraunces',Georgia,serif;--font-body:'Plus Jakarta Sans',system-ui,sans-serif;--font-mono:'JetBrains Mono','Courier New',monospace;--r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;--sh-sm:0 1px 3px rgba(0,0,0,.06);--sh-md:0 4px 16px rgba(0,0,0,.08);}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:16px;}body{font-family:var(--font-body);font-size:14px;background:var(--bg-light);color:var(--text-primary);}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--slate-300);border-radius:2px;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(16px)}}
+.d-topbar{background:white;border-bottom:1px solid var(--border-l);height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100;box-shadow:var(--sh-sm);}
+.d-brand{display:flex;align-items:center;gap:9px;cursor:pointer;}
+.d-logo{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,var(--teal-500),var(--blue-400));display:flex;align-items:center;justify-content:center;}
+.d-logo svg{width:14px;height:14px;fill:white;}
+.d-title{font-family:var(--font-display);font-weight:600;font-size:13px;color:var(--slate-900);}
+.d-sub{font-size:10px;color:var(--text-muted);}
+.d-status{display:flex;align-items:center;gap:7px;}
+.d-pill{display:flex;align-items:center;gap:5px;background:var(--slate-100);border-radius:100px;padding:3px 10px;font-size:11px;color:var(--text-secondary);font-weight:500;cursor:pointer;}
+.d-live{width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;animation:blink 2s infinite;}
+.d-alert{color:var(--red-500);}
+.d-layout{display:flex;min-height:calc(100vh - 50px);}
+.d-sidebar{width:192px;flex-shrink:0;background:white;border-right:1px solid var(--border-l);padding:8px 0;overflow-y:auto;}
+.sidebar-cat{padding:10px 14px 4px;font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--slate-300);}
+.d-nav{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;border-left:2.5px solid transparent;transition:all .12s;text-decoration:none;}
+.d-nav:hover{color:var(--text-primary);background:var(--slate-050);}
+.d-nav.active{color:var(--ink-500);background:var(--blue-050);border-left-color:var(--ink-500);font-weight:600;}
+.d-nav-i{font-size:13px;width:16px;text-align:center;}
+.d-badge{margin-left:auto;background:var(--red-500);color:white;font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;}
+.d-progress{margin:10px 10px 0;background:var(--blue-050);border-radius:var(--r-md);padding:10px 12px;border:1px solid var(--blue-100);}
+.dp-label{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--ink-500);margin-bottom:4px;font-weight:500;}
+.dp-val{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--slate-900);}
+.dp-sub{font-size:10px;color:var(--text-muted);}
+.dp-bar{height:3px;background:var(--blue-100);border-radius:2px;margin-top:6px;}
+.dp-fill{height:100%;width:69%;background:var(--ink-500);border-radius:2px;}
+.d-main{flex:1;overflow-y:auto;padding:20px;}
+.dph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.dph-t{font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--slate-900);letter-spacing:-.4px;}
+.dph-s{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.dc{background:white;border-radius:var(--r-lg);border:1px solid var(--border-l);padding:14px 16px;box-shadow:var(--sh-sm);}
+.dct{font-family:var(--font-mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:12px;}
+.dm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.dm-card{background:white;border-radius:var(--r-lg);padding:14px;border:1px solid var(--border-l);position:relative;overflow:hidden;box-shadow:var(--sh-sm);}
+.dm-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;}
+.mc-b::after{background:linear-gradient(90deg,var(--ink-500),var(--blue-400));}
+.mc-t::after{background:linear-gradient(90deg,var(--teal-600),var(--teal-400));}
+.mc-g::after{background:linear-gradient(90deg,var(--green-600),var(--green-500));}
+.mc-a::after{background:linear-gradient(90deg,var(--amber-600),var(--amber-500));}
+.dm-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);}
+.dm-val{font-family:var(--font-display);font-size:24px;font-weight:700;margin:4px 0 2px;line-height:1;}
+.mc-b .dm-val{color:var(--ink-500);}
+.mc-t .dm-val{color:var(--teal-600);}
+.mc-g .dm-val{color:var(--green-600);}
+.mc-a .dm-val{color:var(--amber-600);}
+.dm-trend{font-size:10px;color:var(--text-muted);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.mb12{margin-bottom:12px;}
+.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt th{background:var(--slate-050);padding:8px 11px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-l);}
+.dt td{padding:9px 11px;border-bottom:1px solid var(--slate-050);color:var(--text-primary);vertical-align:middle;}
+.dt tr:hover td{background:var(--slate-050);}
+.dt tr:last-child td{border-bottom:none;}
+.b{display:inline-flex;align-items:center;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:700;}
+.bg{background:var(--green-100);color:var(--green-600);}
+.br{background:var(--red-100);color:var(--red-600);}
+.by{background:var(--amber-100);color:var(--amber-600);}
+.bb{background:var(--blue-100);color:var(--ink-500);}
+.bt{background:var(--teal-100);color:var(--teal-600);}
+.bs{background:var(--slate-100);color:var(--slate-600);}
+.btn{padding:6px 13px;border-radius:var(--r-sm);font-family:var(--font-body);font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .12s;}
+.btn:active{transform:scale(.97);}
+.btn-p{background:var(--ink-500);color:white;}
+.btn-p:hover{background:var(--blue-400);}
+.btn-t{background:var(--teal-500);color:white;}
+.btn-o{background:white;border:1.5px solid var(--border-l);color:var(--text-muted);}
+.btn-o:hover{border-color:var(--slate-300);color:var(--text-primary);}
+.btn-d{background:var(--red-500);color:white;}
+.btn-s{background:var(--green-500);color:white;}
+.btn-a{background:var(--amber-500);color:white;}
+.tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--slate-100);padding:3px;border-radius:var(--r-md);width:fit-content;}
+.tab-btn{padding:5px 14px;font-size:12px;font-weight:500;border:none;background:none;cursor:pointer;border-radius:7px;color:var(--text-muted);transition:all .15s;}
+.tab-btn.active{background:white;color:var(--ink-500);font-weight:600;box-shadow:var(--sh-sm);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+.al{padding:9px 12px;border-radius:var(--r-sm);font-size:12px;display:flex;align-items:flex-start;gap:7px;margin-bottom:8px;}
+.al-e{background:var(--red-100);border:1px solid #FCA5A5;color:var(--red-600);}
+.al-w{background:var(--amber-100);border:1px solid #FDE68A;color:var(--amber-600);}
+.al-s{background:var(--green-100);border:1px solid #BBF7D0;color:var(--green-600);}
+.al-i{background:var(--blue-050);border:1px solid var(--blue-100);color:var(--ink-500);}
+.al-ic{font-size:13px;flex-shrink:0;margin-top:1px;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:white;border-radius:var(--r-xl);padding:24px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:modalIn .25s ease;}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.modal-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--slate-900);}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);padding:2px 6px;border-radius:4px;}
+.fg{margin-bottom:10px;}
+.fl{font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:3px;display:block;}
+.fi{width:100%;padding:7px 10px;border:1.5px solid var(--border-l);border-radius:var(--r-sm);font-family:var(--font-body);font-size:12px;color:var(--text-primary);outline:none;transition:border .12s;}
+.fi:focus{border-color:var(--ink-500);}
+.fs{width:100%;padding:7px 10px;border:1.5px solid var(--border-l);border-radius:var(--r-sm);font-family:var(--font-body);font-size:12px;background:white;color:var(--text-primary);outline:none;}
+.fs:focus{border-color:var(--ink-500);}
+#toast-container{position:fixed;top:60px;right:16px;z-index:2000;display:flex;flex-direction:column;gap:7px;pointer-events:none;}
+.toast{background:white;border-radius:10px;border:1px solid var(--border-l);padding:10px 14px;box-shadow:0 8px 28px rgba(0,0,0,.12);display:flex;align-items:center;gap:9px;font-size:12px;font-weight:500;color:var(--slate-900);max-width:280px;pointer-events:all;animation:toastIn .3s ease;}
+.toast.out{animation:toastOut .25s ease forwards;}
+/* Compliance bar */
+.comp-bar{display:flex;align-items:center;gap:6px;}
+.comp-track{flex:1;height:5px;background:var(--slate-100);border-radius:3px;overflow:hidden;}
+.comp-fill{height:100%;border-radius:3px;}
+/* Dealer card */
+.dealer-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.deal-card{padding:14px;border-radius:var(--r-lg);border:1px solid var(--border-l);background:white;box-shadow:var(--sh-sm);cursor:pointer;transition:all .2s;}
+.deal-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);}
+.deal-name{font-weight:600;font-size:13px;margin-bottom:2px;}
+.deal-meta{font-size:11px;color:var(--text-muted);}
+/* Search */
+.search-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.search-input{flex:1;padding:8px 12px;border:1.5px solid var(--border-l);border-radius:var(--r-md);font-family:var(--font-body);font-size:12px;outline:none;}
+.search-input:focus{border-color:var(--ink-500);}
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="d-topbar">
+  <div class="d-brand" onclick="location.href='index.html'">
+    <div class="d-logo"><svg viewBox="0 0 16 16"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z"/></svg></div>
+    <div><div class="d-title">OMS National Control Platform</div><div class="d-sub">Ministry of Food · Bangladesh</div></div>
+  </div>
+  <div class="d-status">
+    <div class="d-pill"><div class="d-live"></div>System Live</div>
+    <div class="d-pill">📅 20 March 2026</div>
+    <div class="d-pill d-alert" onclick="location.href='notifications.html'">⚠ 3 Alerts</div>
+  </div>
+</div>
+<div class="d-layout">
+  <div class="d-sidebar">
+    <div class="sidebar-cat">Main</div>
+    <a href="index.html" class="d-nav"><span class="d-nav-i">📊</span>Dashboard</a>
+    <a href="offices.html" class="d-nav"><span class="d-nav-i">🏛</span>Offices & Programs</a>
+    <a href="dealers.html" class="d-nav active"><span class="d-nav-i">🏪</span>Dealers<span class="d-badge">2</span></a>
+    <a href="beneficiaries.html" class="d-nav"><span class="d-nav-i">👥</span>Beneficiaries</a>
+    <div class="sidebar-cat">Operations</div>
+    <a href="distribution.html" class="d-nav"><span class="d-nav-i">🌾</span>Distribution</a>
+    <a href="inspection.html" class="d-nav"><span class="d-nav-i">🔍</span>Inspection</a>
+    <a href="analytics.html" class="d-nav"><span class="d-nav-i">📈</span>Analytics</a>
+    <div class="sidebar-cat">Admin</div>
+    <a href="notifications.html" class="d-nav"><span class="d-nav-i">🔔</span>Notifications<span class="d-badge">3</span></a>
+    <a href="audit.html" class="d-nav"><span class="d-nav-i">📋</span>Audit Log</a>
+    <div class="d-progress">
+      <div class="dp-label">TODAY'S PROGRESS</div>
+      <div class="dp-val">1,247</div>
+      <div class="dp-sub">of 1,800 target</div>
+      <div class="dp-bar"><div class="dp-fill"></div></div>
+    </div>
+  </div>
+
+  <div class="d-main">
+    <div class="dph">
+      <div><div class="dph-t">Dealer Management</div><div class="dph-s">47 active dealers · 2 pending approvals · Dhaka Division</div></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-o" onclick="showToast('📤 Exporting dealer list','info')">📤 Export</button>
+        <button class="btn btn-p" onclick="openModal('registerModal')">+ Register Dealer</button>
+      </div>
+    </div>
+
+    <!-- Pending approvals alert -->
+    <div class="al al-w mb12"><span class="al-ic">⏳</span><div><strong>2 dealers awaiting approval.</strong> Review and respond within 48 hours per SOP. <a href="#pending" style="color:var(--amber-600);font-weight:600">View →</a></div></div>
+
+    <!-- Metrics -->
+    <div class="dm-grid">
+      <div class="dm-card mc-b"><div class="dm-lbl">Total Dealers</div><div class="dm-val">50</div><div class="dm-trend">Dhaka Division</div></div>
+      <div class="dm-card mc-g"><div class="dm-lbl">Active</div><div class="dm-val">47</div><div class="dm-trend">94% operational</div></div>
+      <div class="dm-card mc-a"><div class="dm-lbl">Pending Approval</div><div class="dm-val">2</div><div class="dm-trend">Requires action</div></div>
+      <div class="dm-card mc-t"><div class="dm-lbl">Under Review</div><div class="dm-val">1</div><div class="dm-trend">Compliance issue</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-all')">All Dealers</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-pending')" id="pending-tab">⏳ Pending (2)</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-suspended')">⛔ Suspended</button>
+    </div>
+
+    <!-- ALL DEALERS TAB -->
+    <div id="tab-all" class="tab-pane active">
+      <div class="search-bar">
+        <input class="search-input" id="dealer-search" placeholder="🔍 Search by name, code, or area..." oninput="filterDealers()">
+        <select class="fs" style="width:auto;padding:8px 12px" onchange="filterDealers()">
+          <option>All Status</option>
+          <option>Active</option>
+          <option>Offline</option>
+          <option>Review</option>
+        </select>
+      </div>
+      <div class="dc">
+        <table class="dt" id="dealers-table">
+          <thead><tr><th>ID</th><th>Dealer</th><th>Area</th><th>Today</th><th>Compliance</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="dealers-tbody">
+            <tr>
+              <td style="font-family:var(--font-mono);font-size:10px">DLR-0041</td>
+              <td><strong>Rahman OMS Center</strong><br><span style="font-size:10px;color:var(--text-muted)">Md. Abdur Rahman · রহমান ওএমএস সেন্টার</span></td>
+              <td>Mirpur-10</td>
+              <td>187 txns</td>
+              <td><div class="comp-bar"><div class="comp-track"><div class="comp-fill" style="width:96%;background:var(--green-500)"></div></div><span style="font-size:11px;font-weight:700;color:var(--green-600);width:28px">96%</span></div></td>
+              <td><span class="b bg">✓ Active</span></td>
+              <td style="display:flex;gap:4px">
+                <button class="btn btn-o" style="padding:3px 9px;font-size:10.5px" onclick="viewDealer('DLR-0041','Rahman OMS Center')">View</button>
+                <button class="btn btn-t" style="padding:3px 9px;font-size:10.5px" onclick="showToast('📊 Performance report loaded','info')">Report</button>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);font-size:10px">DLR-0039</td>
+              <td><strong>Karim Grain Depot</strong><br><span style="font-size:10px;color:var(--text-muted)">Md. Abdul Karim · করিম শস্য ডিপো</span></td>
+              <td>Uttara</td>
+              <td>143 txns</td>
+              <td><div class="comp-bar"><div class="comp-track"><div class="comp-fill" style="width:91%;background:var(--green-500)"></div></div><span style="font-size:11px;font-weight:700;color:var(--green-600);width:28px">91%</span></div></td>
+              <td><span class="b bt">📴 Offline</span></td>
+              <td style="display:flex;gap:4px">
+                <button class="btn btn-o" style="padding:3px 9px;font-size:10.5px" onclick="viewDealer('DLR-0039','Karim Grain Depot')">View</button>
+                <button class="btn btn-a" style="padding:3px 9px;font-size:10.5px" onclick="showToast('📡 Sync check initiated for Karim Depot','warning')">Sync</button>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);font-size:10px">DLR-0052</td>
+              <td><strong>Ali Distribution Center</strong><br><span style="font-size:10px;color:var(--text-muted)">Mohammad Ali · আলী বিতরণ কেন্দ্র</span></td>
+              <td>Gulshan</td>
+              <td>98 txns</td>
+              <td><div class="comp-bar"><div class="comp-track"><div class="comp-fill" style="width:74%;background:var(--amber-500)"></div></div><span style="font-size:11px;font-weight:700;color:var(--amber-600);width:28px">74%</span></div></td>
+              <td><span class="b bg">✓ Active</span></td>
+              <td style="display:flex;gap:4px">
+                <button class="btn btn-o" style="padding:3px 9px;font-size:10.5px" onclick="viewDealer('DLR-0052','Ali Distribution')">View</button>
+                <button class="btn btn-a" style="padding:3px 9px;font-size:10.5px" onclick="showToast('⚠️ Compliance warning issued','warning')">Warn</button>
+              </td>
+            </tr>
+            <tr style="background:var(--red-100)">
+              <td style="font-family:var(--font-mono);font-size:10px">DLR-0058</td>
+              <td><strong>Khan Food Point</strong><br><span style="font-size:10px;color:var(--text-muted)">Abdur Rahim Khan · খান ফুড পয়েন্ট</span></td>
+              <td>Demra</td>
+              <td>21 txns</td>
+              <td><div class="comp-bar"><div class="comp-track"><div class="comp-fill" style="width:61%;background:var(--red-500)"></div></div><span style="font-size:11px;font-weight:700;color:var(--red-600);width:28px">61%</span></div></td>
+              <td><span class="b by">⚠ Review</span></td>
+              <td style="display:flex;gap:4px">
+                <button class="btn btn-o" style="padding:3px 9px;font-size:10.5px" onclick="viewDealer('DLR-0058','Khan Food Point')">View</button>
+                <button class="btn btn-d" style="padding:3px 9px;font-size:10.5px" onclick="investigateDealer('DLR-0058')">Investigate</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PENDING TAB -->
+    <div id="tab-pending" class="tab-pane" id="pending">
+      <div class="al al-i mb12"><span class="al-ic">ℹ️</span><div>These dealers have completed registration and are awaiting district officer approval. Review documents before approving.</div></div>
+      <div class="g2">
+        <div class="dc" style="border:2px solid var(--amber-200)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <div style="font-weight:700;font-size:14px">Hossain Agro Store</div>
+              <div style="font-size:11px;color:var(--text-muted)">হোসাইন এগ্রো স্টোর · DLR-0061</div>
+            </div>
+            <span class="b by">⏳ Pending</span>
+          </div>
+          <div style="font-size:12px;line-height:1.7;color:var(--text-secondary);margin-bottom:12px">
+            📍 Banani, Dhaka<br>📞 +8801811111111<br>📋 Registration: REG-2026-0061<br>🆔 NID: 1234567890123<br>🏦 Bank: Dutch Bangla Bank
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-size:11px;color:var(--text-muted)">Documents:</span>
+            <span class="b bg">📄 License ✓</span>
+            <span class="b bg">🆔 NID ✓</span>
+            <span class="b bg">🏦 Bank ✓</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-s" style="flex:1" onclick="approveDealer('DLR-0061','Hossain Agro Store')">✓ Approve</button>
+            <button class="btn btn-d" onclick="rejectDealer('DLR-0061')">✗ Reject</button>
+            <button class="btn btn-o" onclick="showToast('📄 Documents opened','info')">📄 Docs</button>
+          </div>
+        </div>
+        <div class="dc" style="border:2px solid var(--amber-200)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <div style="font-weight:700;font-size:14px">Begum Rice Store</div>
+              <div style="font-size:11px;color:var(--text-muted)">বেগম রাইস স্টোর · DLR-0062</div>
+            </div>
+            <span class="b by">⏳ Pending</span>
+          </div>
+          <div style="font-size:12px;line-height:1.7;color:var(--text-secondary);margin-bottom:12px">
+            📍 Khilgaon, Dhaka<br>📞 +8801911222222<br>📋 Registration: REG-2026-0062<br>🆔 NID: 9876543210987<br>🏦 Bank: Islami Bank
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-size:11px;color:var(--text-muted)">Documents:</span>
+            <span class="b bg">📄 License ✓</span>
+            <span class="b by">🆔 NID ⏳</span>
+            <span class="b bg">🏦 Bank ✓</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-s" style="flex:1" onclick="approveDealer('DLR-0062','Begum Rice Store')">✓ Approve</button>
+            <button class="btn btn-d" onclick="rejectDealer('DLR-0062')">✗ Reject</button>
+            <button class="btn btn-o" onclick="showToast('📄 Documents opened','info')">📄 Docs</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUSPENDED TAB -->
+    <div id="tab-suspended" class="tab-pane">
+      <div class="dc">
+        <div class="dct">⛔ Suspended Dealers</div>
+        <div style="text-align:center;padding:30px;color:var(--text-muted)">
+          <div style="font-size:28px;margin-bottom:8px">✅</div>
+          <div>No dealers currently suspended</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Register Dealer Modal -->
+<div class="modal-overlay" id="registerModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">🏪 Register New Dealer</div>
+      <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="fg"><label class="fl">Dealer Name (English)</label><input class="fi" id="reg-name" placeholder="OMS Center name"></div>
+      <div class="fg"><label class="fl">Dealer Name (বাংলা)</label><input class="fi" placeholder="ডিলারের নাম"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="fg"><label class="fl">Owner Name</label><input class="fi" id="reg-owner" placeholder="Full name"></div>
+      <div class="fg"><label class="fl">Phone Number</label><input class="fi" placeholder="+8801XXXXXXXXX"></div>
+    </div>
+    <div class="fg"><label class="fl">National ID (13 digits)</label><input class="fi" placeholder="1234567890123" maxlength="13"></div>
+    <div class="fg"><label class="fl">Address</label><input class="fi" placeholder="Full address with area"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="fg"><label class="fl">Office / Area</label>
+        <select class="fs"><option>Mirpur OMS Center</option><option>Uttara Center</option><option>Gulshan Center</option><option>Demra Center</option></select>
+      </div>
+      <div class="fg"><label class="fl">Bank Name</label><input class="fi" placeholder="Bank name"></div>
+    </div>
+    <div class="fg"><label class="fl">Bank Account Number</label><input class="fi" placeholder="Account number"></div>
+    <div style="background:var(--amber-050);border-radius:var(--r-md);padding:10px;margin-bottom:12px;font-size:11px;color:var(--amber-600)">
+      ⚠️ Registration will be submitted for district officer approval. Dealer can only operate after approval.
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p" style="flex:1" onclick="submitRegistration()">Submit Registration</button>
+      <button class="btn btn-o" onclick="closeModal('registerModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Dealer Modal -->
+<div class="modal-overlay" id="viewDealerModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="view-dealer-title">Dealer Details</div>
+      <button class="modal-close" onclick="closeModal('viewDealerModal')">✕</button>
+    </div>
+    <div id="view-dealer-content"></div>
+  </div>
+</div>
+
+<script>
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function viewDealer(id, name) {
+  document.getElementById('view-dealer-title').textContent = `🏪 ${name}`;
+  document.getElementById('view-dealer-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div style="background:var(--slate-050);border-radius:var(--r-md);padding:12px">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;font-weight:600">DEALER INFO</div>
+        <div style="font-size:12px;line-height:1.8">
+          <div>🆔 ${id}</div>
+          <div>📞 +8801711234567</div>
+          <div>📍 Mirpur-10, Dhaka</div>
+          <div>🏦 Dutch Bangla Bank</div>
+        </div>
+      </div>
+      <div style="background:var(--slate-050);border-radius:var(--r-md);padding:12px">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;font-weight:600">PERFORMANCE</div>
+        <div style="font-size:12px;line-height:1.8">
+          <div>📊 Compliance: <strong style="color:var(--green-600)">96%</strong></div>
+          <div>🌾 Today: 187 txns</div>
+          <div>📅 Month: 3,240 txns</div>
+          <div>🛡 Blocked: 3 duplicates</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px">RECENT TRANSACTIONS</div>
+      <div style="font-size:12px;display:flex;flex-direction:column;gap:4px">
+        <div style="padding:6px 10px;background:var(--green-050);border-radius:6px;display:flex;justify-content:space-between"><span>Amina Khatun — 5kg Rice</span><span class="b bg">Verified</span></div>
+        <div style="padding:6px 10px;background:var(--slate-050);border-radius:6px;display:flex;justify-content:space-between"><span>Rina Begum — 3kg Flour</span><span class="b bg">Verified</span></div>
+        <div style="padding:6px 10px;background:var(--red-100);border-radius:6px;display:flex;justify-content:space-between"><span>Mohammad Ali — Duplicate</span><span class="b br">Blocked</span></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-p" style="flex:1" onclick="showToast('📈 Full report loading','info')">Full Report</button>
+      <button class="btn btn-t" onclick="showToast('📋 Audit log loading','info')">Audit Log</button>
+      <button class="btn btn-d" onclick="showToast('⚠️ Suspension requires supervisor approval','warning')">Suspend</button>
+    </div>`;
+  openModal('viewDealerModal');
+}
+
+function investigateDealer(id) {
+  showToast(`🔴 Investigation opened for ${id}`, 'error');
+  setTimeout(() => showToast('📋 Audit logs being compiled', 'info'), 1000);
+}
+
+function approveDealer(id, name) {
+  showToast(`✅ ${name} approved successfully`, 'success');
+  setTimeout(() => showToast(`📲 Approval SMS sent to dealer`, 'info'), 800);
+}
+
+function rejectDealer(id) {
+  showToast(`❌ Dealer ${id} application rejected`, 'error');
+}
+
+function submitRegistration() {
+  const name = document.getElementById('reg-name').value;
+  closeModal('registerModal');
+  showToast(`✅ Registration submitted for ${name || 'new dealer'}`, 'success');
+  setTimeout(() => showToast('📧 Notification sent to district officer', 'info'), 800);
+}
+
+function filterDealers() {
+  const q = document.getElementById('dealer-search').value.toLowerCase();
+  document.querySelectorAll('#dealers-tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function showToast(msg, type = 'info') {
+  const icons = {success:'✅',error:'🔴',warning:'⚠️',info:'ℹ️'};
+  const colors = {success:'#16A34A',error:'#DC2626',warning:'#D97706',info:'#1D4ED8'};
+  let tc = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.borderLeft = `3px solid ${colors[type]}`;
+  t.innerHTML = `<span style="font-size:14px">${icons[type]}</span><span>${msg}</span>`;
+  tc.appendChild(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
