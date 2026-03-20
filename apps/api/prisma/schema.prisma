@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  DISTRICT_OFFICER
+  UPAZILA_OFFICER
+  DEALER
+  INSPECTOR
+}
+
+enum OfficeType {
+  NATIONAL
+  DIVISION
+  DISTRICT
+  UPAZILA
+  CENTER
+}
+
+enum ProgramType {
+  REGULAR
+  RAMADAN
+  EMERGENCY
+}
+
+enum DealerStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum BeneficiaryCategory {
+  WIDOW
+  ELDERLY
+  POOR_FAMILY
+  DISABLED
+}
+
+enum ProductType {
+  RICE
+  FLOUR
+}
+
+enum VerificationMethod {
+  FACE
+  EXCEPTION
+}
+
+enum DistributionStatus {
+  ACCEPTED
+  BLOCKED
+  EXCEPTION
+}
+
+enum SyncStatus {
+  ONLINE
+  OFFLINE_QUEUED
+  SYNCED
+}
+
+enum DepositStatus {
+  PENDING
+  PAID
+  VERIFIED
+}
+
+enum InspectionType {
+  ROUTINE
+  COMPLAINT
+  FOLLOWUP
+  SPOT_CHECK
+}
+
+enum InspectionStatus {
+  PENDING
+  COMPLETE
+}
+
+enum SmsStatus {
+  SENT
+  DELIVERED
+  FAILED
+}
+
+enum QueueStatus {
+  QUEUED
+  PROCESSING
+  SYNCED
+  CONFLICT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role
+  officeId     String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model Office {
+  id       String     @id @default(cuid())
+  code     String     @unique
+  name     String
+  nameBn   String?
+  type     OfficeType
+  parentId String?
+  parent   Office?    @relation("OfficeHierarchy", fields: [parentId], references: [id])
+  children Office[]   @relation("OfficeHierarchy")
+  isActive Boolean    @default(true)
+}
+
+model OmsProgram {
+  id             String      @id @default(cuid())
+  code           String      @unique
+  name           String
+  type           ProgramType
+  dailyKgLimit   Decimal
+  monthlyKgLimit Decimal
+  startDate      DateTime
+  endDate        DateTime
+  isActive       Boolean     @default(true)
+}
+
+model Dealer {
+  id              String       @id @default(cuid())
+  dealerCode      String       @unique
+  name            String
+  nameBn          String?
+  phone           String
+  nid             String
+  area            String
+  officeId        String
+  status          DealerStatus @default(PENDING)
+  complianceScore Decimal      @default(100)
+  deviceId        String?
+  approvedBy      String?
+  approvedAt      DateTime?
+  createdAt       DateTime     @default(now())
+}
+
+model Beneficiary {
+  id              String              @id @default(cuid())
+  beneficiaryCode String              @unique
+  name            String
+  nameBn          String?
+  nid             String              @unique
+  phone           String?
+  area            String
+  officeId        String
+  programId       String?
+  category        BeneficiaryCategory
+  monthlyQuotaKg  Decimal
+  faceEmbedding   Bytes?
+  isActive        Boolean             @default(true)
+  enrolledAt      DateTime?
+}
+
+model Distribution {
+  id                 String             @id @default(cuid())
+  txnId              String             @unique
+  beneficiaryId      String
+  dealerId           String
+  programId          String?
+  productType        ProductType
+  quantityKg         Decimal
+  faceMatchScore     Decimal?
+  verificationMethod VerificationMethod
+  status             DistributionStatus
+  syncStatus         SyncStatus         @default(ONLINE)
+  offlineCreatedAt   DateTime?
+  syncedAt           DateTime?
+  createdAt          DateTime           @default(now())
+}
+
+model DuplicateBlock {
+  id            String   @id @default(cuid())
+  beneficiaryId String
+  dealerId      String
+  attemptedAt   DateTime @default(now())
+  blockedReason String
+  originalTxnId String
+}
+
+model Allotment {
+  id            String        @id @default(cuid())
+  dealerId      String
+  programId     String
+  allocatedKg   Decimal
+  depositAmount Decimal
+  depositStatus DepositStatus @default(PENDING)
+  doNumber      String?
+  officerId     String?
+  createdAt     DateTime      @default(now())
+}
+
+model Inspection {
+  id            String           @id @default(cuid())
+  dealerId      String
+  inspectorId   String
+  type          InspectionType
+  score         Int
+  rating        Int
+  checklistData Json
+  notes         String?
+  action        String?
+  status        InspectionStatus @default(PENDING)
+  inspectedAt   DateTime?
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  eventCode  String   @unique
+  action     String
+  entityType String
+  entityId   String?
+  userId     String
+  deviceId   String?
+  ipAddress  String?
+  payload    Json?
+  result     String
+  hashChain  String?
+  createdAt  DateTime @default(now())
+}
+
+model SmsLog {
+  id        String    @id @default(cuid())
+  recipient String
+  message   String
+  type      String
+  status    SmsStatus @default(SENT)
+  gateway   String?
+  cost      Decimal?
+  sentAt    DateTime  @default(now())
+}
+
+model OfflineSyncQueue {
+  id        String      @id @default(cuid())
+  dealerId  String
+  deviceId  String
+  payload   Json
+  status    QueueStatus @default(QUEUED)
+  createdAt DateTime    @default(now())
+  syncedAt  DateTime?
+}
